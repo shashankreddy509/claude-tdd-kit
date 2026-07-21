@@ -1,0 +1,117 @@
+Plan a new feature inline, iterate until approved, then auto-hand off to implementation.
+
+This command runs in the MAIN thread (not a subagent) so the plan is shown to you
+directly in chat and you can iterate on it in real time. No plan file is written until
+you explicitly approve.
+
+Feature request: $ARGUMENTS
+
+## Flow
+
+### 0. Triage-file check (bug path) — DO THIS FIRST
+- Derive the ticket key from `$ARGUMENTS` (e.g. `<KEY>`) if one is present.
+- If a key is present, check for `tasks/<TICKET>-triage.md` in the open project (written by
+  `/bug-triage`). If it exists, this is a **bug fix with a confirmed root cause** — do NOT re-explore
+  from scratch:
+  - Read the triage artifact. Trust its **Verdict**, **Root cause (confirmed on disk)**, **Affected
+    files**, **Excluded as adjacent**, and **Suggested fix-plan seed** sections.
+  - If the verdict is `not-reproducible` / `invalid` / `pre-existing`, STOP and tell the user — there
+    is nothing to build; surface the triage recommendation (close it / not our change).
+  - If `real-bug`, write a **LEAN fix-plan**: the smallest correct change at the shared point (not
+    per-caller), the one test from the seed, and the toggle gate if the seed names one. Skip the
+    broad exploration in step 1 — the root cause is already proven. Present it inline (step 2),
+    iterate (step 3), and on approval (step 4) write it as the plan file.
+- If no triage file, this is the normal feature/plan path — continue to step 1.
+
+### 1. Explore (read-only)
+- Enter plan mode.
+- Read the codebase relevant to the request. You MAY spawn read-only `Explore`
+  subagents in parallel for breadth, or the `planner` subagent as a research helper
+  to draft an approach — but those return text to you; they do NOT write any file.
+
+### 1.5 Gating check (only when the project is live)
+Read the project CLAUDE.md for a `Gating: active` line. Absent or `off` → skip this step
+entirely and every gating step below; a pre-v1 project has no users to protect. Present.
+
+Active → decide which side this ticket needs:
+- backend work feeding a mobile surface → **toggle + catalog**
+- backend-only → **toggle**
+- mobile reads Firestore directly, no backend → **catalog only**
+- refactor/tooling/docs, nothing user-facing → **neither**
+
+The two sides are the backend toggle `feature_toggles/config.<name>` (off ⇒ the backend
+stops sending the data) and the mobile catalog — ONE doc, `catalog/active`, one field per
+feature (off ⇒ the app stops rendering the surface). Either alone starves the feature, and
+both **fail closed: absent means OFF**, so a surface renders only on an affirmative `true`
+and a kill writes `false` rather than deleting the key. Name keys `feat_<name>` (long-lived)
+or `fix_<TICKET>_<slug>` (short-lived rollback lever), identical on both sides. Seed the keys
+at `false` and read them back AFTER verify-red and BEFORE implementation.
+
+Whatever it needs goes in the plan (step 2): the exact keys, the screen the catalog check
+wraps, and a gate-off test case per side. Fold the "does this need gating" call into the
+step-3 AskUserQuestion when it's genuinely ambiguous — don't guess silently.
+
+### 2. Present the plan INLINE
+Show the full plan directly in chat using this format:
+
+# Feature: [name]
+## Summary
+[2-3 sentences]
+## Approach
+[architecture decision — why this over alternatives]
+## Files to Create
+- `path/to/file` — [purpose]
+## Files to Modify
+- `path/to/existing` — [what changes and why]
+## Test Cases to Write
+- [Test]: [scenarios]
+## Gating  (omit this section entirely when the project has no `Gating: active` line)
+- Name: `feat_<name>` for a feature (long-lived) · `fix_<TICKET>_<slug>` for a bug-fix
+  rollback lever (retired ~2 weeks after it ships stable). Same name on both sides.
+- Toggle: `feature_toggles/config.<name>` — off ⇒ [what the backend stops sending]
+- Catalog: `catalog/active` field `<name>` — off ⇒ [which screen/composable stops rendering]
+- Gate-off tests: [toggle-off case] · [catalog-off case] · [absent key ⇒ OFF]
+## Risks / Assumptions
+- [anything that could go wrong or needs confirmation]
+
+### 3. Ask for approval via AskUserQuestion — DO NOT write any file yet
+Immediately after presenting the plan, call `AskUserQuestion` (clickable options,
+no typed approval needed) with exactly these options:
+
+- **Approve — run pipeline** (Recommended): write the plan file, then auto-hand
+  off to implementation (step 5).
+- **Approve — plan file only**: write `tasks/plans/<TICKET>_plan.md` but do NOT
+  start the pipeline; user runs `/implement` later.
+- **Revise**: user states what to change (or picks "Other" with details). Revise
+  the plan inline, re-present, and ask again. Repeat until approved or cancelled.
+- **Cancel**: no file written, stop.
+
+Any open questions inside the plan (toggle default, scope choices, etc.) go in
+the SAME AskUserQuestion call as additional questions (max 4 total) — one click
+session, not a typing exchange.
+
+### 4. On approval ONLY
+- Derive `<TICKET>` from the request: a ticket id like `<KEY>` if present;
+  otherwise a short kebab-case slug of the feature name.
+- Ensure `tasks/plans/` exists (create it if missing).
+- Write the full approved plan to `tasks/plans/<TICKET>_plan.md`. This file is the
+  permanent per-feature record.
+
+### 5. Auto-hand off to implementation (only if "Approve — run pipeline" was chosen)
+- Immediately run this plugin's `implement` command against the file you just
+  wrote (invoked as `/tdd-pipeline:implement tasks/plans/<TICKET>_plan.md`, or
+  whatever namespace this plugin is installed under) — it spawns the
+  build-coordinator TDD pipeline on that path. The `implement` command will move
+  the Jira ticket to "In Progress" before any code is written (auto-discovered
+  from the project's workflow — no hardcoded ids).
+- After the implement command finishes (all 5 stages complete, tests pass,
+  review clean), the user runs their project's `/ship` ritual to commit,
+  push, and open the PR. Then they run this plugin's `ship` command
+  (invoked as `/tdd-pipeline:ship tasks/plans/<TICKET>_plan.md`) to post
+  the pipeline summary to Jira and move the ticket to "In Review". The
+  full pipeline is **Build → Implement → Ship**; Deploy/Run is a separate
+  follow-up (not yet a plugin command).
+
+## Notes
+- The legacy root `PLAN.md` convention is superseded by `tasks/plans/<TICKET>_plan.md`.
+- Never write the plan file before the user approves it.

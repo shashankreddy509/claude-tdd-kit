@@ -1,0 +1,18 @@
+{
+  "name": "claude-tdd-kit",
+  "owner": {
+    "name": "Shashank Reddy Ganta"
+  },
+  "plugins": [
+    {
+      "name": "dev-day",
+      "source": "./dev-day",
+      "description": "Developer day-loop: session bootstrap with feedback memory + plan-gate, Jira standup/triage/groom/create, clean Jira comments, and end-of-day learning capture."
+    },
+    {
+      "name": "tdd-pipeline",
+      "source": "./tdd-pipeline",
+      "description": "Gated TDD build pipeline, ticket to Done: /build plans with click-approval; /implement runs test-writer → implementer → test-runner → multi-specialist review (security, quality, money-logic, concurrency) → changelog; /ship verifies the build receipt, then branches, commits, pushes and opens the PR, moving the ticket to In Review; /merged verifies the merge, parks the ticket for validation and cleans up branches; /validated records your sign-off and closes it. Jira optional; nothing hardcoded."
+    }
+  ]
+}
