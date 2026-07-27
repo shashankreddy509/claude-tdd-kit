@@ -190,12 +190,13 @@ without TDD before. State the command you detected; B1.5 and B3 reuse it.
 
 ### B0. Jira → In Progress (if a ticket is in scope)
 Derive the Jira key from the plan filename.
-- Resolve `cloudId`: prefer a `Jira: cloudId=<uuid> key=<KEY>` line in the project CLAUDE.md;
-  else `mcp__atlassian__getAccessibleAtlassianResources`. Never hardcode a cloudId.
-- `mcp__atlassian__getTransitionsForJiraIssue(cloudId, issueIdOrKey=<key>)`; find the transition
-  whose `to.name` is exactly `"In Progress"`. None → log
+- Resolve the Jira MCP dialect FIRST — see `references/jira-mcp.md`. It returns the tool
+  names for this machine and whether `cloudId` is a parameter. None resolved → log the skip
+  line from that file and proceed to B1.
+- List transitions with the resolved *list transitions* tool; find the one whose `to.name`
+  is exactly `"In Progress"`. None → log
   "<KEY>: no 'In Progress' transition — skipping" and proceed.
-- `mcp__atlassian__transitionJiraIssue(cloudId, issueIdOrKey=<key>, transition={"id": <id>})`.
+- Apply it with the resolved *transition* tool, passing that id.
 - 400 "transition not available/valid from current status" → already in/past In Progress, log the
   no-op and proceed. Any other error → log one-line warning, proceed. Pipeline never depends on
   Jira being up.

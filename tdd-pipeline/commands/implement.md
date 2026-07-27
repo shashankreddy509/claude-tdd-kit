@@ -11,17 +11,16 @@ Precondition: an approved plan file must exist at `tasks/plans/<TICKET>_plan.md`
 ### Step 0 — Move Jira ticket to "In Progress" (if a ticket is in scope)
 Before spawning the build-coordinator, derive the Jira ticket key from the resolved
 plan file (e.g. `<KEY>` from `tasks/plans/<KEY>_plan.md`).
-- If a key is present, resolve `cloudId` first: prefer a `Jira: cloudId=<uuid> key=<KEY>`
-  line in the project's CLAUDE.md; otherwise call
-  `mcp__atlassian__getAccessibleAtlassianResources` and use the returned site's id.
-  Never hardcode a cloudId in the plugin.
-- Look up the ticket's available transitions via
-  `mcp__atlassian__getTransitionsForJiraIssue(cloudId=<cloudId>, issueIdOrKey=<key>)`.
+- If a key is present, resolve the Jira MCP dialect FIRST — see
+  `references/jira-mcp.md`. It returns the tool names to use and whether `cloudId` is a
+  parameter on this machine. No Atlassian MCP resolved → log the skip line from that file
+  and proceed to the build; the pipeline does not depend on Jira.
+- Look up the ticket's available transitions with the resolved *list transitions* tool.
 - Find the transition whose `to.name` is exactly `"In Progress"` (a Jira convention,
   not a per-project id). If no such transition exists, log a one-line note
   ("<KEY>: no 'In Progress' transition in this project's workflow — skipping")
   and proceed. Do not break the pipeline on Jira weirdness.
-- Call `mcp__atlassian__transitionJiraIssue(cloudId=<cloudId>, issueIdOrKey=<key>, transition={"id": <id>})`.
+- Apply it with the resolved *transition* tool, passing that id.
 - On a 400, read the error body: "transition not available/valid from the current
   status" means the ticket is already in or past In Progress — log the no-op and
   proceed. Any OTHER error (auth, permissions, project misconfig) → log a one-line
