@@ -19,8 +19,10 @@ modified `tasks/plans/*_plan.md`, or from the current branch (`feat/PROJ-12-slug
 
 - Determine `<KEY>` from the argument, the newest plan file, or the branch name. With no key,
   the git cleanup still runs and every Jira step is skipped.
-- Resolve `cloudId` ONCE: prefer a `Jira: cloudId=<uuid> key=<KEY>` line in the project's
-  CLAUDE.md; else `mcp__atlassian__getAccessibleAtlassianResources`. Never hardcode it.
+- Resolve the Jira MCP dialect ONCE — see `references/jira-mcp.md`. It returns the tool names
+  for this machine and whether `cloudId` is a parameter (and if so, where to read it from).
+  No Atlassian MCP resolved → log the skip line from that file, run the git cleanup, and skip
+  every Jira step below.
 - Determine the default branch — do NOT assume `main`:
   ```bash
   git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' \
@@ -48,9 +50,7 @@ gh pr list --search "<KEY>" --state merged --json number,url,mergedAt,mergeCommi
 
 ### Step 2 — Pick the post-review state (discovery, two-stage)
 
-```
-mcp__atlassian__getTransitionsForJiraIssue(cloudId=<cloudId>, issueIdOrKey=<KEY>)
-```
+Call the resolved *list transitions* tool for `<KEY>`.
 
 Workflows differ between projects on the same site — one board may expose four transitions,
 another six, with different status ids behind identical names. **Discover; never hardcode.**
@@ -69,11 +69,7 @@ Choose in this order:
 Say which you picked and why, in one line:
 "Board has Build Testing → parking there; run /tdd-pipeline:validated after you verify."
 
-Apply it:
-```
-mcp__atlassian__transitionJiraIssue(cloudId=<cloudId>, issueIdOrKey=<KEY>,
-    transition={"id": "<discovered id>"})
-```
+Apply it with the resolved *transition* tool, passing the discovered id.
 
 A 400 saying the transition isn't valid from the current status means it's already there or
 beyond — log the no-op, don't retry with another id. Any other error is a one-line warning;
@@ -91,10 +87,8 @@ Merged at: <timestamp>
 Moved to: <status name>
 ```
 
-```
-mcp__atlassian__addCommentToJiraIssue(cloudId=<cloudId>, issueIdOrKey=<KEY>,
-    body=<plain text>, contentFormat="markdown")
-```
+Post it with the resolved *comment* tool. The body parameter's name differs by dialect
+(`commentBody` / `body`) — take it from the schema.
 
 A failed comment is a one-line warning, not a stop.
 

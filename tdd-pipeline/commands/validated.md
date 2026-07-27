@@ -17,14 +17,14 @@ Done should mean *validated*, not merely *merged*. `merged` deliberately stops s
 
 - `<KEY>` from the argument, else the newest `tasks/plans/*_plan.md`, else the branch name.
   With no key, stop and ask — this command is entirely about the ticket.
-- Resolve `cloudId` ONCE: prefer a `Jira: cloudId=<uuid> key=<KEY>` line in the project's
-  CLAUDE.md; else `mcp__atlassian__getAccessibleAtlassianResources`. Never hardcode it.
+- Resolve the Jira MCP dialect ONCE — see `references/jira-mcp.md`. It returns the tool names
+  for this machine and whether `cloudId` is a parameter (and if so, where to read it from).
+  No Atlassian MCP resolved → STOP and say so: this command is entirely about the ticket, so
+  there is nothing it can do without Jira.
 
 ### Step 1 — Gate on the current status
 
-```
-mcp__atlassian__getJiraIssue(cloudId=<cloudId>, issueIdOrKey=<KEY>, fields=["status"])
-```
+Read `<KEY>`'s status with the resolved *get issue* tool (request the `status` field).
 
 - Status is a **verification column** ("Build Testing", "QA", "Testing", "Verify") → proceed.
 - Status is already **Done** → say so and stop. Nothing to do.
@@ -55,27 +55,20 @@ Validated by: <the user>
 Date: <ISO date>
 ```
 
-```
-mcp__atlassian__addCommentToJiraIssue(cloudId=<cloudId>, issueIdOrKey=<KEY>,
-    body=<plain text>, contentFormat="markdown")
-```
+Post it with the resolved *comment* tool. The body parameter's name differs by dialect
+(`commentBody` / `body`) — take it from the schema.
 
 **Post the comment BEFORE the transition.** If the comment fails, stop rather than closing a
 ticket with no record of what was verified — the audit trail is the reason this command exists.
 
 ### Step 4 — Move to Done
 
-```
-mcp__atlassian__getTransitionsForJiraIssue(cloudId=<cloudId>, issueIdOrKey=<KEY>)
-```
+List `<KEY>`'s transitions with the resolved *list transitions* tool.
 
 Find the transition whose `to.name` is "Done", or whose `to.statusCategory.key` is `done`.
 **Discover the id — never hardcode it**; ids differ per project even on one site.
 
-```
-mcp__atlassian__transitionJiraIssue(cloudId=<cloudId>, issueIdOrKey=<KEY>,
-    transition={"id": "<discovered id>"})
-```
+Apply it with the resolved *transition* tool, passing the discovered id.
 
 If no Done transition is reachable from the current status, report the available ones and
 ask rather than guessing.
