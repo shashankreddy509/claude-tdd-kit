@@ -7,7 +7,7 @@ description: Captures this session's learnings — preferences, corrections, wha
 
 Read the entire conversation from this session. Extract and synthesize everything the user revealed about how they want to work.
 
-## Output — three artifacts
+## Output — four artifacts
 
 1. **`tasks/feedback.md` — DELEGATE to the `merge-feedback` skill.** Invoke it. It owns the synthesis
    of this session's preferences/corrections into the five sections and the never-delete / superset
@@ -22,9 +22,11 @@ Read the entire conversation from this session. Extract and synthesize everythin
    durable, non-obvious facts — not what git/the repo records, and not behavioral preferences (those
    go to feedback via `merge-feedback`).
 3. **`tasks/session-notes.md`** — the 2-line "Left off" note (see below).
-4. **Optional task inbox** — if a local task-inbox service is running, this session's unfinished
-   points go there, so they reach a daily brief / phone instead of dying in a session-notes file
-   nobody opens. Skipped silently when no such service is running (see below).
+4. **Optional task inbox** — if a local task-inbox service is running, first propose CLOSING the
+   points this session finished (user confirms; never auto-close), then push this session's
+   remaining unfinished points, so they reach a daily brief / phone instead of dying in a
+   session-notes file nobody opens. Close before adding — adding first pollutes the list you
+   then scan. Skipped silently when no such service is running (see below).
 
 ### session-notes.md detail
 
@@ -89,6 +91,58 @@ If a POST fails mid-run, fall back to session-notes for the remaining points and
 one line. Never invent a point to have something to push, and cap it at what genuinely
 matters: five real items beat fifteen padded ones.
 
+### Optional task-inbox detail — closing points this session finished
+
+The inbox only accumulates if nothing ever closes things, and the user should not have to
+tick off work they just watched get done. So before adding new points, propose closures.
+
+**Run this BEFORE the add step above** — adding first pollutes the list you are about to
+scan. Reuse the `up`/`down` probe and the open-todo fetch from the dedup step; do not
+probe or re-fetch. `down` → skip this silently along with the rest of the inbox step.
+
+For each open todo, ask: **did this session produce evidence it is finished?**
+
+Evidence means LIVE STATE — a merged PR, a Jira status, a tag/branch/file that does or
+does not exist, a command's actual output. "I worked on that this session" is not
+evidence. Verify from the source; a todo's own text describing what someone intended is
+not proof of what happened.
+
+Print two lists, then STOP for one confirmation:
+
+```
+Closable (evidence):
+  [1] <todo text>  → <the live evidence>
+
+Answered but caveated (read before closing):
+  [4] <todo text>  → <what is true> BUT <what is not>
+```
+
+The user replies with numbers, `all`, or `none`. Then per chosen id:
+
+```bash
+curl -s -X POST "${TASK_INBOX_URL:-http://localhost:8765}/api/todos/toggle" \
+  -H 'Content-Type: application/json' -d '{"id":"<todo id>"}'
+```
+
+Read the list back afterwards and confirm each one actually flipped — a 200 is not proof
+the state changed. Report how many closed, and name any that did not.
+
+**Three rules, each from a real miss:**
+
+- **A parent ticket reaching Done NEVER closes a follow-up todo.** "PROJ-83 is Done" does
+  not close "file the 2 defects found during PROJ-83" — the parent shipped, that work did
+  not. One audit found 13 such todos; a naive ticket-status rule would have wrongly closed
+  every one.
+- **Any caveat puts it in list two, never list one.** "Confirm the 7am job fired
+  unattended" was literally satisfied — and the job broke two days later and stayed broken
+  six days. Closing it silently would have buried a live outage.
+- **If the referenced artifact cannot be found at all, it is NOT closable.** A todo naming
+  a branch and SHA that exist nowhere is unverifiable, not done. Say which, and why.
+
+**Never close a todo the user did not pick.** Silence is not consent, and a wrongly closed
+todo is invisible afterwards — strictly worse than one that lingers. When unsure which
+list an item belongs in, it goes in the caveated one.
+
 ## Compact-aware (the session may have been compacted)
 
 This runs at session close, after work that may have been `/compact`-ed. A compaction summary is
@@ -105,14 +159,16 @@ rule appends corrections/preferences to disk AT THE MOMENT they happen:
 
 ## Rules
 
-- Scan the FULL conversation — don't summarize only recent turns. This is the input to all three
+- Scan the FULL conversation — don't summarize only recent turns. This is the input to all four
   artifacts.
 - The feedback merge rules (never-delete, superset, ≤20 words, behavioral-only, no code snippets)
   live in `merge-feedback` — don't restate or reimplement them here; just invoke it.
 - After all four updates, report a one-line summary: how many feedback rules captured (from
   merge-feedback's output), any memory files added/updated, the "Left off" note, and how many
-  open points went to the task inbox (omit that last clause entirely when no inbox was reachable —
-  the points went to session-notes instead).
+  todos were closed plus how many open points went to the task inbox (omit both inbox clauses
+  entirely when no inbox was reachable — the points went to session-notes instead).
+- Closing todos is the only step here that MUTATES state the user can't easily undo. It is gated
+  on their explicit picks, never on inference — see the three rules in the closing section.
 
 ## Dashboard review (PROJ-53, best-effort — only if `scripts/dashboard.py` exists; if that script is absent, skip this step SILENTLY with no message)
 
