@@ -27,12 +27,22 @@ cloudId / project key / issue types — everything is discovered at runtime.
    - **Found** → use that `cloudId` + `projectKey`. Also note any workflow/bug-format hints in
      the same CLAUDE.md (see step 5).
    - **Not found** → ask the user for the **cloudId** and **project key** (one `AskUserQuestion`
-     or a direct prompt). Do not guess. Offer to look them up via
-     `mcp__atlassian__getVisibleJiraProjects` if the user is unsure of the key.
+     or a direct prompt). Do not guess. Offer to look them up via the list-projects verb resolved
+     in step 1b if the user is unsure of the key.
 
-2. **Fetch real issue types.** Call `mcp__atlassian__getJiraProjectIssueTypesMetadata` with the
-   discovered `cloudId` + `projectIdOrKey`. Collect the type names (excluding sub-tasks unless
-   the user asks for one). Do **not** hardcode Bug/Task/Story — use what the project actually has.
+1b. **Resolve the Jira MCP dialect.** Atlassian MCP servers differ per machine: one exposes
+   camelCase names (`mcp__atlassian__getJiraProjectIssueTypesMetadata`) with `cloudId` REQUIRED;
+   another exposes snake_case under a `jira` prefix and resolves the site internally, with no
+   `cloudId` at all. If the `tdd-pipeline` plugin is installed, follow its `references/jira-mcp.md`.
+   Otherwise probe inline: try the camelCase names via `ToolSearch`; if nothing resolves, search by
+   keyword (`ToolSearch "+jira create issue"`, `"+jira project"`) and use what comes back.
+   **Pass `cloudId` ONLY when the resolved schema has that parameter** — otherwise omit it
+   everywhere below and ignore the `cloudId=` half of the CLAUDE.md line. Never hardcode a tool name.
+
+2. **Fetch real issue types.** Call the issue-types-metadata verb resolved in step 1b with
+   `projectIdOrKey` (plus `cloudId` only if its schema requires it). Collect the type names
+   (excluding sub-tasks unless the user asks for one). Do **not** hardcode Bug/Task/Story — use
+   what the project actually has.
 
 3. **Q1 — issue type.** Ask via `AskUserQuestion` (single-select, header `Type`) with the
    fetched types as options. *"What type of ticket is this?"*
@@ -76,16 +86,17 @@ cloudId / project key / issue types — everything is discovered at runtime.
    step-6 self-check, and re-show. Loop until they explicitly approve. No `createJiraIssue`
    call happens before approval.
 
-8. **Create.** Call `mcp__atlassian__createJiraIssue`:
+8. **Create.** Call the create-issue verb resolved in step 1b:
    ```
-   cloudId:        <discovered>
+   cloudId:        <discovered>   ← ONLY if the resolved schema has this parameter; omit otherwise
    projectKey:     <discovered>
    issueTypeName:  <from Q1, exact name as fetched>
    summary:        <approved title>
    description:    <approved body>
    contentFormat:  markdown
    ```
-   No `transition` (project default status), no `additional_fields`.
+   No `transition` (project default status), no `additional_fields`. Field names may differ on a
+   snake_case dialect — use the names from the resolved schema, not this list verbatim.
 
 9. **Report.** Print the new issue **key** and **webUrl** from the tool response, e.g.
    `Created PROJ-NN — <webUrl>`.

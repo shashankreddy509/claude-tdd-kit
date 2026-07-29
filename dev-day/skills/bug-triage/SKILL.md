@@ -38,10 +38,16 @@ never hardcode a cloudId. If not found, ask for the cloudId + key. Normalize the
 ## Steps
 
 ### 1. Fetch the ticket (delegate the live read)
-Load the tool and read the ticket:
+**Resolve the Jira MCP dialect first.** Atlassian MCP servers differ per machine: one exposes
+camelCase names (`mcp__atlassian__getJiraIssue`) with `cloudId` REQUIRED; another exposes snake_case
+under a `jira` prefix and resolves the site internally, with no `cloudId` at all. If the
+`tdd-pipeline` plugin is installed, follow its `references/jira-mcp.md`. Otherwise probe inline: try
+the camelCase name via `ToolSearch`; if nothing resolves, search by keyword
+(`ToolSearch "+jira issue"`) and use what comes back. Never hardcode a tool name.
+
+Then read the ticket with the resolved verb:
 ```
-ToolSearch "select:mcp__atlassian__getJiraIssue"
-mcp__atlassian__getJiraIssue(cloudId=<discovered>, issueIdOrKey=<TICKET>)
+<get-issue tool>(issueIdOrKey=<TICKET>)      # add cloudId=<discovered> ONLY if its schema has it
 ```
 Capture: summary, description, **issuetype**, **assignee**, status, priority, labels, parent epic,
 and the comment thread.
@@ -91,7 +97,12 @@ Decide one of:
 - **`not-reproducible`** — the code path can't produce the reported behavior. Say why; recommend
   closing as not-repro/invalid.
 - **`pre-existing`** — the failure isn't from any recent change. If there's a build/test failure in
-  play, delegate the attribution to `prove-pre-existing` and report its verdict.
+  play, delegate the attribution to `prove-pre-existing` and report its verdict. If that skill isn't
+  available, do it inline: capture the exact error signature, `git stash push -- <your files>`,
+  re-run the SAME command on the clean base, compare, then **`git stash pop` and verify the tree
+  matches its pre-stash state**. The pop is mandatory and must happen even if the re-run errors —
+  a stashed tree that is never popped looks like the user's work vanished. On a pop conflict, STOP
+  and surface `git stash list` rather than discarding anything.
 - **`invalid`** — the expectation in the ticket is wrong (behavior is by design / matches spec).
 
 ### 7. Write the artifact
