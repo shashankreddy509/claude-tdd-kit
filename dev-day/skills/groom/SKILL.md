@@ -24,10 +24,19 @@ implementation, never assigns a story-point number, never edits Jira.
 line of the form `Jira: cloudId=<uuid> key=<PROJECTKEY>` and use those values;
 never hardcode a cloudId. If not found, ask for the cloudId + key.
 
+**Then resolve the Jira MCP dialect.** Atlassian MCP servers differ per machine: one exposes
+camelCase names (`mcp__atlassian__getJiraIssue`) with `cloudId` REQUIRED; another exposes snake_case
+under a `jira` prefix and resolves the site internally, with no `cloudId` at all. If the
+`tdd-pipeline` plugin is installed, follow its `references/jira-mcp.md`. Otherwise probe inline: try
+the camelCase name via `ToolSearch`; if nothing resolves, search by keyword (`ToolSearch "+jira
+issue"`) and use what comes back. Pass `cloudId` ONLY when the resolved schema has it — otherwise
+omit it and ignore the `cloudId=` half of the line. Never hardcode a tool name.
+
 ## Steps
 
-1. **Fetch the ticket.** `ToolSearch "select:mcp__atlassian__getJiraIssue"`, then
-   `getJiraIssue(cloudId=<discovered>, issueIdOrKey=<TICKET>)`. Also pull linked/sibling issues and
+1. **Fetch the ticket.** Using the get-issue verb resolved above:
+   `<get-issue tool>(issueIdOrKey=<TICKET>)`, adding `cloudId=<discovered>` only if its schema
+   requires it. Also pull linked/sibling issues and
    attachments if referenced. Capture summary, description, issuetype, acceptance criteria, parent
    epic, comments.
 

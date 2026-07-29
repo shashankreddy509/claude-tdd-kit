@@ -46,7 +46,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
    git status --short && git branch --show-current && git fetch origin main -q && git rev-parse origin/main HEAD
    ```
 
-2. **Confirm the Jira issue is In Progress.** The work being shipped should map to an issue in the project key from CLAUDE.md. If one exists and isn't already In Progress, move it there via the Atlassian MCP (`getTransitionsForJiraIssue` → match `to.name == "In Progress"`); if no issue exists for non-trivial feature work, flag it (offer `/backlog` or create one) but don't block the ship. Do NOT write to `tasks/todo.md` — it's archive-only.
+2. **Confirm the Jira issue is In Progress.** The work being shipped should map to an issue in the project key from CLAUDE.md. If one exists and isn't already In Progress, move it there using the list-transitions and transition verbs **resolved in step 0** (never a hardcoded tool name) → match `to.name == "In Progress"`; if no issue exists for non-trivial feature work, flag it (offer `/backlog` or create one) but don't block the ship. Do NOT write to `tasks/todo.md` — it's archive-only.
 
 3. **Scope the commit.** Stage ONLY the session's feature files.
    - Leave UNSTAGED: unrelated/other-session WIP (`graphify-out/`, `tasks/lesson.md`/`feedback.md` unless the change IS docs, `tasks/todo.md` — archive-only, never touch it, untracked notes, CI).
