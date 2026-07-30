@@ -28,6 +28,11 @@ Feature request: $ARGUMENTS
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore`
   subagents in parallel for breadth, or the `planner` subagent as a research helper
   to draft an approach — but those return text to you; they do NOT write any file.
+- **UI ticket? Resolve its mock now.** Check the ticket's `Mock:` line, then the repo's
+  `design/exports/`, then CLAUDE.md's design-pack line. Whatever you find goes in the plan's
+  `## Design Reference`. A UI ticket with no mock anywhere is worth surfacing to the owner —
+  it usually means the design pack was never copied into the repo, and the build will ship
+  generic sample UI instead of the designed screen.
 
 ### 1.5 Gating check (only when the project is live)
 Read the project CLAUDE.md for a `Gating: active` line. Absent or `off` → skip this step
@@ -59,6 +64,12 @@ Show the full plan directly in chat using this format:
 [2-3 sentences]
 ## Approach
 [architecture decision — why this over alternatives]
+## Design Reference
+[UI tickets: the mockup path the implementer builds to, e.g. `design/exports/03-editor.png`
+(+ light variant). The mock is the visual contract — it wins over prose on layout.
+Resolve it from the ticket's `Mock:` line, the repo's `design/exports/`, or CLAUDE.md's
+design-pack line. Non-UI ticket: "n/a". UI ticket with no mock found anywhere:
+"NONE FOUND — UI from prose only" and flag it to the owner.]
 ## Files to Create
 - `path/to/file` — [purpose]
 ## Files to Modify

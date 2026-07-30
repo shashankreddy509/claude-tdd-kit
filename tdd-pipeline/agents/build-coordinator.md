@@ -139,6 +139,10 @@ plan has a Gating section) the seeded keys and this rule: the feature must read 
 through the project's ONE shared catalog/toggle client with a fail-closed default (absent
 ⇒ off), never an ad-hoc Firestore read in a screen; if no such client exists, build it as
 part of this ticket
++ (if the plan has a `## Design Reference` naming a mock) the mock path(s) and this rule:
+READ that image with the Read tool before writing any UI code and build to it — the mock is
+the visual contract and wins over prose on layout; never substitute generic sample UI when a
+mock exists; green tests do not close a UI ticket whose mock was never opened.
 Wait for completion.
 Output: "⚙️ Implementation done. Running tests..."
 

@@ -137,6 +137,11 @@ Show the full plan in chat:
 [2-3 sentences]
 ## Approach
 [architecture decision — why this over alternatives]
+## Design Reference
+[UI tickets: the mockup path to build to, e.g. `design/exports/03-editor.png` (+ light
+variant) — the visual contract, wins over prose on layout. Resolve from the ticket's
+`Mock:` line, the repo's `design/exports/`, or CLAUDE.md's design-pack line.
+Non-UI: "n/a". UI ticket with no mock found: "NONE FOUND — UI from prose only" + flag it.]
 ## Files to Create
 - `path/to/file` — [purpose]
 ## Files to Modify
@@ -259,9 +264,18 @@ Make the failing tests pass. Minimum needed — no extra code.
 client with a fail-closed default (absent ⇒ off) — never an ad-hoc Firestore read in a screen. No
 such client exists yet → build it as part of this ticket and note it; that shared reader is what
 keeps twelve hand-rolled null checks from drifting into twelve behaviors.
-1. Read the plan file. 2. Read every test file for the expected contracts. 3. Read the existing
-   codebase for patterns. 4. Implement only what tests require. 5. Follow existing architecture
-   strictly.
+1. Read the plan file. 2. **If the plan's `## Design Reference` names a mock, READ THAT IMAGE
+   (the Read tool renders PNG/JPG) BEFORE writing any UI code** — see the mock rule below.
+   3. Read every test file for the expected contracts. 4. Read the existing codebase for
+   patterns. 5. Implement only what tests require. 6. Follow existing architecture strictly.
+
+**Mock rule (UI tickets):** the referenced image is the visual contract and wins over prose on
+any layout dispute, including the plan's own wording. Match layout, spacing, type scale, color,
+component shape, iconography. NEVER substitute generic sample/placeholder UI when a mock exists
+— that is the exact failure this rule prevents. Green tests are not sufficient for a UI ticket
+with a mock: tests assert behavior, the mock asserts appearance, and both must hold. If the mock
+contradicts a test, implement to the test and report the conflict. If the named mock path does
+not exist on disk, say so explicitly — it means the design pack was never copied into the repo.
 
 Stack rules (apply only the matching one):
 - **Android/Kotlin**: MVVM ViewModel→Repository→DataSource; expose StateFlow (never public
