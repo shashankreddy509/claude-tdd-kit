@@ -33,6 +33,16 @@ only on approval, persist it to `tasks/plans/<TICKET>_plan.md`.
 ## Approach
 [Architecture decision — why this approach over alternatives]
 
+## Success Criteria
+- [observable condition that makes this done — a state someone else could check, not "it works"]
+- Prover: [the exact check that proves it landed — a field read back, a hash compared, an exit
+  code, a row count. A `200`, a green suite, and "it looked right" are not provers. If nothing in
+  this environment can prove it, name the tool that WOULD and state the result will be ASSERTED,
+  not verified.]
+
+## Out of Scope
+- [explicitly NOT built here — the adjacent thing a reader would assume is included]
+
 ## Design Reference
 [UI tickets: the mockup path(s) the implementer must build to, e.g.
 `design/exports/03-editor.png` (+ `design/exports/light/03-editor.png`).

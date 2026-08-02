@@ -1,7 +1,7 @@
 ---
 name: merge-feedback
 description: Synthesize this session's preferences/corrections into tasks/feedback.md and merge them into the existing file without ever deleting prior points. One job — the feedback artifact only. Called by end-session and by start-session's mid-session auto-capture; can also run standalone. Triggers: merge feedback, update feedback.md, capture preferences, record corrections.
-allowed-tools: Read, Bash
+allowed-tools: Read, Bash, Edit
 ---
 
 # Merge Feedback
@@ -44,6 +44,29 @@ owns those and calls this only for the feedback piece).
 - ...
 ```
 
+4. **Patch the skill that was running.** A correction recorded only as prose in `feedback.md` does
+   not reach the skill that produced the mistake — the next invocation repeats it. So for each
+   correction captured in step 2, ask: *was a named skill driving when this happened?* If yes, also
+   append the lesson as one line to a `## Gotchas` section in THAT skill's own `SKILL.md` (create the
+   section at the end of the file if absent).
+
+   Write the gotcha as an imperative rule with its trigger, not a story: "Before X, check Y — Z fails
+   silently otherwise." One line each. Skip this step entirely when no skill was driving; a
+   correction from ordinary conversation belongs in `feedback.md` only.
+
+   **Guards on this step — it must not sprawl:**
+   - Only a skill that was ACTUALLY named or invoked this session. Never infer which skill "would
+     have" been relevant, and never patch a second skill because it looks related.
+   - Append only. Never rewrite, reorder, or delete existing skill content — the never-delete rule
+     applies here exactly as it does to `feedback.md`.
+   - Skip a lesson already covered by an existing gotcha line in that file. Read before appending.
+   - **Plugin skills:** patch the plugin's SOURCE repo (wherever it is cloned), never the
+     `~/.claude/plugins/cache/` copy — the cache is overwritten on reinstall and hand-editing it
+     desyncs source, marketplace clone, and cache. After patching a plugin skill, say in the report
+     that a version bump plus a per-machine `/plugin` reinstall is required for the change to take
+     effect; do not perform either.
+   - Report every file touched. A silent skill edit is worse than no edit.
+
 ## Merge rules (the heart of this skill — never violate)
 
 - The final file MUST be a SUPERSET of the previous version plus what's new this session.
@@ -70,8 +93,9 @@ allowed decrease — call it out explicitly when it happens). Report `SUPERSET-C
 ## Notes
 
 - If the date isn't otherwise known, get it from the environment/context — do not invent one.
-- This skill writes ONLY `tasks/feedback.md`. If the caller (end-session) also needs
-  session-notes/memory updated, that's the caller's job — this stays single-artifact so it can't
-  straddle.
+- This skill writes `tasks/feedback.md`, plus — via step 4 only — a `## Gotchas` line in a skill that
+  was actually driving when a correction happened. That second write is the same job, not a second
+  one: recording a correction where it will actually be enforced. It does NOT extend to
+  session-notes or the memory vault; those stay end-session's job.
 - Standalone use = mid-session auto-capture (start-session's rule): when the user gives a correction
   or durable preference, call this immediately so it's on disk before any `/compact`.
