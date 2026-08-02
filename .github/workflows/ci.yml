@@ -1,0 +1,30 @@
+name: validate
+
+# Structural validation for the marketplace. A plugin here is markdown, so there is
+# no unit test to run — what these checks catch is broken wiring that would otherwise
+# ship green and fail at the user's install.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+
+      - name: Validate structure
+        run: tests/validate.sh
+
+      # On a release tag, additionally assert both plugin manifests match the tag —
+      # this is the check that would have caught a repo advertising v1.0.0 while the
+      # manifests said something else.
+      - name: Validate manifests match the release tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: tests/validate.sh --tag "${GITHUB_REF_NAME}"
