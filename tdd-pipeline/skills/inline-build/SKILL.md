@@ -104,6 +104,16 @@ Identical intent to `/build`, run directly in chat.
     per-caller), the one seed test, the toggle gate if named. Skip broad exploration (A1).
 - No triage file → normal feature path, continue A1.
 
+### A0.5. Automation admissibility check (owner-scoped — skip if the skill isn't installed)
+- Durable automation? (cron/launchd job, hook, mirror/sync, scheduled report, new pane/face)
+  → no: continue A1.
+- Yes AND `/automation-gate` available: it must have already ruled **APPROVE-AUTOMATE** on this
+  process. No verdict yet → STOP, tell the user to run it first. DELETE / SIMPLIFY-FIRST /
+  APPROVE-AUGMENT / DO-IT-BY-HAND → STOP and report that verdict; planning a build the gate
+  rejected defeats the gate.
+- Skill NOT installed → continue A1. Owner-tooling, not a pipeline requirement; its absence must
+  never block a build.
+
 ### A1. Explore (read-only)
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore` subagents in
   parallel for breadth ONLY — they return text, write nothing. (This is the one allowed spawn:
@@ -137,6 +147,14 @@ Show the full plan in chat:
 [2-3 sentences]
 ## Approach
 [architecture decision — why this over alternatives]
+## Success Criteria
+- [observable condition that makes this done — a state someone else could check, not "it works"]
+- Prover: [the exact check that proves it landed — a field read back, a hash compared, an exit
+  code, a row count. A `200`, a green suite, and "it looked right" are not provers. If nothing in
+  this environment can prove it, name the tool that WOULD and state the result will be ASSERTED,
+  not verified.]
+## Out of Scope
+- [explicitly NOT built here — the adjacent thing a reader would assume is included]
 ## Design Reference
 [UI tickets: the mockup path to build to, e.g. `design/exports/03-editor.png` (+ light
 variant) — the visual contract, wins over prose on layout. Resolve from the ticket's

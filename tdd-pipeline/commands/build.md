@@ -23,6 +23,16 @@ Feature request: $ARGUMENTS
     iterate (step 3), and on approval (step 4) write it as the plan file.
 - If no triage file, this is the normal feature/plan path — continue to step 1.
 
+### 0.5. Automation admissibility check (owner-scoped — skip if the skill isn't installed)
+- Is this request a DURABLE AUTOMATION — a cron/launchd job, a hook, a mirror/sync, a scheduled
+  report, or a new pane/face? If no, continue to step 1.
+- If yes AND `/automation-gate` is available in this environment, it must have already ruled
+  **APPROVE-AUTOMATE** on this process. No verdict yet → STOP and tell the user to run it first.
+  A verdict of DELETE / SIMPLIFY-FIRST / APPROVE-AUGMENT / DO-IT-BY-HAND → STOP and report that
+  verdict; planning a build the gate rejected defeats the gate.
+- If the skill is NOT installed, continue to step 1 — this check is owner-tooling, not a pipeline
+  requirement, and its absence must never block a build.
+
 ### 1. Explore (read-only)
 - Enter plan mode.
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore`
@@ -64,6 +74,14 @@ Show the full plan directly in chat using this format:
 [2-3 sentences]
 ## Approach
 [architecture decision — why this over alternatives]
+## Success Criteria
+- [observable condition that makes this done — a state someone else could check, not "it works"]
+- Prover: [the exact check that proves it landed — a field read back, a hash compared, an exit
+  code, a row count. A `200`, a green suite, and "it looked right" are not provers. If nothing in
+  this environment can prove it, name the tool that WOULD and state the result will be ASSERTED,
+  not verified.]
+## Out of Scope
+- [explicitly NOT built here — the adjacent thing a reader would assume is included]
 ## Design Reference
 [UI tickets: the mockup path the implementer builds to, e.g. `design/exports/03-editor.png`
 (+ light variant). The mock is the visual contract — it wins over prose on layout.
