@@ -21,15 +21,30 @@ decides what to do next.
 Run the deterministic sweep (sources 1–3) via the script, then add the Jira source, then print the
 combined standup.
 
-**Sources 1–3 — git + gh + deploy gap — are emitted as RAW facts by one script** WHEN it exists.
-Run it and read its output; do NOT re-derive these by hand:
+**Sources 1–3 — git + gh + deploy gap — are emitted as RAW facts by one bundled script.**
+Run it and read its output; do NOT re-derive these by hand.
 
-```bash
-scripts/standup.sh        # optionally: --app-paths "app/ src/"  (or STANDUP_APP_PATHS=)
+**Resolve `SKILL_DIR` first.** Set it to the **absolute path of the directory containing THIS
+SKILL.md you just Read** — your harness reported that path in the Read result. The script is always
+a direct sibling of this file (`SKILL_DIR/scripts/standup.sh`), in every install layout:
+
+```
+Read ~/.claude/plugins/cache/<marketplace>/dev-day/<ver>/skills/standup/SKILL.md → SKILL_DIR=…/skills/standup
+Read ~/.claude/skills/standup/SKILL.md                                           → SKILL_DIR=~/.claude/skills/standup
 ```
 
-**Fallback when `scripts/standup.sh` is absent** (most repos don't ship it). Do NOT abort;
-derive sources 1–3 by hand, read-only:
+Substitute that literal path below. This works on every harness without relying on a
+harness-specific environment variable.
+
+```bash
+"${SKILL_DIR}/scripts/standup.sh"     # optionally: --app-paths "app/ src/"  (or STANDUP_APP_PATHS=)
+```
+
+Run it from the repo you are reporting on — it reads the CURRENT working directory's git state, not
+`SKILL_DIR`'s.
+
+**Fallback if that script cannot be run** (not found under `SKILL_DIR`, or not executable). Do NOT
+abort; derive sources 1–3 by hand, read-only:
 - **git**: `git rev-parse --abbrev-ref HEAD`, `git status --short`, `git rev-list --left-right --count @{u}...HEAD`.
 - **PRs**: `gh pr list --state open --json number,title,headRefName` — targeting the RESOLVED repo
   (`-R <owner/repo>`), not necessarily the cwd (see the dashboard section below).
