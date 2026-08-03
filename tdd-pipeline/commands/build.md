@@ -42,22 +42,24 @@ Feature request: $ARGUMENTS
   the build ships generic sample UI instead of the designed screen.
 
 ### 1.5 Gating check (only when the project is live)
-Read the project CLAUDE.md for a `Gating: active` line. Absent or `off` → skip this step
-entirely and every gating step below; a pre-v1 project has no users to protect. Present.
+Read the project CLAUDE.md for a `Gating:` line naming the project's feature-flag store —
+a Firestore doc, LaunchDarkly/Unleash, a `feature_flags` table, an env default, or anything
+else it already uses. Absent or `off` → skip this step entirely and every gating step below;
+a pre-v1 project has no users to protect. Present.
 
 Active → decide which side this ticket needs:
-- backend work feeding a mobile surface → **toggle + catalog**
-- backend-only → **toggle**
-- mobile reads Firestore directly, no backend → **catalog only**
+- server work feeding a client surface → **both sides**
+- server-only → **server flag**
+- client reads the data store directly, no server → **client flag only**
 - refactor/tooling/docs, nothing user-facing → **neither**
 
-The two sides are the backend toggle `feature_toggles/config.<name>` (off ⇒ the backend
-stops sending the data) and the mobile catalog — ONE doc, `catalog/active`, one field per
-feature (off ⇒ the app stops rendering the surface). Either alone starves the feature, and
-both **fail closed: absent means OFF**, so a surface renders only on an affirmative `true`
-and a kill writes `false` rather than deleting the key. Name keys `feat_<name>` (long-lived)
-or `fix_<TICKET>_<slug>` (short-lived rollback lever), identical on both sides. Seed the keys
-at `false` and read them back AFTER verify-red and BEFORE implementation.
+A flag can have two sides: the **server flag** (off ⇒ the server stops sending the data) and
+the **client flag** (off ⇒ the app stops rendering the surface). Either alone starves the
+feature, and both **fail closed: absent means OFF**, so a surface renders only on an
+affirmative `true` and a kill writes `false` rather than deleting the key. Name keys
+`feat_<name>` (long-lived) or `fix_<TICKET>_<slug>` (short-lived rollback lever), identical on
+both sides. Seed the keys at `false` and read them back AFTER verify-red and BEFORE
+implementation.
 
 Whatever it needs goes in the plan (step 2): the exact keys, the screen the catalog check
 wraps, and a gate-off test case per side. Fold the "does this need gating" call into the
@@ -93,9 +95,10 @@ Resolve it from the ticket's mock reference or the project's design directory. N
 ## Gating  (omit this section entirely when the project has no `Gating: active` line)
 - Name: `feat_<name>` for a feature (long-lived) · `fix_<TICKET>_<slug>` for a bug-fix
   rollback lever (retired ~2 weeks after it ships stable). Same name on both sides.
-- Toggle: `feature_toggles/config.<name>` — off ⇒ [what the backend stops sending]
-- Catalog: `catalog/active` field `<name>` — off ⇒ [which screen/composable stops rendering]
-- Gate-off tests: [toggle-off case] · [catalog-off case] · [absent key ⇒ OFF]
+- Server flag: `<key in the project's flag store>` — off ⇒ [what the server stops sending]
+- Client flag: `<key in the project's flag store>` — off ⇒ [which screen/component/endpoint
+  stops rendering or responding]
+- Gate-off tests: [server-off case] · [client-off case] · [absent key ⇒ OFF]
 ## Risks / Assumptions
 - [anything that could go wrong or needs confirmation]
 

@@ -65,9 +65,9 @@ omit it and ignore the `cloudId=` half of the line. Never hardcode a tool name.
    - Sketch the **test matrix**: what unit coverage (using the project's own test runner) and any
      manual/on-device coverage this needs — so test effort is visible at estimate time.
 
-6. **Dependency / twin check.** Does real behavior depend on something not yet shipped — a backend
-   change, a Firestore migration, a mobile↔web contract, another ticket? Check links/labels/parent
-   and flag "blocked on <dependency>" if so.
+6. **Dependency / twin check.** Does real behavior depend on something not yet shipped — a server
+   change, a schema/data migration, a contract between two clients or services, another ticket?
+   Check links/labels/parent and flag "blocked on <dependency>" if so.
 
 7. **Open questions / gaps to resolve before estimating.** The decisions that must be made first:
    missing ACs, undecided business rules, unconfirmed contracts, analytics/observability not

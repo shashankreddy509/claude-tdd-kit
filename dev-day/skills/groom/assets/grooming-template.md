@@ -34,7 +34,7 @@ _Pre-grooming readiness + spec brief. Read-only analysis — no implementation p
 
 ## 5. Dependency / twin check
 
-<Does real behavior depend on something not yet shipped — a backend change, a Firestore migration, a mobile↔web contract, another ticket? Check links/labels/parent. Flag "blocked on <dependency>" if so.>
+<Does real behavior depend on something not yet shipped — a server change, a schema/data migration, a contract between two clients or services, another ticket? Check links/labels/parent. Flag "blocked on <dependency>" if so.>
 
 ## 6. Open questions / gaps to resolve before estimating
 
