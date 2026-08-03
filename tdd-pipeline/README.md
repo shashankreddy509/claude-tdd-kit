@@ -1,11 +1,11 @@
 # tdd-pipeline
 
 Gated TDD build pipeline for Claude Code, packaged as a plugin. Works on any
-stack — Android/Kotlin, Python, JS/TS, Go, Rust, JVM, or generic — via
-stack-detected test commands and per-stack rule sections. Includes the
-2026-07-04/05 hardening: Edit-tool surgical edits, coordinator-owned retry
-loop, verify-red stage, full-diff review scope, critical-fix loop-back, and
-the no-polling rule.
+stack — Android/Kotlin, Python, JS/TS, Go, Rust, JVM, .NET, PHP, Ruby, or
+generic — via stack-detected test commands and per-stack rule sections.
+Surgical edits over file rewrites, a coordinator-owned retry loop, a verify-red
+stage that rejects tests passing without implementation, full-diff review scope,
+and a critical-fix loop-back that re-reviews any post-review edit.
 
 ## Flow
 
@@ -70,10 +70,13 @@ money-logic-reviewer, concurrency-reviewer, memory-analyzer,
 kotlin-best-practices, planner, changelog
 
 ## Test-command detection
-test-runner and the verify-red stage auto-detect the suite: `gradlew` →
-`./gradlew test`; pytest project → `.venv/bin/python -m pytest` (or
-`python3 -m pytest`); `package.json` → `npm test`. No match = hard stop, never
-a guessed command.
+test-runner and the verify-red stage auto-detect the suite, in order: `gradlew` →
+`./gradlew test`; pytest project → the venv's pytest (or `python3 -m pytest`);
+`package.json` → `npm test`; `go.mod` → `go test ./...`; `Cargo.toml` → `cargo test`;
+`pom.xml` → `mvn -q test`; `.csproj`/`.sln` → `dotnet test`; `composer.json` →
+`vendor/bin/phpunit`; `Gemfile` → `bundle exec rspec`; a `Makefile` test target →
+`make test`. A test command named in CLAUDE.md or CI config overrides all of them.
+No match = ask for the command, never guess one.
 
 ## Install
 

@@ -331,10 +331,16 @@ Output: "⚙️ Implementation done. Running tests..."
 4. `go.mod` → `go test ./...`
 5. `Cargo.toml` → `cargo test`
 6. `pom.xml` → `mvn -q test`; `build.gradle(.kts)` without wrapper → `gradle test`
-7. `Makefile` with a `test` target → `make test`
-8. A project CLAUDE.md / CI config naming an explicit test command → use it (overrides 1-7)
+7. `.csproj` / `.sln` → `dotnet test`
+8. `composer.json` → `vendor/bin/phpunit`
+9. `Gemfile` → `bundle exec rspec` (or `bundle exec rake test` with no spec dir)
+10. `Makefile` with a `test` target → `make test` (late deliberately — Ruby/PHP/.NET repos often
+    have one, and their real runner is the better answer)
+11. A project CLAUDE.md / CI config naming an explicit test command → use it (overrides 1-10)
 
-State which command you picked and why. Nothing matches → STOP: "FAIL — no recognized test setup".
+State which command you picked and why. Nothing matches → do NOT invent a command and do NOT declare
+the repo has no tests; ASK the user for this project's test command, and suggest adding it to
+CLAUDE.md so rung 11 resolves it next time.
 
 **The loop (attempt counter starts at 1, max 5):**
 Run the detected command.
@@ -403,8 +409,8 @@ parallel agents, run the specialist lenses one after another YOURSELF.
      comparisons, non-idempotent close, balance/position accounting. If unsure whether the change
      could affect money/values/orders/balances, run it anyway — cheap insurance.
    - **Concurrency** (if flagged): races, staleness, double-fire, unguarded shared state.
-   - **Kotlin best-practices** (if `.kt` files changed): idiomatic Kotlin, coroutine patterns, null
-     safety, collection handling.
+   - **Language idiom** (always): idiomatic use of the diff's language — null/error handling,
+     concurrency primitives, collection and iteration patterns per that language's conventions.
    - **Memory** (if allocation/lifecycle/streams/retained refs): leaks, resource leaks, lifecycle.
 4. **Adversarial verify — CRITICALS only.** For each Critical you found, actively try to REFUTE it:
    read the actual code at file:line — is there a guard, invariant, caller contract, or existing
@@ -421,7 +427,7 @@ parallel agents, run the specialist lenses one after another YOURSELF.
      ✅ verified / ⚠️ unverified.
    - **🟡 Warning (should fix):** memory/perf/bad patterns/concurrency risks + any REFUTED critical
      (naming the guard that refuted it). An unverified critical does NOT belong here.
-   - **🟢 Suggestions:** style/readability/architecture (Kotlin findings mapped by severity).
+   - **🟢 Suggestions:** style/readability/architecture (language-idiom findings mapped by severity).
    - **✅ Passed Checks:** which lenses looked at what and found clean.
    - **Scope note:** "Per-ticket diff review (+ caller-context). Pre-existing bugs in unchanged
      files out of scope — covered by /deep-audit. A clean report ≠ whole codebase clean."

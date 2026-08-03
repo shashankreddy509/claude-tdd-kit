@@ -24,12 +24,19 @@ Inspect the repo root and pick, in this order:
 4. `go.mod` → `go test ./...`
 5. `Cargo.toml` → `cargo test`
 6. `pom.xml` → `mvn -q test`; `build.gradle`/`build.gradle.kts` without wrapper → `gradle test`
-7. `Makefile` with a `test` target → `make test`
-8. A project CLAUDE.md or CI config that names an explicit test command → use it
-   (this overrides 1-7 when present)
+7. `.csproj` / `.sln` → `dotnet test`
+8. `composer.json` → `vendor/bin/phpunit`
+9. `Gemfile` → `bundle exec rspec` (or `bundle exec rake test` if there is no spec dir)
+10. `Makefile` with a `test` target → `make test`
+11. A project CLAUDE.md or CI config that names an explicit test command → use it
+    (this overrides 1-10 when present)
 
-State which command you picked and why. If nothing matches, STOP and return:
-"FAIL — no recognized test setup". Do not invent a command.
+The `Makefile` rung sits near the end deliberately: a Ruby, PHP, or .NET repo often has one
+too, and its real runner is the better answer.
+
+State which command you picked and why. If nothing matches, do NOT invent a command and do
+NOT declare the repo has no tests — ASK the user for the test command for this project, and
+suggest they add it to CLAUDE.md so rung 11 resolves it next time.
 
 ## The One Cycle
 1. Run the detected test command.
