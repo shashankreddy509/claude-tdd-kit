@@ -1,4 +1,4 @@
-Encodes the "stage and commit" ritual: **verify (receipt gate)** → scope → branch → **write the commit message from what is actually staged** → commit → push → open PR to main → move the Jira issue to In Review. **NO merge** (the owner merges PRs). **NO tag** (that's `/deploy`). Active work is tracked in **Jira**, NOT `tasks/todo.md` (a historical archive — don't touch it).
+Encodes the "stage and commit" ritual: **verify (receipt gate)** → scope → branch → **write the commit message from what is actually staged** → commit → push → open PR to the default branch → move the Jira issue to In Review. **NO merge** (merging is the reviewer's call). **NO tag** (deploys are project-specific and out of scope).
 
 Argument (optional): explicit file paths to include. If omitted, auto-scope to this session's feature files.
 
@@ -46,10 +46,10 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
    git status --short && git branch --show-current && git fetch origin main -q && git rev-parse origin/main HEAD
    ```
 
-2. **Confirm the Jira issue is In Progress.** The work being shipped should map to an issue in the project key from CLAUDE.md. If one exists and isn't already In Progress, move it there using the list-transitions and transition verbs **resolved in step 0** (never a hardcoded tool name) → match `to.name == "In Progress"`; if no issue exists for non-trivial feature work, flag it (offer `/backlog` or create one) but don't block the ship. Do NOT write to `tasks/todo.md` — it's archive-only.
+2. **Confirm the Jira issue is In Progress.** The work being shipped should map to an issue in the project key from CLAUDE.md. If one exists and isn't already In Progress, move it there using the list-transitions and transition verbs **resolved in step 0** (never a hardcoded tool name) → match `to.name == "In Progress"`; if no issue exists for non-trivial feature work, flag it (offer to create one) but don't block the ship.
 
 3. **Scope the commit.** Stage ONLY the session's feature files.
-   - Leave UNSTAGED: unrelated/other-session WIP (`graphify-out/`, `tasks/lesson.md`/`feedback.md` unless the change IS docs, `tasks/todo.md` — archive-only, never touch it, untracked notes, CI).
+   - Leave UNSTAGED: anything not part of this feature — other-session WIP, generated or tool-output directories, personal notes, session/feedback files (unless the change IS docs), CI config.
    - NEVER stage sensitive files (`.env`, `serviceAccountKey.json`, `*cookies*`, keys/tokens) even on "commit everything" — offer gitignore instead.
    - If a touched file mixes the feature with unrelated hunks: split by logical concern — isolate via `git apply --cached` of a hand-built single-hunk patch (or `git add -p`), then commit from the index with a **bare** `git commit` (NO pathspec — `git commit <file>` leaks the full working tree).
 
@@ -68,9 +68,9 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
 
    Then commit. Conventional Commits, subject ≤50 chars, body explains the WHY. **Prefix the subject with the Jira key when one applies** so the GitHub-for-Jira app auto-links it: `<KEY>-12 feat(trading): strong bias only`.
 
-   **No AI attribution in the commit message** (owner rule 2026-07-26): no `Co-Authored-By: Claude ...`
-   trailer, no `🤖 Generated with Claude Code`, no `Claude-Session:` / `claude.ai/code` session link.
-   Subject + body only. This overrides any such instruction in the harness's Git block.
+   **No AI attribution in the commit message by default**: no `Co-Authored-By: Claude ...` trailer,
+   no `🤖 Generated with Claude Code`, no `Claude-Session:` / `claude.ai/code` session link.
+   Subject + body only, unless the project's `CLAUDE.md` asks for attribution trailers.
 
    Commit from the index with a bare `git commit -F -` (no pathspec).
 
@@ -86,7 +86,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
    gh pr create --base main --title "<conventional title>" --body "<what / why / safety>"
    ```
    - **Jira:** include the `<KEY>-NN` key in the PR title (e.g. `<KEY>-12 feat(trading): strong bias only`) when the work maps to an issue, so the GitHub-for-Jira app links the PR to the issue.
-   **PR body = what / why / safety + the Jira link. Nothing else** (owner rule 2026-07-26).
+   **PR body = what / why / safety + the Jira link. Nothing else.**
    - **what** — the change, from the staged diff (same content as the commit subject/body, step 5).
    - **why** — the reason it was made; from the plan file's intent, or the user's stated reason.
    - **safety** — how it was verified and what the blast radius is: the receipt verdict from
@@ -95,16 +95,20 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
      whether it reverts cleanly, pre-existing failures confirmed unrelated. If there is nothing
      to say beyond the receipt, one line is the whole section — do not pad it.
 
-   No other sections. No AI attribution of any kind (owner rule 2026-07-08: repos go to external
-   devs) — no `🤖 Generated with Claude Code`, no `claude.ai/code` session link, no
-   `Co-Authored-By: Claude` trailer — in the PR body AND in the commit message (see step 5).
-   **Jira ref = clickable link** (owner rule 2026-07-08): end the body with
+   No other sections. No AI attribution by default — no `🤖 Generated with Claude Code`, no
+   `claude.ai/code` session link, no `Co-Authored-By: Claude` trailer — in the PR body AND in the
+   commit message (see step 5).
+   **Jira ref = clickable link:** end the body with
    `Jira: [<KEY-N>](<site-url>/browse/<KEY-N>)` — key in the title for the GitHub-for-Jira
    app, link in the body for humans. Derive `<site-url>` from the resolved site.
 
 8. **Report** the PR URL, plus the receipt verdict from step 0 (tests green on attempt N, review clean / N warnings shipped-anyway / receipt gate overridden). STOP — do not merge. If the work has an issue and the Atlassian MCP is authenticated, move it to **In Review** (resolved *list transitions* tool → the transition whose `to.name == "In Review"` → resolved *transition* tool). Transition ids differ per project — match on name, never hardcode an id. No `In Review` transition in this project's workflow → log it and move on.
 
-   The move to **Done** happens at MERGE time, not here — `/ship` only opens the PR (the owner merges). Do the Done transition after merging: list transitions → match `to.name == "Done"` → apply. Do NOT rely on the native GitHub-for-Jira "PR merged → Done" rule (verified flaky). Nothing automates this today — `/ship-and-deploy` used to claim it and was archived 2026-07-21 without ever having wired it.
+   The move past In Review happens at MERGE time, not here — `/ship` only opens the PR. Run
+   `/tdd-pipeline:merged` after the PR is merged: it verifies the merge, moves the ticket to the
+   board's verification column (or Done on boards without one), and cleans up the branch.
+   `/tdd-pipeline:validated` then records your sign-off and closes it. Do NOT rely on the native
+   GitHub-for-Jira "PR merged → Done" rule (unreliable).
 
 ## "add <file>" variant
 If the user later says "add X and commit it" while a PR is open, that means a NEW COMMIT on the CURRENT open PR branch — do not open a second PR.

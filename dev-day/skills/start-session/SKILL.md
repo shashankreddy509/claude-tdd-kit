@@ -43,9 +43,9 @@ Treat the user as a professional in their domain. Calibrate language, depth, and
 - Long-form documents: use headers sparingly and only where navigation is genuinely useful.
 
 **Memory:**
-- You have a persistent file-based memory system. At session start, prior feedback (`tasks/feedback.md`) and project memory (`~/.claude/projects/<cwd-slug>/memory/` indexed by `MEMORY.md`) are loaded if present — rely on whichever exist, and simply carry on when they don't.
+- This plugin uses a file-based memory convention. At session start, prior feedback (`tasks/feedback.md`) and project memory (`~/.claude/projects/<cwd-slug>/memory/` indexed by `MEMORY.md`) are loaded if present — rely on whichever exist, and simply carry on when they don't.
 - Do not invent or speculate about prior work that is not in those files. If the user references context that is genuinely absent from loaded memory, ask them to paste it rather than guessing.
-- **Capture at the moment, not only at day's end.** When the user gives a correction or a durable working preference, invoke the `merge-feedback` skill right away to append it to `tasks/feedback.md` (it owns the never-delete/superset merge; `condense-feedback` handles shrinking if the file grows) — do NOT wait for `/end-session`. A genuinely technical, non-obvious gotcha goes to project memory immediately. This protects against a mid-session `/compact` degrading what end-session can recover: the fact is already on disk.
+- **Capture at the moment, not only at day's end.** When the user gives a correction or a durable working preference, invoke the `merge-feedback` skill right away to append it to `tasks/feedback.md` (it owns the never-delete/superset merge) — do NOT wait for `/end-session`. A genuinely technical, non-obvious gotcha goes to project memory immediately. This protects against a mid-session `/compact` degrading what end-session can recover: the fact is already on disk.
 
 **Task source of truth:** this skill is global (used across projects). A project that tracks work in Jira declares it in its CLAUDE.md with a line of the form:
 
@@ -53,7 +53,7 @@ Treat the user as a professional in their domain. Calibrate language, depth, and
 Jira: cloudId=<uuid> key=<PROJECTKEY>
 ```
 
-The skill reads that line at startup to pull pending issues. A project with no such line has no Jira configured — skip the task list entirely (don't read or print `tasks/todo.md`).
+The skill reads that line at startup to pull pending issues. A project with no such line has no Jira configured — skip the task list entirely.
 
 ## Plan-gate (standing rule — applies to EVERY task, all day, not just the first)
 
@@ -73,10 +73,10 @@ writes free.
 - A change in APPROACH, or touching a file / use-case NOT in the approved plan, needs a FRESH check.
   When unsure whether a mid-flow change is within the approved plan or new scope, surface it and let
   the user decide — do not guess.
-- **NOT gated** (run immediately, no plan): status/read-only lookups (`/standup`, `/check-jira-bugs`,
-  `/firebase-check`, `/validate-trade`), the mail/dashboard digest, posting a comment, answering a
-  question, and skills that write NON-code artifacts (`/bug-triage`, `/groom`, `/jot`, `/note`,
-  `/remember`, memory/feedback writes). The gate is specifically about writing/editing code.
+- **NOT gated** (run immediately, no plan): status/read-only lookups (`/standup`, and any read-only
+  checks your setup adds), posting a comment, answering a question, and skills that write NON-code
+  artifacts (`/bug-triage`, `/groom`, `/create-ticket`, `/jira-comment`, memory/feedback writes).
+  The gate is specifically about writing/editing code.
 - The user may still invoke plan mode explicitly (`EnterPlanMode`) when they want the hard harness
   lock on a risky task — this gate does not replace that, it removes the forced-at-startup version.
 
@@ -92,13 +92,12 @@ writes free.
      - Group the issues by status name (To Do / In Progress / Product Backlog / etc.) for the confirmation message; one line each: `KEY — summary (issuetype)`.
      - If the MCP call fails (auth/offline), say so in one line ("Jira unavailable") and show "None" — do not fall back to a local file.
    - **If not found** — no Jira for this project. Skip the task list: the confirmation message's pending-tasks body is just "None (no Jira configured for this project)".
-3. **Dashboard (PROJ-53, best-effort — only if `scripts/dashboard.py` exists; if that script is absent, skip this whole step SILENTLY with no message, and a dead server never blocks startup):**
-   - **Drain first:** `.venv/bin/python scripts/dashboard.py drain` — if it returns a queued `pick_ticket {key}`, that IS the user's choice of what to work on; skip the "what are we working on?" wait and start that ticket.
-   - **Render the session panel** with the pulled Jira issues so the user can click a ticket to start:
-     ```bash
-     .venv/bin/python scripts/dashboard.py render session '{"branch":"<branch>","groups":{"To Do":[{"key":"PROJ-N","summary":"…"}],"In Progress":[…],"Product Backlog":[…]}}'
-     ```
-     Page live at `http://localhost:7799`. Additive — still print the text confirmation below.
+3. **Session dashboard (OPTIONAL — only if the repo ships a dashboard tool; if it does not, skip this whole step SILENTLY with no message, and a dead server never blocks startup):**
+   - Some setups render the session panel as a clickable page. If the repo defines such a tool (its
+     CLAUDE.md names the command), run its drain step first — a queued "pick ticket" IS the user's
+     choice of what to work on, so skip the "what are we working on?" wait and start that ticket.
+   - Then render the panel with the pulled Jira issues, grouped by status.
+   - Additive — still print the text confirmation below, always.
 4. Do NOT enter plan mode. The plan-gate above is the standing rule for the day: any code-changing task gets analysis + plan + STOP-for-approval before any edit; read-only and non-code-artifact work runs immediately. After the confirmation message, wait for the user's first task and apply the gate to it (and every task after).
 
 ## Confirmation Message

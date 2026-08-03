@@ -62,7 +62,7 @@ cloudId / project key / issue types — everything is discovered at runtime.
        weren't told.
      - **Other types** (Task/Story/Epic/etc.) → free-form: a one-paragraph summary plus
        acceptance criteria / notes / scope as the context warrants. Keep it tight.
-     - **Test floor (standing rule 2026-07-08):** any ticket that changes code gets
+     - **Test floor (default; override in your CLAUDE.md):** any ticket that changes code gets
        "unit tests for <the change>" in its acceptance criteria — no manual-verification-only
        tickets. Skip only for pure docs/config/process tickets.
 

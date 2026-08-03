@@ -34,7 +34,7 @@ derive sources 1–3 by hand, read-only:
 - **PRs**: `gh pr list --state open --json number,title,headRefName` — targeting the RESOLVED repo
   (`-R <owner/repo>`), not necessarily the cwd (see the dashboard section below).
 - **deploy gap**: latest plain `v*` tag (exclude `-rc`) vs `origin/main`; `git diff --name-only <tag>..origin/main`
-  filtered to the app-source prefix (`btc_agent/` here). Zero app files → up-to-date; else pending vX.Y.(Z+1).
+  filtered to the repo's app-source prefix (see `--app-paths` below). Zero app files → up-to-date; else pending vX.Y.(Z+1).
 
 The script prints, read-only and macOS/bash-3.2 safe (degrading gracefully when gh/tags are absent):
 
@@ -45,7 +45,7 @@ The script prints, read-only and macOS/bash-3.2 safe (degrading gracefully when 
    missing/unauth instead of crashing.
 3. **Deploy gap (merged ≠ deployed)** — latest `v*` tag (or `git describe`) vs `origin/main`,
    classified by CONTENT not PR title: it lists only app-code files/commits under the app-source
-   prefix(es). Default prefixes are permissive (`app/ btc_agent/ src/`); override per-project with
+   prefix(es). Default prefixes are permissive (`app/ src/ lib/`); override per-project with
    `--app-paths` / `STANDUP_APP_PATHS`. `status: PENDING` → "deploy pending (vX.Y.(Z+1))";
    `status: NO-OP` (only docs/tooling changed) → "nothing to deploy"; no tag → nothing to report.
 
@@ -55,12 +55,12 @@ The script prints, read-only and macOS/bash-3.2 safe (degrading gracefully when 
    MCP (`searchJiraIssuesUsingJql`), group by status. List key · summary · status. If no Jira
    line → skip this source (don't fall back to a todo file).
 
-5. **Stale catalog entries (ONLY when CLAUDE.md has `Gating: active`).** No line → skip this
-   source silently; a pre-v1 project has no catalog. Present → read the `catalog/active` doc
-   (project's own Firestore helper, read-only) and flag entries that look retired-but-present:
-   `fix_<TICKET>_*` keys whose ticket is Done and whose fix has been in production ~2 weeks or
-   more. `feat_*` keys are long-lived — never flag them. Report as a prompt, not an action: this
-   source NEVER writes or deletes a catalog entry.
+5. **Stale feature-flag entries (ONLY when CLAUDE.md has a `Gating:` line naming a flag store).**
+   No line → skip this source silently. Present → read the flag store read-only, using whatever
+   helper the project already has (a Firestore doc, LaunchDarkly/Unleash, a config table, an env
+   file), and flag entries that look retired-but-present: per-fix keys whose ticket is Done and
+   whose fix has been in production ~2 weeks or more. Long-lived feature keys are never flagged.
+   Report as a prompt, not an action: this source NEVER writes or deletes a flag entry.
    Retiring one is a code change, not a console click — with fail-closed semantics an absent key
    reads as OFF, so removing the entry while the app still gates on it silently disables the fix.
    The app-side branch goes in the same change (both sides of the gate move together).
@@ -73,7 +73,7 @@ standup — <repo> @ <branch>
 • PRs open: #N <title> …                              | none
 • deploy:   PENDING vX.Y.Z (<app files changed>)      | up-to-date  | no-op (docs only)
 • tickets:  <N> open — <key summary [status]> …       | none / no Jira configured
-• catalogs: <N> stale — <fix_KEY_slug (shipped <date>)> …   | clean | n/a (gating off)
+• flags:    <N> stale — <flag key (shipped <date>)> …        | clean | n/a (no flag store)
 VERDICT: <one line — e.g. "PR #132 awaiting merge; deploy pending once merged" or "nothing pending">
 ```
 
@@ -85,12 +85,12 @@ server or a missing tool NEVER blocks or fails the sweep.
 
 **Resolve the tool, in order — stop at the first hit:**
 
-1. `scripts/dashboard.py` in the current repo → `TOOL=".venv/bin/python scripts/dashboard.py"`
-   (fall back to `python3` if the venv is absent).
-2. A `Dashboard:` line in the repo's `CLAUDE.md`, for the case where the tool lives in a
+1. A dashboard script the repo ships under `scripts/` → run it with the project's own interpreter
+   (for a Python tool, `.venv/bin/python` when a venv exists, else `python3`).
+2. A `Dashboard:` line in the repo's `CLAUDE.md` — also covers the case where the tool lives in a
    SIBLING repo but drives a board for this one:
    ```
-   Dashboard: tool=<abs path to dashboard.py> port=<port> [env=K=V,K=V] [gh_repo=<owner/repo>]
+   Dashboard: tool=<abs path to the dashboard tool> port=<port> [env=K=V,K=V] [gh_repo=<owner/repo>]
    ```
    Use its `tool`, `port`, and any `env` prefix verbatim.
 3. Neither → **no dashboard. Skip.**

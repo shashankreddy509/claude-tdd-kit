@@ -65,20 +65,20 @@ detail and the ticket has screenshots, fetch them (`mcp__atlassian__fetch` on th
 State the one-line repro you'll be root-causing, so a wrong reading can be corrected early.
 
 ### 4. Fan out root-cause Explore agents (delegate, read-only)
-Spawn parallel `Explore` agents (Task tool, `subagent_type: Explore`) scoped to the OPEN repo (this
-is a single-repo project — no sibling fan-out). Use at least two complementary angles so one blind
-spot doesn't sink the result:
+Spawn parallel `Explore` agents (Task tool, `subagent_type: Explore`) scoped to the OPEN repo. Use
+at least two complementary angles so one blind spot doesn't sink the result:
 - **Symptom finder:** locate the user-facing string / error / element / API response field from the
   repro — exact key + file:line + every code site that produces it.
 - **Mechanism finder:** locate the branch/condition/default that DECIDES the observed (wrong)
-  behavior vs the expected one — the gate, the hardcoded value, the missing check. For BTC:
-  - **Web:** the FastAPI route, the Firestore read/write, the `_fs.load_feature_toggles()` gate, the
-    scanner/trade logic.
-  - **Android:** the ViewModel branch, the `catalogOn(flag)` gate in `CatalogFlags.kt`, the repository.
+  behavior vs the expected one — the gate, the hardcoded value, the missing check. By stack:
+  - **Web/backend:** the route handler, the data-store read/write, the feature-flag gate, the
+    domain/business logic.
+  - **Mobile:** the ViewModel/presenter branch, the flag gate, the repository.
+  - **Other:** find the equivalent decision point for that stack.
 
 Each agent must return `file:path:line` + a short quoted snippet for every finding, and edit nothing.
-Tip: for a cross-module "how does X relate to Y" angle on the web repo, `graphify query` traverses
-the graph's edges better than grep.
+Tip: if the repo has a knowledge graph (e.g. a `graphify-out/` directory), a graph query traverses
+cross-module "how does X relate to Y" edges better than grep.
 
 ### 5. Adversarially confirm the cause (the step that makes the verdict trustworthy)
 Do NOT accept the first plausible chain. Finders often disagree or surface adjacent-but-wrong sites.

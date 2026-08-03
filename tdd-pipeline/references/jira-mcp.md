@@ -87,10 +87,10 @@ dialect than expected.
 
 ## Verification status
 
-Dialect A is **verified** — probed live against a connected Atlassian MCP (2026-07-27),
-all four tools resolved with `cloudId` required.
+Dialect A is **verified** — probed live against a connected Atlassian MCP, all four tools
+resolved with `cloudId` required.
 
 Dialect B is **UNVERIFIED**. It is written from a field report of a different Atlassian MCP
-plus the keyword-probe fallback in step 2, which is designed to work even if the exact
-snake_case names in this file are wrong. Anyone running dialect B: confirm step 2 resolves
-the four verbs, then update the table above with the real names and delete this paragraph.
+plus the keyword-probe fallback in step 2, which is designed to resolve the four verbs even
+if the exact snake_case names in this file are wrong. If you run dialect B, please report the
+real tool names upstream so this reference can be corrected.

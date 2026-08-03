@@ -19,7 +19,7 @@ it formats and posts text that already exists.
   wrong one posts to someone else's Jira. A repo whose `CLAUDE.md` has no `Jira:` line has
   no Jira configured — ask the user for the cloudId rather than guessing.
 - The comment body. If the user just authored it in the conversation, use that verbatim as the source.
-- Any CC mentions — preserve EXACTLY as given (e.g. `User:712020:21265635-...`). These are live
+- Any CC mentions — preserve EXACTLY as given (e.g. `User:<accountId>`). These are live
   account-id references; do not reword, reformat, or drop them.
 
 ## Render-safe rules (apply BEFORE posting — this is the whole point)

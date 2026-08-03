@@ -10,11 +10,11 @@ Feature request: $ARGUMENTS
 
 ### 0. Triage-file check (bug path) — DO THIS FIRST
 - Derive the ticket key from `$ARGUMENTS` (e.g. `<KEY>`) if one is present.
-- If a key is present, check for `tasks/<TICKET>-triage.md` in the open project (written by
-  `/bug-triage`). If it exists, this is a **bug fix with a confirmed root cause** — do NOT re-explore
-  from scratch:
-  - Read the triage artifact. Trust its **Verdict**, **Root cause (confirmed on disk)**, **Affected
-    files**, **Excluded as adjacent**, and **Suggested fix-plan seed** sections.
+- If a key is present, check for `tasks/<TICKET>-triage.md` in the open project (a triage artifact
+  from any bug-triage workflow). If it exists, this is a **bug fix with a confirmed root cause** —
+  do NOT re-explore from scratch:
+  - Read the triage artifact. Trust its stated verdict, root cause, affected files, what it excluded
+    as adjacent, and any fix-plan seed it proposes.
   - If the verdict is `not-reproducible` / `invalid` / `pre-existing`, STOP and tell the user — there
     is nothing to build; surface the triage recommendation (close it / not our change).
   - If `real-bug`, write a **LEAN fix-plan**: the smallest correct change at the shared point (not
@@ -23,26 +23,23 @@ Feature request: $ARGUMENTS
     iterate (step 3), and on approval (step 4) write it as the plan file.
 - If no triage file, this is the normal feature/plan path — continue to step 1.
 
-### 0.5. Automation admissibility check (owner-scoped — skip if the skill isn't installed)
-- Is this request a DURABLE AUTOMATION — a cron/launchd job, a hook, a mirror/sync, a scheduled
-  report, or a new pane/face? If no, continue to step 1.
-- If yes AND `/automation-gate` is available in this environment, it must have already ruled
-  **APPROVE-AUTOMATE** on this process. No verdict yet → STOP and tell the user to run it first.
-  A verdict of DELETE / SIMPLIFY-FIRST / APPROVE-AUGMENT / DO-IT-BY-HAND → STOP and report that
-  verdict; planning a build the gate rejected defeats the gate.
-- If the skill is NOT installed, continue to step 1 — this check is owner-tooling, not a pipeline
-  requirement, and its absence must never block a build.
+### 0.5. Automation admissibility check (OPTIONAL — requires an automation-approval gate)
+- Is this request a DURABLE AUTOMATION — a cron/scheduled job, a hook, a mirror/sync, a recurring
+  report, or a new always-on surface? If no, continue to step 1.
+- If yes AND your setup has an automation-approval gate, confirm it approved this process before
+  planning; a rejected verdict → STOP and report it, since planning a build the gate rejected
+  defeats the gate.
+- No such gate installed → continue to step 1. This check must never block a build.
 
 ### 1. Explore (read-only)
 - Enter plan mode.
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore`
   subagents in parallel for breadth, or the `planner` subagent as a research helper
   to draft an approach — but those return text to you; they do NOT write any file.
-- **UI ticket? Resolve its mock now.** Check the ticket's `Mock:` line, then the repo's
-  `design/exports/`, then CLAUDE.md's design-pack line. Whatever you find goes in the plan's
-  `## Design Reference`. A UI ticket with no mock anywhere is worth surfacing to the owner —
-  it usually means the design pack was never copied into the repo, and the build will ship
-  generic sample UI instead of the designed screen.
+- **UI ticket? Resolve its mock now.** Check the ticket for a mock reference, then the project's
+  design directory (CLAUDE.md may name it, e.g. `design/exports/`). Whatever you find goes in the
+  plan's `## Design Reference`. A UI ticket with no mock anywhere is worth surfacing — without one
+  the build ships generic sample UI instead of the designed screen.
 
 ### 1.5 Gating check (only when the project is live)
 Read the project CLAUDE.md for a `Gating: active` line. Absent or `off` → skip this step
@@ -84,10 +81,9 @@ Show the full plan directly in chat using this format:
 - [explicitly NOT built here — the adjacent thing a reader would assume is included]
 ## Design Reference
 [UI tickets: the mockup path the implementer builds to, e.g. `design/exports/03-editor.png`
-(+ light variant). The mock is the visual contract — it wins over prose on layout.
-Resolve it from the ticket's `Mock:` line, the repo's `design/exports/`, or CLAUDE.md's
-design-pack line. Non-UI ticket: "n/a". UI ticket with no mock found anywhere:
-"NONE FOUND — UI from prose only" and flag it to the owner.]
+(+ any light/dark variant). The mock is the visual contract — it wins over prose on layout.
+Resolve it from the ticket's mock reference or the project's design directory. Non-UI ticket:
+"n/a". UI ticket with no mock found anywhere: "NONE FOUND — UI from prose only" and flag it.]
 ## Files to Create
 - `path/to/file` — [purpose]
 ## Files to Modify
