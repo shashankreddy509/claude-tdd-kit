@@ -1,5 +1,7 @@
 # claude-tdd-kit
 
+[![validate](https://github.com/shashankreddy509/claude-tdd-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/shashankreddy509/claude-tdd-kit/actions/workflows/ci.yml)
+
 Two Claude Code plugins that make an AI coding agent accountable: **dev-day** runs the
 developer day-loop, **tdd-pipeline** runs a gated build/test/review pipeline from ticket
 to Done. Add one marketplace, install either plugin.
@@ -136,6 +138,28 @@ Merging and deploying stay yours. `/ship` never merges. `/merged` never deploys.
 Each plugin's own README has the full command list and stage-by-stage flow.
 
 ---
+
+## What's tested
+
+A plugin here is markdown, not executable code, so there is no unit test to run. What *can*
+break silently is the wiring — and every one of those failures ships green and only surfaces
+at a user's install. `tests/validate.sh` runs on every push, every PR, and every release tag:
+
+| Check | Catches |
+| --- | --- |
+| Manifests parse | A trailing comma that makes the marketplace un-addable |
+| Marketplace sources resolve | A plugin directory renamed or moved without updating `marketplace.json` |
+| Referenced agents exist | A coordinator spawning an agent whose file was renamed — the stage silently never runs |
+| Frontmatter name matches filename | An agent that cannot be resolved when spawned |
+| Shell scripts parse | `bash -n` + shellcheck on every bundled script |
+| Versions agree | The two plugins drifting apart, or disagreeing with the release tag |
+
+Each check is mutation-tested: the defect is introduced, the check is confirmed to fail with
+a non-zero exit, and the tree is restored. That process found a bug in the validator itself —
+a piped `while read` ran in a subshell, so a real failure printed but still exited 0.
+
+Run it locally with `tests/validate.sh`, or `tests/validate.sh --tag v1.4.0` to include the
+release-tag assertion.
 
 ## Layout
 
