@@ -19,6 +19,7 @@ in this same kit. dev-day runs the day; tdd-pipeline builds the tickets.
 | Build one | `/tdd-pipeline:build <KEY>` then `/tdd-pipeline:implement` | Hands the ticket to the tdd-pipeline plugin: plan → your approval → test-writer → implementer → test-runner → review → ship gate |
 | Jira notes | `/dev-day:jira-comment` | Posts comments that survive the Atlassian MCP's markdown mangling |
 | Evening | `/dev-day:end-session` | Captures the session's corrections + lessons into `tasks/feedback.md` (via `merge-feedback`, never deletes prior points) and leaves a "left off here" note for tomorrow |
+| When it gets big | `/dev-day:condense-feedback` | Shrinks a grown `tasks/feedback.md` ~75-85% without losing a single distinct lesson — merges points that mean the same thing, groups by theme, backs up first |
 
 ## Setup
 
@@ -46,6 +47,11 @@ re-asking; new scope needs a fresh check.
 **The feedback loop.** Corrections you give today change behavior tomorrow:
 `end-session` merges them into `tasks/feedback.md` (superset merge, never deletes),
 `start-session` loads them silently the next morning. The file is repo-local and yours.
+
+Growth is one-way by design — `merge-feedback` can only add, so a lesson can never be lost
+to an automatic trim. When the file eventually gets unwieldy, `condense-feedback` is the one
+skill allowed to shrink it: it merges points that mean the same thing, keeps every distinct
+rule and concrete constant, and writes a timestamped backup before touching anything.
 
 ## Files the plugin maintains in your repo
 

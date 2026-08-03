@@ -77,8 +77,8 @@ owns those and calls this only for the feedback piece).
 - Prior dated sections stay intact below the new one. Don't rewrite history; only the new section is
   authored, except where a merge folds a new point into an older bullet.
 - If the file has grown unwieldy over many sessions, DON'T hand-trim it here (that risks dropping a
-  point). If you have a condense/compaction skill installed, use it; otherwise leave the file be —
-  growth is acceptable. This skill only ever adds/merges.
+  point) — that is `condense-feedback`'s job, which ships alongside this skill and is the only thing
+  allowed to shrink the file. This skill only ever adds/merges.
 
 ## Self-check (correctness — the superset gate; report PASS/FAIL)
 
