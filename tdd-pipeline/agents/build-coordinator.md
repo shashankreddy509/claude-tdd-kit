@@ -21,7 +21,8 @@ Before doing anything:
 2. If it does not exist → STOP and output:
    "❌ Plan file not found at <path>. Run the build command first and approve the plan."
 3. **Harness pre-flight — run the test-runner Step 0 ladder NOW, before Stage 1.**
-   Detect the project's test command (gradlew / pytest / npm / go / cargo / mvn / make /
+   Detect the project's test command (gradlew / pytest / npm / go / cargo / mvn / dotnet /
+   composer / bundle / make /
    a CLAUDE.md override). Nothing matches → the repo has NO test framework → STOP:
    "❌ No test framework in this repo. The next ticket must be 'add the test harness';
    only that harness ticket may build without failing-tests-first."
@@ -100,7 +101,7 @@ Output: "📝 Tests written. Verifying red state..."
 ### Stage 1.5: Verify-Red Check
 Run the NEW test files once yourself via Bash and confirm they FAIL before any
 implementation exists. Detect the command using test-runner's Step 0 ladder
-(gradlew / pytest / npm / go test / cargo test / mvn / make test / project
+(gradlew / pytest / npm / go test / cargo test / mvn / dotnet test / composer / bundle / make test / project
 CLAUDE.md override), targeting just the new test files where the runner
 supports it.
 - New tests FAIL → correct red state. Write the receipt with `red` filled in and

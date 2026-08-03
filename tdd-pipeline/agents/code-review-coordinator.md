@@ -92,7 +92,8 @@ failure, the fix direction, and ✅ verified / ⚠️ unverified.]
 [memory leaks, performance, bad patterns, concurrency risks, and any critical the verifier refuted.]
 
 ### 🟢 Suggestions (optional improvements)
-[style, readability, architecture — include `kotlin-best-practices` findings here mapped by severity.]
+[style, readability, architecture — include any language-specific reviewer's findings here
+mapped by severity.]
 
 ### ✅ Passed Checks
 [what each specialist looked at and found clean — name the specialist and the category.]
