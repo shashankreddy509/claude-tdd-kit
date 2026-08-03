@@ -144,3 +144,23 @@ reader might disagree.
 - Do NOT commit unless the user asks. This often edits a file outside the repo.
 - Each run makes a fresh timestamped backup and refuses to clobber an existing one — a
   never-clobber bug once destroyed a 640-line original, which is why the guard exists.
+
+## Gotchas
+
+- Before chasing the 75-85% target, check whether the file is ALREADY one-line-per-entry (an index,
+  a pointer list). That target assumes prose with repetition; against an already-condensed file the
+  only way to reach it is deleting entries — the exact loss this skill exists to prevent. Report the
+  honest ceiling (~25-35% from hook-trimming plus grouping) and name why the headline number does
+  not apply.
+- Line count can RISE while bytes fall, when grouping under new section headers is what buys the
+  saving. Report whichever metric the actual constraint uses — a read limit is byte-based, so `-27%`
+  chars with `+15` lines is a pass, not a failure.
+- Prove "nothing was lost" with a script, never by skimming: extract every entry key (link target,
+  heading, id) from the backup and the new file, assert the set difference is empty, and also assert
+  every link still resolves and nothing on disk went unindexed. A lossless claim verified by eye is
+  not verified.
+- When the user's request carries an explicit constraint ("condense but lose nothing"), it OVERRULES
+  any pending drop list this skill or a memory file proposed. Do merges and trimming only, and say
+  which previously-analysed drops were overruled so the analysis is not silently contradicted.
+- After condensing a file that a memory/analysis file describes as "pending a decision", update that
+  file too — otherwise it keeps advertising a question that has been answered.
