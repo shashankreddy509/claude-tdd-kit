@@ -10,7 +10,7 @@
 set -u
 
 # --- args / config -----------------------------------------------------------
-APP_PATHS_DEFAULT="app/ btc_agent/ src/"
+APP_PATHS_DEFAULT="app/ src/ lib/"
 APP_PATHS="${STANDUP_APP_PATHS:-$APP_PATHS_DEFAULT}"
 
 while [ "$#" -gt 0 ]; do

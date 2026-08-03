@@ -20,17 +20,17 @@ _Pre-grooming readiness + spec brief. Read-only analysis — no implementation p
 
 ## 3. Business spec
 
-<What user-facing behavior changes, for whom, under what conditions (auth state, trading mode paper/live, flow). Note edge cases the ticket implies but doesn't state.>
+<What user-facing behavior changes, for whom, under what conditions (auth state, user role, environment, flow). Note edge cases the ticket implies but doesn't state.>
 
 ## 4. Technical spec — codebase reality
 
 <Anchor the ticket in the REAL code: where the feature lives today, what gates it, which modules a change would touch, the contracts involved. Every file:line must resolve. If net-new with no existing hook, say "net-new; no existing code to anchor to" — do NOT fabricate.>
 
 - **Where it lives today:** <file:line ...>
-- **Gate:** <feature_toggles/config.<x> (web) | catalogOn(<flag>) in CatalogFlags.kt (android) | none>
+- **Gate:** <the feature-flag / config gate this sits behind, if any | none>
 - **Modules a change would touch:** <...>
 - **API contracts (inferred vs confirmed):** <new/changed endpoints, request/response shapes — mark each `inferred` or `confirmed`>
-- **Test matrix:** <unit (web: pytest | android: ViewModel) + any manual/on-device coverage — so test effort is visible at estimate time>
+- **Test matrix:** <unit tests (your project's test runner) + any manual/on-device coverage — so test effort is visible at estimate time>
 
 ## 5. Dependency / twin check
 

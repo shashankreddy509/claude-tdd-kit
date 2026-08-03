@@ -49,8 +49,10 @@ The "Left off" note is two lines and gets OVERWRITTEN each session, so anything 
 carried forward is lost. If an optional local task inbox is available, push this session's
 **open points** there instead — they persist and can surface in a daily brief or on the phone.
 
-The inbox is an optional local HTTP service, default base URL `http://localhost:8765`
-(configurable — set `TASK_INBOX_URL` to point elsewhere). It is NOT required infrastructure.
+The inbox is an optional local HTTP service — any service implementing the small contract below
+(`GET /api/todos`, `POST /api/todos/add`, `POST /api/todos/toggle`). Set `TASK_INBOX_URL` to point
+at yours; the default is `http://localhost:8765`. It is NOT required infrastructure, and every step
+below degrades silently when nothing answers.
 
 What qualifies: a concrete unfinished thing with a next action. A bug found but not
 fixed, a ticket to file, a deploy step deferred, a decision waiting on the user.
@@ -84,8 +86,7 @@ curl -s -X POST "${TASK_INBOX_URL:-http://localhost:8765}/api/todos/add" \
   -d '{"text":"<point>","project":"<repo dir name>","kind":"task"}'
 ```
 
-Set `project` to the current repo's directory name so the brief groups it correctly.
-Video-production work takes `"kind":"video"` and a `"stage"`.
+Set `project` to the current repo's directory name so the inbox groups it correctly.
 
 If a POST fails mid-run, fall back to session-notes for the remaining points and say so in
 one line. Never invent a point to have something to push, and cap it at what genuinely
@@ -129,13 +130,12 @@ the state changed. Report how many closed, and name any that did not.
 
 **Three rules, each from a real miss:**
 
-- **A parent ticket reaching Done NEVER closes a follow-up todo.** "PROJ-83 is Done" does
-  not close "file the 2 defects found during PROJ-83" — the parent shipped, that work did
-  not. One audit found 13 such todos; a naive ticket-status rule would have wrongly closed
-  every one.
-- **Any caveat puts it in list two, never list one.** "Confirm the 7am job fired
-  unattended" was literally satisfied — and the job broke two days later and stayed broken
-  six days. Closing it silently would have buried a live outage.
+- **A parent ticket reaching Done NEVER closes a follow-up todo.** "PROJ-12 is Done" does
+  not close "file the 2 defects found during PROJ-12" — the parent shipped, that work did
+  not. A naive ticket-status rule wrongly closes every todo of this shape.
+- **Any caveat puts it in list two, never list one.** "Confirm the scheduled job fired
+  unattended" can be literally satisfied while the job breaks days later and stays broken.
+  Closing it silently buries a live outage.
 - **If the referenced artifact cannot be found at all, it is NOT closable.** A todo naming
   a branch and SHA that exist nowhere is unverifiable, not done. Say which, and why.
 
@@ -170,16 +170,12 @@ rule appends corrections/preferences to disk AT THE MOMENT they happen:
 - Closing todos is the only step here that MUTATES state the user can't easily undo. It is gated
   on their explicit picks, never on inference — see the three rules in the closing section.
 
-## Dashboard review (PROJ-53, best-effort — only if `scripts/dashboard.py` exists; if that script is absent, skip this step SILENTLY with no message)
+## Dashboard review (OPTIONAL — only if the repo ships a dashboard tool; if it does not, skip this step SILENTLY with no message)
 
-Before writing the merged learnings, optionally let the user keep/drop each via the dashboard (a
-dead server never blocks the write — fall back to writing all learnings):
-1. **Render** the captured learnings as toggle rows:
-   ```bash
-   .venv/bin/python scripts/dashboard.py render endsession '{"branch":"<branch>","learnings":[{"id":"l1","text":"…"},{"id":"l2","text":"…"}]}'
-   ```
-   Page live at `http://localhost:7799` — each row has Keep/Drop; a `Commit kept to memory` button.
-2. **Drain** `scripts/dashboard.py drain` — apply `reject_learning {id}` to DROP that line, keep the
-   rest; `commit_learnings` = proceed with the current keep/drop set. If the inbox is empty (user
-   didn't interact), write ALL learnings as normal — the dashboard is an optional review layer, not
-   a gate.
+Some setups render the captured learnings as keep/drop rows on a local page before they are written.
+If the repo defines such a tool (its CLAUDE.md names the command), render the learnings as toggle
+rows, then drain the user's picks: a reject applies to that line only, keeping the rest; a commit
+proceeds with the current keep/drop set.
+
+If nothing is rendered, nothing is drained, or the user did not interact, write ALL learnings as
+normal. This is an optional review layer, never a gate — a dead server must not block the write.

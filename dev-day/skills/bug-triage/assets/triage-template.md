@@ -31,39 +31,39 @@ One-line statement of the verdict and the single most important reason.
 The decision chain, origin → decision point → user-visible effect. Each line is a real, re-verified
 `file:line` with a quoted snippet:
 
-1. `path/File.py:NN` — <what this line does>
-   ```python
+1. `path/File.ext:NN` — <what this line does>
+   ```
    <quoted snippet>
    ```
-2. `path/Other.py:NN` — <the branch/default/gate that decides the wrong behavior>
-   ```python
+2. `path/Other.ext:NN` — <the branch/default/gate that decides the wrong behavior>
+   ```
    <quoted snippet>
    ```
 
-(Android: use `.kt` files + kotlin fences.)
+(Use the real file extensions and a matching language fence for your stack.)
 
 **Why it produces the bug:** <prose: how the chain yields Actual instead of Expected>.
 
 **Fix lever (for the planner, not applied here):** <the existing helper/flag/method the fix should
-use — e.g. "gate behind feature_toggles/config.<name>", "read _fs.load_feature_toggles() not
-sc.settings", Android: "gate behind catalogOn(<CatalogFlag>)">.
+use — e.g. "gate behind the existing feature flag", "read through the shared config accessor rather
+than the raw settings object", or "n/a">.
 
 ## Affected files (fix scope)
 
-- `path/File.py` — <what changes>
-- `path/Other.py` — <what changes, if any>
+- `path/File.ext` — <what changes>
+- `path/Other.ext` — <what changes, if any>
 
 ## Excluded as adjacent / out of scope
 
 Findings the search surfaced that are NOT this bug's cause (so the planner doesn't chase them):
-- `path/Elsewhere.py:NN` — <real smell, but belongs to <other flow>, not this repro>
+- `path/Elsewhere.ext:NN` — <real smell, but belongs to <other flow>, not this repro>
 
 ## Suggested fix-plan seed (lean fix-plan; planner expands + user approves)
 
 - **Root cause:** <one line>
 - **Minimal change:** <the smallest edit that fixes it at the shared point, not per-caller>
-- **Toggle gate:** <new/existing feature toggle (web: feature_toggles/config.<name>=false first;
-  android: catalog flag + byte-identical OFF fallback), or "n/a — pure correctness fix">
+- **Flag gate:** <new/existing feature flag in the project's own flag store, seeded OFF first with a
+  byte-identical OFF fallback, or "n/a — pure correctness fix">
 - **One test:** <the single check to leave behind — test name + what it asserts>
 - **Callers to check:** <if the fix touches a shared helper, who else calls it>
 

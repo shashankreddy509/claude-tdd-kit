@@ -48,7 +48,7 @@ omit it and ignore the `cloudId=` half of the line. Never hardcode a tool name.
    ticket without testable ACs is not groom-ready.
 
 4. **Business spec.** What user-facing behavior changes, for whom, under what conditions (auth state,
-   trading mode paper/live, flow). Note edge cases the ticket implies but doesn't state.
+   user role, environment, flow). Note edge cases the ticket implies but doesn't state.
 
 5. **Technical spec — codebase reality.** Anchor the ticket in the real code — where the feature
    lives today, what gates it, which modules a change would touch, the contracts involved:
@@ -62,8 +62,8 @@ omit it and ignore the `cloudId=` half of the line. Never hardcode a tool name.
      to anchor to") — do NOT fabricate a codebase reality that doesn't exist yet.
    - Enumerate likely **API contracts** (new/changed endpoints, request/response shapes) from the
      description, marked as inferred vs confirmed.
-   - Sketch the **test matrix**: what unit (web: pytest; android: ViewModel) and any manual/on-device
-     coverage this needs — so test effort is visible at estimate time.
+   - Sketch the **test matrix**: what unit coverage (using the project's own test runner) and any
+     manual/on-device coverage this needs — so test effort is visible at estimate time.
 
 6. **Dependency / twin check.** Does real behavior depend on something not yet shipped — a backend
    change, a Firestore migration, a mobile↔web contract, another ticket? Check links/labels/parent

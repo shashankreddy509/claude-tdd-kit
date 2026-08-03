@@ -118,7 +118,8 @@ Identical intent to `/build`, run directly in chat.
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore` subagents in
   parallel for breadth ONLY — they return text, write nothing. (This is the one allowed spawn:
   read-only research, not pipeline work.) Everything downstream is inline.
-- If a `graphify-out/` exists, prefer graph navigation per the project CLAUDE.md before grep.
+- If the repo has a knowledge graph (e.g. a `graphify-out/` directory), prefer graph navigation per
+  the project CLAUDE.md before grep.
 
 ### A1.5. Gating check (only when the project is live)
 Read the project CLAUDE.md for a `Gating: active` line. Absent or `off` → skip this step and every
