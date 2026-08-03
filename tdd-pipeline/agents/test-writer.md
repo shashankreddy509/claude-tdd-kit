@@ -17,13 +17,11 @@ Tests should compile but fail (red state). Do not write implementation.
 3. Write each test file listed in the plan
 4. Tests must assert real behavior — no empty tests, no `assertTrue(true)`
 5. If the plan has a **Gating** section, its gate-off cases are REQUIRED tests, not
-   optional ones — backend: toggle off ⇒ the documented 404 / omitted field; mobile:
-   catalog off ⇒ the surface is not rendered. Also cover the absent-key case: a missing
-   toggle/catalog entry must behave as OFF (fail closed). An untested off-path is
-   discovered during the incident it was built for. The two gates are the backend toggle
-   `feature_toggles/config.<name>` and the mobile catalog field `<name>` in the single
-   `catalog/active` doc; both fail closed, so absent reads as OFF and only an affirmative
-   `true` renders the surface.
+   optional ones — server side: flag off ⇒ the documented 404 / omitted field; client side:
+   flag off ⇒ the surface is not rendered. Also cover the absent-key case: a missing flag
+   entry must behave as OFF (fail closed). An untested off-path is discovered during the
+   incident it was built for. Both sides fail closed, so absent reads as OFF and only an
+   affirmative `true` renders the surface.
 
 ## Stack Rules — apply ONLY the section matching the project
 Detect the stack from the repo (build files, existing tests) and follow the

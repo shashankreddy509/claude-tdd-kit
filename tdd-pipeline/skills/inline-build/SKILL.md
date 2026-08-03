@@ -104,15 +104,13 @@ Identical intent to `/build`, run directly in chat.
     per-caller), the one seed test, the toggle gate if named. Skip broad exploration (A1).
 - No triage file → normal feature path, continue A1.
 
-### A0.5. Automation admissibility check (owner-scoped — skip if the skill isn't installed)
-- Durable automation? (cron/launchd job, hook, mirror/sync, scheduled report, new pane/face)
-  → no: continue A1.
-- Yes AND `/automation-gate` available: it must have already ruled **APPROVE-AUTOMATE** on this
-  process. No verdict yet → STOP, tell the user to run it first. DELETE / SIMPLIFY-FIRST /
-  APPROVE-AUGMENT / DO-IT-BY-HAND → STOP and report that verdict; planning a build the gate
-  rejected defeats the gate.
-- Skill NOT installed → continue A1. Owner-tooling, not a pipeline requirement; its absence must
-  never block a build.
+### A0.5. Automation admissibility check (OPTIONAL — requires an automation-approval gate)
+- Durable automation? (cron/scheduled job, hook, mirror/sync, recurring report, a new always-on
+  surface) → no: continue A1.
+- Yes AND your setup has an automation-approval gate: confirm it approved this process before
+  planning. A rejected verdict → STOP and report it; planning a build the gate rejected defeats
+  the gate.
+- No such gate installed → continue A1. This check must never block a build.
 
 ### A1. Explore (read-only)
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore` subagents in
@@ -122,18 +120,18 @@ Identical intent to `/build`, run directly in chat.
   the project CLAUDE.md before grep.
 
 ### A1.5. Gating check (only when the project is live)
-Read the project CLAUDE.md for a `Gating: active` line. Absent or `off` → skip this step and every
-gating step below; a pre-v1 project has no users to protect. Present → decide which side this ticket
-needs: backend feeding a mobile surface → **toggle +
-catalog**; backend-only → **toggle**; mobile reads Firestore directly → **catalog only**;
-refactor/tooling → **neither**. Put the exact keys, the screen the catalog check wraps, and a
+Read the project CLAUDE.md for a `Gating:` line naming the project's feature-flag store (a Firestore
+doc, LaunchDarkly/Unleash, a `feature_flags` table, an env default, whatever it already uses). Absent
+or `off` → skip this step and every gating step below; a pre-v1 project has no users to protect.
+Present → decide which side this ticket needs: server work feeding a client surface → **both
+sides**; server-only → **server flag**; the client reads the data store directly → **client flag
+only**; refactor/tooling → **neither**. Put the exact keys, the surface the client check wraps, and a
 gate-off test case per side into the plan. Fold a genuinely ambiguous call into A3's question.
 
-The two sides of the kill-switch, either one sufficient to starve a feature: the **backend toggle**
-`feature_toggles/config.<name>` (off → the backend stops sending the data) and the **mobile catalog**
-— ONE doc, `catalog/active`, a field per feature (off → the app stops rendering the surface). Both
-**fail closed: absent means OFF**; a feature renders only on an affirmative `true`, and killing one
-writes `false` rather than deleting the key. Name keys `feat_<name>` (long-lived) or
+The two sides of the kill-switch, either one sufficient to starve a feature: the **server flag**
+(off → the server stops sending the data) and the **client flag** (off → the app stops rendering the
+surface). Both **fail closed: absent means OFF**; a feature renders only on an affirmative `true`,
+and killing one writes `false` rather than deleting the key. Name keys `feat_<name>` (long-lived) or
 `fix_<TICKET>_<slug>` (short-lived rollback lever), identical on both sides. The app reads the
 catalog through ONE shared fail-closed client, never ad-hoc per-screen reads. Seed the keys at
 `false` and read them back AFTER verify-red and BEFORE implementation, so gated code is written
@@ -170,8 +168,9 @@ Non-UI: "n/a". UI ticket with no mock found: "NONE FOUND — UI from prose only"
 ## Gating  (omit entirely when the project has no `Gating: active` line)
 - Name: `feat_<name>` (long-lived) · `fix_<TICKET>_<slug>` (retired ~2wk after stable). Same
   name on both sides.
-- Toggle: `feature_toggles/config.<name>` — off ⇒ [what the backend stops sending]
-- Catalog: `catalog/active` field `<name>` — off ⇒ [which screen/composable stops rendering]
+- Server flag: `<key in the project's flag store>` — off ⇒ [what the server stops sending]
+- Client flag: `<key in the project's flag store>` — off ⇒ [which screen/component/endpoint
+  stops rendering or responding]
 - Gate-off tests: [toggle-off case] · [catalog-off case] · [absent key ⇒ OFF]
 ## Risks / Assumptions
 - [anything that could go wrong or needs confirmation]
@@ -264,25 +263,29 @@ Run ONLY the new test files once (detect the command with the B3 ladder). Confir
 ### B1.6. Seed the gate keys  (skip unless the plan has a Gating section)
 Tests are red and no implementation exists — the right seam to guarantee the gate exists before any
 code is written against it. For each key the plan names:
-- Write it to Firestore at `false` (toggle: `feature_toggles/config.<name>`; catalog: the `<name>`
-  FIELD on the single `catalog/active` doc — merge-update it, never create a doc per entry, and
-  never overwrite the whole doc). Use the project's own Firestore helper / venv python.
+- Write it to the project's feature-flag store at `false`, using the project's own flag helper/CLI
+  (the store its CLAUDE.md `Gating:` line names). Where the store keeps flags as fields on one
+  shared document, merge-update that document — never create a document per entry and never
+  overwrite the whole thing.
 - **Read it back** and confirm the value is there and `false`. A write you did not read back is not
   a seeded key.
-- Already exists → leave its current value alone (do not stomp a live toggle someone flipped) and
+- Already exists → leave its current value alone (do not stomp a live flag someone flipped) and
   record that it pre-existed.
-- Cannot reach Firestore, or readback fails → STOP: "❌ Stopped at B1.6: could not seed/verify
-  <key>." Do not implement gated code against a gate that may not exist.
+- The project has NO flag store configured → record `gating` as n/a in the receipt, skip this step,
+  and continue. A missing store is not a failure.
+- A CONFIGURED store cannot be reached, or readback fails → STOP: "❌ Stopped at B1.6: could not
+  seed/verify <key>." Do not implement gated code against a gate that may not exist.
 
 Record the keys + readback in the receipt's `gating` block. Log: "🔒 Seeded <keys> = false".
 
 ### B2. Write implementation  (inline implementer)
 Make the failing tests pass. Minimum needed — no extra code.
 
-**Gated tickets:** the feature must read its gate through the project's ONE shared catalog/toggle
-client with a fail-closed default (absent ⇒ off) — never an ad-hoc Firestore read in a screen. No
-such client exists yet → build it as part of this ticket and note it; that shared reader is what
-keeps twelve hand-rolled null checks from drifting into twelve behaviors.
+**Gated tickets:** the feature must read its gate through the project's ONE shared flag client with
+a fail-closed default (absent ⇒ off) — never an ad-hoc flag read at the call site. No such client
+exists yet → build a minimal one over the project's EXISTING flag mechanism and note it, never
+introducing a new flag backend; that shared reader is what keeps twelve hand-rolled null checks from
+drifting into twelve behaviors.
 1. Read the plan file. 2. **If the plan's `## Design Reference` names a mock, READ THAT IMAGE
    (the Read tool renders PNG/JPG) BEFORE writing any UI code** — see the mock rule below.
    3. Read every test file for the expected contracts. 4. Read the existing codebase for

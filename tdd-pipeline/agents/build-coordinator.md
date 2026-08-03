@@ -118,17 +118,19 @@ supports it.
 Tests are red and no implementation exists — the right seam to guarantee the gate exists
 before any code is written against it. Do this YOURSELF via Bash; do not delegate it.
 For each key the plan names:
-- Write it to Firestore at `false` (toggle: `feature_toggles/config.<name>`; catalog: the
-  `<name>` FIELD on the single `catalog/active` doc — merge-update it, never create a doc
-  per entry and never overwrite the whole doc), using the project's own Firestore helper /
-  venv python.
+- Write it to the project's feature-flag store at `false`, using the project's own flag
+  helper/CLI (the store its CLAUDE.md `Gating:` line names). Where the store keeps flags as
+  fields on one shared document, merge-update that document — never create a document per
+  entry and never overwrite the whole thing.
 - **Read it back** and confirm the value is present and `false`. A write you did not read
   back is not a seeded key.
-- Already exists → leave its current value alone (never stomp a live toggle someone
+- Already exists → leave its current value alone (never stomp a live flag someone
   flipped) and record that it pre-existed.
-- Cannot reach Firestore, or readback fails → STOP: "❌ Pipeline stopped at Stage 1.6:
-  could not seed/verify <key>." Do not let the implementer write gated code against a
-  gate that may not exist.
+- The project has NO flag store configured → record `gating` as n/a in the receipt, skip
+  this stage, and continue. A missing store is not a failure.
+- A CONFIGURED store cannot be reached, or readback fails → STOP: "❌ Pipeline stopped at
+  Stage 1.6: could not seed/verify <key>." Do not let the implementer write gated code
+  against a gate that may not exist.
 
 Record keys + readback in the receipt's `gating` block. Output: "🔒 Seeded <keys> = false".
 
@@ -136,9 +138,9 @@ Record keys + readback in the receipt's `gating` block. Output: "🔒 Seeded <ke
 Spawn agent: `implementer`
 Pass: full contents of the plan file + list of test files written in Stage 1 + (if the
 plan has a Gating section) the seeded keys and this rule: the feature must read its gate
-through the project's ONE shared catalog/toggle client with a fail-closed default (absent
-⇒ off), never an ad-hoc Firestore read in a screen; if no such client exists, build it as
-part of this ticket
+through the project's ONE shared flag client with a fail-closed default (absent ⇒ off),
+never an ad-hoc flag read at the call site; if no such client exists, build a minimal one
+over the project's EXISTING flag mechanism — never introduce a new flag backend
 + (if the plan has a `## Design Reference` naming a mock) the mock path(s) and this rule:
 READ that image with the Read tool before writing any UI code and build to it — the mock is
 the visual contract and wins over prose on layout; never substitute generic sample UI when a
