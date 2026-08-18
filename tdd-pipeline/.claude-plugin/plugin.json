@@ -1,6 +1,6 @@
 {
   "name": "tdd-pipeline",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Gated TDD build pipeline: /build plans a feature or bug fix and waits for click-approval; /implement runs the build-coordinator through test-writer → verify-red → implementer → test-runner → adversarially-verified code review → changelog (Critical findings hard-stop, post-review edits must re-pass review); /ship gates the commit on a verification receipt, then posts the pipeline summary to Jira and moves the ticket to In Review. Ships an /inline-build skill that runs the same pipeline entirely in the main thread with no subagent spawns. Plans carry a Design Reference so UI tickets are built to their mockup PNG instead of generic sample UI.",
   "author": {
     "name": "Shashank Reddy Ganta"

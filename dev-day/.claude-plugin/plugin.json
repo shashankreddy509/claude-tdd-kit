@@ -1,6 +1,6 @@
 {
   "name": "dev-day",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "The complete developer day-loop for Claude Code + Jira: /start-session boots a senior-collaborator session (feedback memory, Jira backlog, standing plan-gate), /standup answers 'anything pending?', /bug-triage root-causes tickets, /groom preps them for estimation, /create-ticket files them, /jira-comment posts clean Jira comments, and /end-session captures what the session learned into feedback.md for the next one. Building a ticket is handed off to the tdd-pipeline plugin (/tdd-pipeline:build then /tdd-pipeline:implement).",
   "author": {
     "name": "Shashank Reddy Ganta"

@@ -268,3 +268,13 @@ scopes, writes the commit message, commits, pushes, and opens the PR."
   stopped early defeats the entire gate
 - If any stage fails unexpectedly, report what stage failed and stop
 - Do not skip stages under any circumstance
+
+## Gotchas
+
+- A negative control that PASSES is a red flag, not a success — the harness may be unable to express the bug. Investigate why before recording it; never report the green as proof the fix works.
+- Deterministic virtual time (StandardTestDispatcher) plus a lock shared by the racing operations makes cross-thread interleavings structurally unreachable. A race test written against that harness can have zero power while looking correct.
+- When a harness genuinely cannot reproduce a race, extract the decision into a pure function and test it in isolation — then state explicitly in the receipt what that proves (the logic) and what it does not (the race).
+- Record a zero-power control AS zero-power in the receipt with its root cause. Dropping it reads as if no control was needed.
+- Before reporting a Critical, verify its stated premise in live source. A review's factual claim can be wrong; relaying it unverified sends the pipeline down a wrong fix.
+- A fix that makes a pre-existing bug newly REACHABLE is in scope for the review even when the plan fenced off the file it lives in. Surface the tension; let the owner decide rather than silently honoring the boundary.
+- Three rounds of Criticals in the same mechanism is a design signal, not a bug count. Stop and report rather than expanding scope a fourth time.

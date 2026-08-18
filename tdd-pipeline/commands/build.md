@@ -143,3 +143,6 @@ session, not a typing exchange.
 ## Notes
 - The legacy root `PLAN.md` convention is superseded by `tasks/plans/<TICKET>_plan.md`.
 - Never write the plan file before the user approves it.
+
+## Gotchas
+- Step 5 hands off to `implement` (the build-coordinator AGENT pipeline). Never substitute `inline-build` — it is a separate command the user must ask for by name, and swapping it in silently skips the independent-reviewer property the agent pipeline exists to provide.

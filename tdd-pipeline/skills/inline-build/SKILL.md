@@ -488,3 +488,39 @@ Do NOT commit, push, tag, merge, or deploy here. The ship gate is a hard stop �
 - If any stage fails unexpectedly, report which stage and stop.
 - After modifying code files, if the project uses graphify, run `graphify update .` to keep the
   graph current (per project CLAUDE.md).
+
+## Gotchas
+
+- Before writing a B1 test against an existing helper, READ that helper's signature and the file's
+  imports — assuming a param or an import that isn't there produces a compile-level red that hides
+  whether the assertions discriminate.
+- When B3 makes an EXISTING test fail, decide whether that test pinned the bug you are fixing before
+  touching it. A test written against the buggy behavior is legitimately amended; a test catching a
+  real regression is not. Say which one it was, in the receipt.
+- Never claim in a plan that a new mechanism makes an existing one redundant until the suite proves
+  it — delete the old mechanism, run the tests, and restore it if anything goes red. A retained
+  buffer/replay slot and an explicit scheduling yield often cover DIFFERENT windows.
+- A B4 review agent that returns without a findings report has NOT approved anything. Treat a
+  missing verdict as DID NOT COMPLETE, resume it for the report, and never record silence as
+  `critical: 0`.
+- Verify a review's refutation of a Critical against live source before downgrading it. If you
+  cannot name the specific guard, invariant, or test that refutes it, it stays a Critical.
+- Any post-B4 edit — including a comment-only one — invalidates BOTH `green` and `review`. Re-run
+  the suite and the review, then overwrite both receipt entries from the new runs.
+- When the user names a SPECIFIC pipeline skill, invoke that one. If you believe another fits
+  better, say so and wait — never substitute first and explain after; the instruction preceded the
+  action, so an after-the-fact flag is not a correction, it is a fait accompli.
+- A plan's stated invariant ("must not orphan X") binds EVERY code path, not just the one you
+  designed. Enumerate the paths and check each: declining to start something is not the same as
+  stopping it, and the difference is where orphaned state hides.
+- An APPROVED PLAN FILE ALREADY ON DISK is not a reason to run inline. It feels like "planning is
+  done, so use the half that implements" — but that is exactly when the agent pipeline matters, and
+  a project whose owner chose agents to keep main-thread context small is worse served by inline the
+  larger the plan is. With `tasks/plans/<KEY>_plan.md` approved and no skill named, hand that path to
+  the `build-coordinator` AGENT. Run inline ONLY when the user names it.
+- The build entry points (`build`, `implement`) live in the plugin's `commands/` dir, NOT `skills/`,
+  so a Skill-tool lookup surfaces only THIS skill and makes substitution feel like the sole option.
+  Before reaching for inline, `ls` the plugin's `commands/` dir — absence from the skill list is a
+  lookup artifact, never evidence the agent pipeline is unavailable.
+- A test that probes the HELPER cannot prove a CALL-SITE fix. When the fix is "call X via Y instead of directly", a test that invokes Y itself stays green after you revert the call site — Y still behaves correctly, the caller just stopped using it. Drive the real entry point and monkeypatch the boundary Y reaches (the network/store call), never Y itself. Caught only because injection #4 reverted the call site and 13/13 still passed.
+- An injection that reddens NOTHING may be too narrow, not proof of good code. If a guard is checked in two places (e.g. a fast path and a re-check inside a lock), disabling one leaves the other catching it. Before concluding "the test is hollow", verify the injection actually removed every instance of the condition.
