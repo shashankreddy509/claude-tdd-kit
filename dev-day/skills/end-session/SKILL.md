@@ -179,3 +179,31 @@ proceeds with the current keep/drop set.
 
 If nothing is rendered, nothing is drained, or the user did not interact, write ALL learnings as
 normal. This is an optional review layer, never a gate — a dead server must not block the write.
+
+## Self-check (report PASS/FAIL; don't block)
+
+The four artifacts are the deliverable, so verify they LANDED — a session-close that reports
+success while nothing reached disk is the failure this gate exists to catch. Re-read each file
+after writing; do not assert from the fact that a write was attempted.
+
+- **Feedback merge:** `merge-feedback` owns the superset rule and reports its own
+  `SUPERSET-CHECK`. Carry that verdict through verbatim — do NOT re-derive or re-grade it here.
+  If it reported FAIL, this gate FAILs too.
+- **Memory vault:** every memory file written this session resolves on disk under
+  `~/.claude/projects/<slug>/memory/`, and each new file has a matching one-line pointer in
+  that vault's `MEMORY.md`. A file with no pointer is an orphan — it will not be recalled.
+- **Session-notes:** `tasks/session-notes.md` contains a non-empty "Left off" note dated to
+  THIS session. A note carried over unchanged from the previous session is a FAIL, not a pass.
+- **Closure step:** if todo closure is still awaiting the user's picks, it is reported as
+  PENDING. Reporting a count (including "0 todos closed") while the decision is unmade is a FAIL.
+
+Report `END-SESSION SELF-CHECK: PASS` or `FAIL — <what did not land>`. A FAIL means write the
+missing artifact before finishing; it does not mean re-running the whole skill.
+
+## Gotchas
+
+- A ticket closed on an accept-the-risk decision is NOT evidence its todo is done — the work shipped unvalidated, so check WHY it reached Done before listing it as closable, or a knowingly-unproven fix gets silently buried.
+- When the user names a todo in their own words, match it against the STORED text before acting — a paraphrase can keyword-match a different row entirely, and the thing they want may already exist rather than being open work. Quote the row back verbatim and confirm which item they mean.
+- The closure step STOPS for the user's picks, so report it as awaiting an answer, never as a finished count — writing "0 todos closed" in the final summary reads as a completed outcome when the decision is still pending, and the user then has to re-ask what is blocking.
+- Present each closure candidate by its CONTENT first, never by its raw todo id — ids are internal handles the user does not recognise, and an id-led list forces them to ask what each row is before they can decide.
+- If closing a todo requires a destructive step (clearing app data, deleting a model, resetting state), enumerate what that step destroys and offer a preserve-then-restore path BEFORE running it — a verification that costs the user hours of re-pushed data is not worth the closed row.
