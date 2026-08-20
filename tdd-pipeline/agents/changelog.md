@@ -75,3 +75,6 @@ Tests:
 - Pull the Why section from the plan file passed to you — do not invent reasoning
 - Describe the STAGED diff when there is one. Files the caller deliberately left
   unstaged are not part of this commit and must not appear in What Changed.
+
+## Gotchas
+- When the caller's prompt says "no file listing, explain WHY not WHAT", that OVERRIDES this file's What Changed template — a diff is already readable from the diff, so honour the caller and emit subject + why only.

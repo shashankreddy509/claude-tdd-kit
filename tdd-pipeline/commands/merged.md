@@ -155,3 +155,11 @@ If the project has its own deploy ritual, mention that deploying is separate. **
 /tdd-pipeline:merged
 # → derives the key from the newest plan file or the branch name
 ```
+
+## Gotchas
+- Rule 2's "no verification column → Done" is a DEFAULT, not a mandate. When the ticket's central claim is asserted-not-verified (no device run, no instrumented proof), hold it at In Review and write the exact repro into Jira. Done must mean validated, and a board that cannot express that is a reason to hold, not a licence to close.
+- `git branch --merged` omits squash-merged branches, so its silence is not evidence the work is unmerged. Prove containment with an empty `git diff origin/<default> <branch>` plus a one-parent merge commit BEFORE reaching for `-D`.
+- `git pull --ff-only` can print "Updating a..b" and still leave HEAD where it was. Verify the sync by comparing `git rev-parse <default>` to `git rev-parse origin/<default>`, and confirm the merge commit is an ancestor.
+- Content-verify the merge on the default branch by grepping for the actual new SYMBOLS, never the commit subject — with a positive control (known-present symbol) and a negative control (symbol that must not exist) proving the grep discriminates.
+- Step 4's "stop if the working tree is dirty" is about protecting UNRELATED work, not a blanket halt. When the dirt is the user's pre-existing WIP, prove disjointness first (`comm -12` the dirty paths against `git diff --name-only origin/<default>...HEAD`); zero overlap means the checkout is safe and the sync proceeds. Blindly stopping every session on standing WIP is as wrong as blindly switching.
+- On a board where Done means DEPLOYED TO PRODUCTION, a merge plus a dev/staging deploy does not earn it — check what the deployed artifact actually is (running tag, a served cache-buster or version string) before transitioning, and park in the verification column when only a pre-release is out. A ticket belonging to an epic that ships in ONE tag stays parked until that tag exists, however complete its own code is.

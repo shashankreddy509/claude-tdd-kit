@@ -112,3 +112,14 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
 
 ## "add <file>" variant
 If the user later says "add X and commit it" while a PR is open, that means a NEW COMMIT on the CURRENT open PR branch — do not open a second PR.
+
+## Gotchas
+- `stage` in a receipt encodes how far VERIFICATION got, not whether a commit exists — Stage 5's own output is "Pipeline complete. Nothing committed." A pipeline that fixed review warnings and re-ran suite/compile/review may still be sitting at `"reviewed"`; that is a stale label, not an incomplete run.
+- When the gate stops on a receipt field, resume the agent and ask whether the field is TRUE — never tell it which value to write. Instructing the value turns receipt regeneration into laundering. Instruct it to refuse and name the gap if some stage genuinely did not finish.
+- Verify a push landed by comparing `git rev-parse origin/<branch>` to local HEAD. `PIPESTATUS` can come back empty through a shell wrapper, so a push's exit code may be unreadable while the output text still looks successful.
+- Scan for AI attribution in the actual commit object (`git log -1 --format=%B`) and the live PR body fetched back from `gh`, not only in the source file you wrote — and run a positive control so an empty grep means absence, not a broken command.
+- A changelog agent's subject line can exceed the ≤50-char limit; measure it before committing (`head -1 | wc -c` counts the newline, so subtract 1).
+- Fixing a warning at the ship gate INVALIDATES the receipt's green — the suite that passed described a different tree. Re-run the full suite plus any cross-platform compile after the fixes and before committing, and read the counts from result XML. A "cosmetic" warning fix can be functional: wrapping a call in `withContext(realDispatcher)` inside code under `runTest` parks the coroutine forever because virtual time cannot advance a real dispatcher.
+- When a warning cannot be fixed as scoped, say so and file it rather than shipping a fix that looks applied. Re-verify the revert too — a reverted fix leaves stale imports that only a compile catches.
+- Stage feature files by explicit path; `git add -A` sweeps generated caches and other tickets' plans/receipts into the commit. Verify with `git diff --cached --name-only` before writing the message, and re-check after any late fix.
+- Before reading ANY suite verdict at the gate, delete the test-results directory and pass `--rerun-tasks`. Stale XML from a previous run reports the old pass counts while the build exits non-zero — a failed build that looks green.
