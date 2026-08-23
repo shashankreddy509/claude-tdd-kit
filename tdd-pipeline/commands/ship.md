@@ -24,7 +24,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
 
    | Receipt state | Do |
    |---|---|
-   | file missing | **STOP** — no verified run. Offer `/implement` (or `/inline-build`) first. |
+   | file missing | **STOP** — no verified run. Offer `/implement` first. |
    | `stage != "complete"` | **STOP** — name the stage it died at |
    | `red.exit == 0` | **STOP** — tests never failed, so they prove nothing |
    | `green.exit != 0` | **STOP** — tests are red |

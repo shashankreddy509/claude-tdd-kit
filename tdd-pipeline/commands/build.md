@@ -175,4 +175,4 @@ session, not a typing exchange.
   the approvals record, not the file, is the approval.)
 
 ## Gotchas
-- Step 5 hands off to `implement` (the build-coordinator AGENT pipeline). Never substitute `inline-build` — it is a separate command the user must ask for by name, and swapping it in silently skips the independent-reviewer property the agent pipeline exists to provide.
+- Step 5 hands off to `implement` (the build-coordinator AGENT pipeline) — the ONLY execution model. The former `inline-build` skill was REMOVED 2026-08-23 (owner ruling): never reimplement the pipeline inline in the main thread; it silently skips the independent-reviewer property the agent pipeline exists to provide.

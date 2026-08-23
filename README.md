@@ -99,17 +99,13 @@ Both the pipeline and the ship command carry the same rule in their own text: a 
 record, not a permission slug. Never write or edit one to get past the gate. If the gate is
 wrong, fix the gate.
 
-### `/inline-build` is a second execution model, not a fallback feature
+### One execution model — the agent pipeline
 
-The same stages run entirely in the main thread with no subagent spawns. Same plan, same
-verify-red, same receipt, same review gate.
-
-**Why both exist:** subagents cost spawn overhead and lose context between stages, so each
-one re-reads what it needs. The inline path trades parallelism for one continuous context
-and one token pool. Which is cheaper depends on the ticket, so it is a choice rather than a
-default. The one thing inline does *not* do is review its own work: the review step still
-launches the review coordinator as a separate agent, because an author reviewing their own
-code is the failure this kit exists to prevent.
+An inline variant (`/inline-build`, the same stages in the main thread with no subagent
+spawns) existed until 2026-08-23 and was removed by owner ruling: sessions kept substituting
+it for the agent pipeline, and an author-adjacent context reviewing freshly written code is
+the failure this kit exists to prevent. `/build` → `/implement` → build-coordinator is the
+only way a plan becomes code.
 
 ### Nothing about the tracker is hardcoded
 

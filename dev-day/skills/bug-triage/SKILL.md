@@ -24,7 +24,7 @@ It is hard-scoped:
   the fix belongs, and hands that to a planner via the artifact. (Producing a plan would make it
   straddle into planning — that's the consuming planner's job, gated by the user's plan-gate.)
 - **Stops at the artifact.** `tasks/<TICKET>-triage.md` is the contract. The user runs `/build` (or
-  `/inline-build`) separately when they choose — those detect the triage file and write a LEAN
+  the plugin's build command) separately when they choose — those detect the triage file and write a LEAN
   fix-plan from it.
 
 ## Gate FIRST
@@ -108,7 +108,7 @@ Decide one of:
 ### 7. Write the artifact
 Write `tasks/<TICKET>-triage.md` in the OPEN project's `tasks/` dir, using
 `assets/triage-template.md` as the structure. This file is the planner contract. Then tell the user
-it's written and that they can run `/build` or `/inline-build` against it when ready — do NOT start
+it's written and that they can run `/build` against it when ready — do NOT start
 planning here.
 
 ## Self-check (report PASS/FAIL; don't silently block)

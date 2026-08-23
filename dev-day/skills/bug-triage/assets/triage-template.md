@@ -1,7 +1,7 @@
 # Triage — <TICKET>
 
 > Written by the `bug-triage` skill. Read-only investigation; no code changed, Jira untouched.
-> This file is the planner contract: `/build` or `/inline-build` picks up the root cause +
+> This file is the planner contract: `/build` picks up the root cause +
 > affected files below without re-exploring. The plan-gate still applies.
 
 ## Verdict
