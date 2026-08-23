@@ -177,6 +177,18 @@ Non-UI: "n/a". UI ticket with no mock found: "NONE FOUND — UI from prose only"
 ```
 
 ### A3. Approval via AskUserQuestion — write NOTHING yet
+
+Floor-gate mode (opt-in): run `[ "$AGENT_OFFICE_GATE" = "floor" ] && [ -f ~/projects/agent-office/tools/gate.py ] && echo on || echo off`.
+When it prints `on`, write the plan NOW as a draft (the one exception to "write nothing yet" —
+the durable gate record marks approval in this mode, and the unanswered draft is what convenes
+the office floor's approval meeting), tell the user "Plan on the table — approve on the office
+floor, or interrupt me to answer here", then run
+`python3 ~/projects/agent-office/tools/gate.py wait tasks/plans/<TICKET>_plan.md --timeout 600`:
+`approve` → PHASE B; `revise` → ask in chat what to change, rewrite the plan file (the new
+mtime reopens the gate), wait again; `discard` → STOP, leaving file + record as the audit
+trail; `timeout`/`missing` → fall through to the AskUserQuestion below and record the answer
+per A4. When it prints `off` (the default), the flow below is unchanged.
+
 Call `AskUserQuestion` (clickable, no typed approval) with:
 - **Approve — run pipeline inline** (Recommended): write plan file, then run PHASE B inline.
 - **Approve — plan file only**: write `tasks/plans/<TICKET>_plan.md`, do NOT run pipeline.
@@ -189,6 +201,9 @@ Fold any open plan questions (toggle default, scope) into the SAME call (max 4 t
 - Derive `<TICKET>`: a ticket id like `PROJ-123` if present; else a short kebab-case slug.
 - Ensure `tasks/plans/` exists (create if missing).
 - Write the approved plan to `tasks/plans/<TICKET>_plan.md`. Permanent per-feature record.
+- Record the approval durably (best-effort): if `~/projects/agent-office/tools/gate.py` exists,
+  run `python3 ~/projects/agent-office/tools/gate.py record tasks/plans/<TICKET>_plan.md approve`;
+  otherwise skip silently — the gate is optional equipment.
 
 If "plan file only" → STOP here. Tell the user to run `/inline-build <plan-path>` (or `/implement`)
 later.
@@ -200,6 +215,13 @@ later.
 Precondition: an approved `tasks/plans/<TICKET>_plan.md`. If a path was given, use it; else default
 to the most recently modified `tasks/plans/*_plan.md`. If none exists → STOP: "Run the plan phase
 first and approve a plan." State which plan file you resolved.
+
+Approval gate (only if `~/projects/agent-office/tools/gate.py` exists; otherwise skip silently):
+run `python3 ~/projects/agent-office/tools/gate.py check <resolved-plan-path>`. `approve` →
+proceed. `discard` → STOP (never build a discarded plan). `revise` → STOP (the rewrite reopens
+the gate). `unanswered` → if `$AGENT_OFFICE_GATE` is `floor`, `gate.py wait <path> --timeout 600`
+and act on the outcome (`timeout` → ask); else ask via `AskUserQuestion` (Approve / Cancel),
+recording the answer with `gate.py record <path> approve|discard`. A plan FILE is not an approval.
 
 ### B0-PRE. Harness pre-flight — BEFORE anything else in PHASE B
 Run the B3 Step 0 ladder NOW to detect the project's test command. Nothing matches → the repo has NO

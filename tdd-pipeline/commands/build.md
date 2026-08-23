@@ -103,6 +103,28 @@ Resolve it from the ticket's mock reference or the project's design directory. N
 - [anything that could go wrong or needs confirmation]
 
 ### 3. Ask for approval via AskUserQuestion — DO NOT write any file yet
+
+#### Floor-gate mode (opt-in) — approval can come from the Agent Office floor
+Check the opt-in first: run `[ "$AGENT_OFFICE_GATE" = "floor" ] && [ -f ~/projects/agent-office/tools/gate.py ] && echo on || echo off`.
+Only when it prints `on`, replace the AskUserQuestion flow below with:
+
+1. Write the plan NOW as a draft to `tasks/plans/<TICKET>_plan.md` (floor-gate mode is
+   the one exception to "never write before approval" — in this mode the durable gate
+   record marks approval, not the file's existence; the unanswered draft is what makes
+   the office floor convene its approval meeting).
+2. Tell the user: "Plan on the table — approve on the office floor, or interrupt me to
+   answer here."
+3. Run `python3 ~/projects/agent-office/tools/gate.py wait tasks/plans/<TICKET>_plan.md --timeout 600`
+   and act on its stdout:
+   - `approve` → continue at step 5 (auto-hand off).
+   - `revise` → the floor click carries no notes: ask in chat what to change, revise the
+     plan FILE (the rewrite moves its mtime, which reopens the gate), and return to 3.
+   - `discard` → stop. Leave the plan file and its recorded discard as the audit trail.
+   - `timeout` / `missing` → fall through to the normal AskUserQuestion flow below; after
+     the user answers there, record the answer per step 4.
+
+Otherwise (`off` — the default everywhere): the flow below is unchanged.
+
 Immediately after presenting the plan, call `AskUserQuestion` (clickable options,
 no typed approval needed) with exactly these options:
 
@@ -124,6 +146,12 @@ session, not a typing exchange.
 - Ensure `tasks/plans/` exists (create it if missing).
 - Write the full approved plan to `tasks/plans/<TICKET>_plan.md`. This file is the
   permanent per-feature record.
+- Record the approval durably (best-effort): if `~/projects/agent-office/tools/gate.py`
+  exists, run
+  `python3 ~/projects/agent-office/tools/gate.py record tasks/plans/<TICKET>_plan.md approve`.
+  If it does not exist, skip silently — the gate is optional equipment, and a machine
+  without agent-office builds exactly as before. This record is what lets `/implement`
+  later distinguish "the user approved this plan" from "a plan file exists".
 
 ### 5. Auto-hand off to implementation (only if "Approve — run pipeline" was chosen)
 - Immediately run this plugin's `implement` command against the file you just
@@ -142,7 +170,9 @@ session, not a typing exchange.
 
 ## Notes
 - The legacy root `PLAN.md` convention is superseded by `tasks/plans/<TICKET>_plan.md`.
-- Never write the plan file before the user approves it.
+- Never write the plan file before the user approves it. (One exception: floor-gate
+  mode in step 3 writes a draft and blocks on the recorded gate answer instead — there
+  the approvals record, not the file, is the approval.)
 
 ## Gotchas
 - Step 5 hands off to `implement` (the build-coordinator AGENT pipeline). Never substitute `inline-build` — it is a separate command the user must ask for by name, and swapping it in silently skips the independent-reviewer property the agent pipeline exists to provide.
