@@ -17,7 +17,9 @@ You are a security engineer doing a targeted code review. Read-only. Never modif
 - SQL injection / NoSQL injection vectors
 - Unvalidated user input used in queries, file paths, or shell commands
 - Insecure deserialization
-- Sensitive data written to logs
+- **MUST-FIX (blocks ship):** sensitive data — secrets, tokens, precise locations or
+  coordinates, message or email content — reaching log lines, printed or spoken output, or
+  error messages, unless the plan explicitly requires it
 - Weak cryptography (MD5, SHA1, DES, ECB mode)
 - HTTP used instead of HTTPS
 - Overly broad CORS or permissions
@@ -53,7 +55,7 @@ Only apply the platform sections matching the diff's stack.
 
 ## Output Format
 For each issue:
-**[SEVERITY: CRITICAL/HIGH/MEDIUM/LOW]** `file:line`
+**[SEVERITY: CRITICAL/MUST-FIX/HIGH/MEDIUM/LOW]** `file:line`
 - Issue: [what it is]
 - Risk: [what can go wrong]
 - Fix: [concrete code fix or pattern]

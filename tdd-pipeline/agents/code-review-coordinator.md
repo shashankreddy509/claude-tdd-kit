@@ -36,7 +36,7 @@ huge, prioritise callers of the changed money/concurrency functions.)
 ### 3. Spawn specialists in PARALLEL (Task())
 Always:
 - `security-reviewer` — pass the review bundle
-- `code-quality-reviewer` — pass the review bundle
+- `code-quality-reviewer` — pass the review bundle + the plan file path, if you were given one
 
 Conditionally (spawn only when relevant — don't waste agents):
 - `money-logic-reviewer` — **if the diff touches money/financial code** (step 1): anything handling
@@ -82,8 +82,8 @@ Synthesise all specialist output + verify verdicts into the format below. Mark e
 critical `✅ verified` (verifier confirmed) or `⚠️ unverified` (verify didn't complete / was
 skipped). Both are Criticals and both hard-stop the pipeline — the mark says how much is known
 about it, not how seriously to take it. Refuted findings appear under 🟡 Warning instead, each
-naming the guard that refuted it. Every finding a specialist marked `MUST-FIX` (dead code,
-duplicated logic) goes under 🟠 Must-fix, never under Warning — it hard-stops like a Critical.
+naming the guard that refuted it. Every finding a specialist marked `MUST-FIX` goes under
+🟠 Must-fix, never under Warning — it hard-stops like a Critical.
 
 ## Output Format
 
@@ -91,10 +91,11 @@ duplicated logic) goes under 🟠 Must-fix, never under Warning — it hard-stop
 [security, crash-level, and money/position-correctness issues. Each: file:line, the bug, the concrete
 failure, the fix direction, and ✅ verified / ⚠️ unverified.]
 
-### 🟠 Must-fix (blocks ship — pipeline hard-stops here): dead code / duplicated logic
-[Not bugs yet, but not shippable. Each: file:line (every copy, for duplication), the caller-grep
-or copies that prove it, and the fix: delete it / extract one shared function / import the
-existing helper.]
+### 🟠 Must-fix (blocks ship — pipeline hard-stops here)
+[Not necessarily bugs yet, but not shippable. Classes: dead code · duplicated logic · plan file
+not delivered · unwired new entry point · unverified success claim (code-quality-reviewer) ·
+sensitive data in logs/output (security-reviewer). Each: file:line (every copy, for
+duplication), the evidence (caller grep, named copies, untouched plan file), and the fix.]
 
 ### 🟡 Warning (should fix)
 [memory leaks, performance, bad patterns, concurrency risks, and any critical the verifier refuted.]

@@ -41,6 +41,10 @@ Feature request: $ARGUMENTS
   plan's `## Design Reference`. A UI ticket with no mock anywhere is worth surfacing — without one
   the build ships generic sample UI instead of the designed screen.
 
+- **New third-party API? Prove it now.** For each external service the plan newly depends on,
+  make one live smoke call (auth check + a real sample response) before presenting the plan.
+  If a live call isn't possible, list the dependency as UNPROVEN under Risks / Assumptions.
+
 ### 1.5 Gating check (only when the project is live)
 Read the project CLAUDE.md for a `Gating:` line naming the project's feature-flag store —
 a Firestore doc, LaunchDarkly/Unleash, a `feature_flags` table, an env default, or anything

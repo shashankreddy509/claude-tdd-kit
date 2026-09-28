@@ -74,6 +74,9 @@ prose on any layout dispute, including the plan's own wording.
   Write risks output-token truncation and file corruption.
 - For large files (1000+ lines), read only the relevant line ranges (use offset/limit or
   Grep to locate them) instead of the whole file.
+- When the plan is amended mid-build, rework the existing code to the new shape — merge
+  the parallel paths, delete what the amendment superseded. Never bolt a second path on
+  beside the old one.
 - If the plan pins exact lines/edits, apply them directly — do not re-derive the solution
   from scratch.
 
