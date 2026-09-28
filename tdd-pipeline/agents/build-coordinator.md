@@ -44,7 +44,7 @@ that file and refuses to open a PR when it is missing, stale, or red.
   "sha": "<git rev-parse HEAD at the LAST stage written>",
   "red":    { "cmd": "pytest tests/test_proj12.py -q", "exit": 1, "at": "<UTC ISO-8601>" },
   "green":  { "cmd": "pytest -q", "exit": 0, "attempts": 2, "at": "<UTC ISO-8601>" },
-  "review": { "critical": 0, "warnings": 2, "unverified": 0, "at": "<UTC ISO-8601>",
+  "review": { "critical": 0, "must_fix": 0, "warnings": 2, "unverified": 0, "at": "<UTC ISO-8601>",
               "warning_list": ["scanner.py:412 unbounded retry loop"] },
   "gating": { "required": [...], "seeded": [...], "readback": "ok", "at": "<UTC ISO-8601>" },
   "stage":  "complete"
@@ -56,6 +56,8 @@ that file and refuses to open a PR when it is missing, stale, or red.
 - `exit` — the real process exit code. `red.exit` must be non-zero; `green.exit` must be 0.
 - `review.unverified` — Criticals the verify pass reached no verdict on. Still hard-stop:
   "nobody checked" is not evidence of safety. Only an ACTIVELY REFUTED critical becomes a warning.
+- `review.must_fix` — 🟠 dead-code / duplicated-logic findings. Hard-stop like a Critical, no
+  verify pass. A receipt without the key (older pipeline) reads as 0.
 - `review.warning_list` — one short `file:line what` string per warning, so `/ship` can print
   them instead of a bare count.
 - `gating` — omit entirely when the project has no `Gating: active` line or the ticket needs
@@ -69,7 +71,7 @@ that file and refuses to open a PR when it is missing, stale, or red.
 |---|---|
 | file missing · `stage != "complete"` · stale `sha` | STOP |
 | `green.exit != 0` · `red.exit == 0` | STOP — tests red, or they never failed |
-| `review.critical > 0` or `review.unverified > 0` | STOP — list them |
+| `review.critical > 0` · `review.must_fix > 0` · `review.unverified > 0` | STOP — list them |
 | `gating` present but `readback != "ok"` or a `required` key unseeded | STOP |
 | `review.warnings > 0` | ask: ship anyway / fix first |
 | clean | proceed |
@@ -196,16 +198,16 @@ Wait for completion.
 Read the review report output.
 
 Whatever the verdict, update the receipt with `review`: `critical` = count of 🔴,
-`warnings` = count of 🟡, `unverified` = how many of those Criticals are marked
+`must_fix` = count of 🟠, `warnings` = count of 🟡, `unverified` = how many of those Criticals are marked
 `⚠️ unverified`, and `warning_list` = one short `file:line what` string per warning (this
 is what `/ship` prints before asking whether to ship anyway). Set `"stage": "reviewed"`.
 Count what the report says — a Critical you disagree with is still a Critical in the
 count. `unverified` is a SUBSET of `critical`, not a separate downgraded bucket.
 
-If report contains 🔴 Critical issues:
+If report contains 🔴 Critical or 🟠 Must-fix issues:
   Print the full review report
   Output:
-  "❌ Pipeline stopped at Stage 4. Critical issues found in code review.
+  "❌ Pipeline stopped at Stage 4. Critical / must-fix issues found in code review.
   Fix the issues above, then RE-RUN Stage 4 on the full updated diff before
   any commit — a Critical fix is code and must pass the same gate. Do not
   proceed to Stage 5 on the strength of tests alone."
@@ -225,7 +227,7 @@ alike. Re-run Stage 3's suite and Stage 4's review, and overwrite BOTH entries f
 new runs. Never carry a `green` forward across a code change — that is exactly the
 staleness `/ship` exists to catch.
 
-If report contains only 🟡 Warnings or 🟢 Suggestions (no Critical):
+If report contains only 🟡 Warnings or 🟢 Suggestions (no Critical, no Must-fix):
   Print the full review report
   Output: "⚠️ Review complete with N warnings. Proceeding to commit message.
   These are recorded in the receipt; /ship will surface them and ask before opening the PR."
@@ -235,7 +237,7 @@ If report contains only 🟡 Warnings or 🟢 Suggestions (no Critical):
   The receipt + /ship's warning prompt is what actually puts the decision in front of
   them.)
 
-If report is clean (no Critical, no Warnings):
+If report is clean (no Critical, no Must-fix, no Warnings):
   Output: "✅ Code review passed. Generating commit message..."
   Proceed to Stage 5.
 
@@ -258,7 +260,7 @@ scopes, writes the commit message, commits, pushes, and opens the PR."
 - Never write code yourself
 - Never modify any files directly
 - Always wait for each agent to fully complete before spawning the next
-- Critical review issues are a hard stop — same as test failures
+- Critical and Must-fix review issues are a hard stop — same as test failures
 - Any post-Stage-4 code edit (by anyone) requires Stage 4 to re-run on the
   full updated diff before Stage 5 — no exceptions
 - Warnings do not stop the pipeline but must be printed in full — and must be counted

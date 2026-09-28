@@ -16,7 +16,7 @@ evidence on disk, and the next stage refuses to continue without it.
 | Tests | Written after the code, pass first time | Stage 1.5 runs the new tests **before any implementation exists** and requires a non-zero exit. Tests that already pass stop the run: *"they assert existing behavior and prove nothing."* |
 | Evidence | The model says "all tests pass" | The real process exit codes go into `tasks/receipts/<TICKET>.json`: `red.exit`, `green.exit`, the command that ran, and the HEAD `sha` |
 | Review | The same context that wrote the code reads it | Separate specialist reviewer agents check the diff plus its callers. Every Critical finding goes to a verifier that tries to refute it |
-| Opening the PR | Happens whenever the model decides it's finished | `/ship` reads the receipt and **refuses** if it's missing, if `stage != "complete"`, if `sha` is stale, if `red.exit == 0` (the tests never failed), if `green.exit != 0`, or if any Critical is confirmed or unverified |
+| Opening the PR | Happens whenever the model decides it's finished | `/ship` reads the receipt and **refuses** if it's missing, if `stage != "complete"`, if `sha` is stale, if `red.exit == 0` (the tests never failed), if `green.exit != 0`, if any Critical is confirmed or unverified, or if review found dead code or duplicated logic |
 
 A model can talk its way past a rule written in markdown. It can't create a receipt file that
 doesn't exist or a `sha` that matches a HEAD that has moved.
@@ -143,6 +143,10 @@ direct callers. It then starts specialists in parallel. `security` and `code-qua
 run. `money-logic`, `concurrency`, `memory-analyzer` and `kotlin-best-practices` run only when
 the diff calls for them. Each specialist works from a narrow, written taxonomy.
 
+Dead code and duplicated logic that `code-quality-reviewer` finds are reported as 🟠 **Must-fix**.
+They stop the pipeline like a Critical, but skip the verify pass: the reviewer's repo-wide
+caller grep, or the `file:line` of every copy, is the evidence.
+
 **Why:** a single general-purpose reviewer drifts toward whatever is easiest to spot, which is
 formatting. A narrow scope with a written checklist keeps a reviewer on the kinds of bug that
 actually cause outages.
@@ -174,7 +178,8 @@ happened. It stops on any of these:
 - the `sha` is stale (HEAD moved after the last verified run)
 - `green.exit != 0`
 - `red.exit == 0` (the tests never failed, so they prove nothing)
-- any `review.critical` or `review.unverified`
+- any `review.critical`, any `review.must_fix` (dead code or duplicated logic), or any
+  `review.unverified`
 - a feature-gate block whose read-back failed
 
 Warnings print in full with `file:line` and ask before shipping, never as a bare count, because

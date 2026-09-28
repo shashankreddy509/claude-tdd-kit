@@ -20,7 +20,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
 
 ## Steps
 
-0. **Read the pipeline receipt — gate the ship on it.** Find the ticket key (branch slug, the user's argument, or the Jira issue for this work) and read `tasks/receipts/<TICKET>.json`. The pipeline writes it; keys are `ticket`, `plan`, `sha` (HEAD at the last stage written — staleness detection), `red`/`green` (`cmd` + the REAL process `exit` + `at`), `review` (`critical`, `warnings`, `unverified`, `warning_list` of `file:line what` strings), an optional `gating` block (`required`, `seeded`, `readback`), and `stage` (`red` | `green` | `reviewed` | `complete`). A receipt is a record, not a permission slip — never hand-write or edit one to get past this gate.
+0. **Read the pipeline receipt — gate the ship on it.** Find the ticket key (branch slug, the user's argument, or the Jira issue for this work) and read `tasks/receipts/<TICKET>.json`. The pipeline writes it; keys are `ticket`, `plan`, `sha` (HEAD at the last stage written — staleness detection), `red`/`green` (`cmd` + the REAL process `exit` + `at`), `review` (`critical`, `must_fix`, `warnings`, `unverified`, `warning_list` of `file:line what` strings), an optional `gating` block (`required`, `seeded`, `readback`), and `stage` (`red` | `green` | `reviewed` | `complete`). A receipt is a record, not a permission slip — never hand-write or edit one to get past this gate.
 
    | Receipt state | Do |
    |---|---|
@@ -28,7 +28,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
    | `stage != "complete"` | **STOP** — name the stage it died at |
    | `red.exit == 0` | **STOP** — tests never failed, so they prove nothing |
    | `green.exit != 0` | **STOP** — tests are red |
-   | `review.critical > 0` or `review.unverified > 0` | **STOP** — list them |
+   | `review.critical > 0` · `review.must_fix > 0` (missing = 0) · `review.unverified > 0` | **STOP** — list them |
    | `gating` present, `readback != "ok"` or `seeded` misses a `required` key | **STOP** — the kill-switch does not exist; this feature could not be turned off after release |
    | `review.warnings > 0` | Print each warning (file:line + what it is) from `review.warning_list`, THEN **AskUserQuestion**: ship anyway / fix first. Never summarise as a bare count — an unread warning is the same as no warning. |
    | clean | proceed |
