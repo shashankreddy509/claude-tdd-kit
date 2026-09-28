@@ -25,7 +25,7 @@ and a critical-fix loop-back that re-reviews any post-review edit.
                                        always; money-logic + concurrency when the
                                        diff warrants; Criticals adversarially
                                        verified; hard stop on Critical and
-                                       Must-fix (dead code / duplication); any
+                                       Must-fix; any
                                        post-review edit re-enters Stage 4)
       Stage 5    changelog            (commit message from the plan file)
 ```

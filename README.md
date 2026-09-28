@@ -16,7 +16,7 @@ evidence on disk, and the next stage refuses to continue without it.
 | Tests | Written after the code, pass first time | Stage 1.5 runs the new tests **before any implementation exists** and requires a non-zero exit. Tests that already pass stop the run: *"they assert existing behavior and prove nothing."* |
 | Evidence | The model says "all tests pass" | The real process exit codes go into `tasks/receipts/<TICKET>.json`: `red.exit`, `green.exit`, the command that ran, and the HEAD `sha` |
 | Review | The same context that wrote the code reads it | Separate specialist reviewer agents check the diff plus its callers. Every Critical finding goes to a verifier that tries to refute it |
-| Opening the PR | Happens whenever the model decides it's finished | `/ship` reads the receipt and **refuses** if it's missing, if `stage != "complete"`, if `sha` is stale, if `red.exit == 0` (the tests never failed), if `green.exit != 0`, if any Critical is confirmed or unverified, or if review found dead code or duplicated logic |
+| Opening the PR | Happens whenever the model decides it's finished | `/ship` reads the receipt and **refuses** if it's missing, if `stage != "complete"`, if `sha` is stale, if `red.exit == 0` (the tests never failed), if `green.exit != 0`, if any Critical is confirmed or unverified, or if review found any 🟠 Must-fix |
 
 A model can talk its way past a rule written in markdown. It can't create a receipt file that
 doesn't exist or a `sha` that matches a HEAD that has moved.
@@ -143,9 +143,11 @@ direct callers. It then starts specialists in parallel. `security` and `code-qua
 run. `money-logic`, `concurrency`, `memory-analyzer` and `kotlin-best-practices` run only when
 the diff calls for them. Each specialist works from a narrow, written taxonomy.
 
-Dead code and duplicated logic that `code-quality-reviewer` finds are reported as 🟠 **Must-fix**.
-They stop the pipeline like a Critical, but skip the verify pass: the reviewer's repo-wide
-caller grep, or the `file:line` of every copy, is the evidence.
+Findings that are not yet bugs but must not ship are reported as 🟠 **Must-fix**: dead code,
+duplicated logic, a planned file the diff never touched, new code nothing calls, a success
+message not gated on the result, and sensitive data in logs or output. They stop the pipeline
+like a Critical, but skip the verify pass: the reviewer's cited evidence (caller grep, every
+copy's `file:line`, the untouched plan file) is the proof.
 
 **Why:** a single general-purpose reviewer drifts toward whatever is easiest to spot, which is
 formatting. A narrow scope with a written checklist keeps a reviewer on the kinds of bug that
@@ -178,7 +180,7 @@ happened. It stops on any of these:
 - the `sha` is stale (HEAD moved after the last verified run)
 - `green.exit != 0`
 - `red.exit == 0` (the tests never failed, so they prove nothing)
-- any `review.critical`, any `review.must_fix` (dead code or duplicated logic), or any
+- any `review.critical`, any `review.must_fix`, or any
   `review.unverified`
 - a feature-gate block whose read-back failed
 

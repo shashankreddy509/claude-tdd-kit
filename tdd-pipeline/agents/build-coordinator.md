@@ -56,7 +56,7 @@ that file and refuses to open a PR when it is missing, stale, or red.
 - `exit` — the real process exit code. `red.exit` must be non-zero; `green.exit` must be 0.
 - `review.unverified` — Criticals the verify pass reached no verdict on. Still hard-stop:
   "nobody checked" is not evidence of safety. Only an ACTIVELY REFUTED critical becomes a warning.
-- `review.must_fix` — 🟠 dead-code / duplicated-logic findings. Hard-stop like a Critical, no
+- `review.must_fix` — 🟠 Must-fix findings (classes listed in code-review-coordinator). Hard-stop like a Critical, no
   verify pass. A receipt without the key (older pipeline) reads as 0.
 - `review.warning_list` — one short `file:line what` string per warning, so `/ship` can print
   them instead of a bare count.
@@ -189,7 +189,7 @@ If test-runner returns a FAIL diagnosis:
 
 ### Stage 4: Code Review
 Spawn agent: `code-review-coordinator`
-Pass: the FULL working-tree diff at review time (`git diff HEAD` + untracked
+Pass: the plan file path + the FULL working-tree diff at review time (`git diff HEAD` + untracked
 new files) — this must include Stage 3's fix edits, not just Stages 1-2.
 Review always sees exactly what would be committed.
 
