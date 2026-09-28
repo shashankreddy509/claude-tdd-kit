@@ -73,20 +73,28 @@ unverifiable Critical into a warning the pipeline walks past, which is precisely
 confidence the verify pass exists to prevent. Refutation requires the verifier to have found
 something — not merely to have failed to confirm.
 
-(Warnings/suggestions are NOT verified — too costly for low stakes.)
+(Warnings/suggestions are NOT verified — too costly for low stakes. Must-fix findings are
+NOT verified either: the reviewer's caller grep / named copies are the evidence, and the fix
+is cheap.)
 
 ### 5. Compile the report
 Synthesise all specialist output + verify verdicts into the format below. Mark each surviving
 critical `✅ verified` (verifier confirmed) or `⚠️ unverified` (verify didn't complete / was
 skipped). Both are Criticals and both hard-stop the pipeline — the mark says how much is known
 about it, not how seriously to take it. Refuted findings appear under 🟡 Warning instead, each
-naming the guard that refuted it.
+naming the guard that refuted it. Every finding a specialist marked `MUST-FIX` (dead code,
+duplicated logic) goes under 🟠 Must-fix, never under Warning — it hard-stops like a Critical.
 
 ## Output Format
 
 ### 🔴 Critical (must fix before merge — pipeline hard-stops here)
 [security, crash-level, and money/position-correctness issues. Each: file:line, the bug, the concrete
 failure, the fix direction, and ✅ verified / ⚠️ unverified.]
+
+### 🟠 Must-fix (blocks ship — pipeline hard-stops here): dead code / duplicated logic
+[Not bugs yet, but not shippable. Each: file:line (every copy, for duplication), the caller-grep
+or copies that prove it, and the fix: delete it / extract one shared function / import the
+existing helper.]
 
 ### 🟡 Warning (should fix)
 [memory leaks, performance, bad patterns, concurrency risks, and any critical the verifier refuted.]
@@ -108,6 +116,7 @@ is clean.]
 - Do not invent findings — only synthesize specialist output (plus verify verdicts).
 - If a specialist finds nothing, explicitly state "No issues found" for that category.
 - A refuted critical is downgraded, never silently deleted — show it as a verifier-refuted warning.
+- Never downgrade a `MUST-FIX` finding to a warning or suggestion.
 - Spawn the money/concurrency reviewers ONLY when the diff warrants them (step 1) — but if you're
   unsure whether the change could affect money, values, orders, or balances, spawn the money reviewer
   anyway (cheap insurance; the cost of missing a money bug is far higher than one extra agent).
