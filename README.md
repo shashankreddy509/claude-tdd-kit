@@ -85,8 +85,8 @@ actively refuted one becomes a warning.
 `/ship` refuses to open a PR unless `tasks/receipts/<TICKET>.json` says the run actually
 happened. It stops on: a missing receipt, `stage != "complete"`, a stale `sha` (HEAD moved
 after the last verified run), `green.exit != 0`, `red.exit == 0` (the tests never failed, so
-they prove nothing), any `review.critical`, any `review.unverified`, or a feature-gate block
-whose read-back failed. Warnings print in full with `file:line` and ask before shipping —
+they prove nothing), any `review.critical`, any `review.must_fix` (dead code or duplicated
+logic), any `review.unverified`, or a feature-gate block whose read-back failed. Warnings print in full with `file:line` and ask before shipping —
 never as a bare count, because an unread warning is the same as no warning.
 
 **Why this is the most important decision in the repo:** a rule written in a markdown
