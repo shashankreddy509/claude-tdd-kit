@@ -99,3 +99,4 @@ allowed decrease — call it out explicitly when it happens). Report `SUPERSET-C
   session-notes or the memory vault; those stay end-session's job.
 - Standalone use = mid-session auto-capture (start-session's rule): when the user gives a correction
   or durable preference, call this immediately so it's on disk before any `/compact`.
+- The superset gate matches bullets as LINES, so a merge that rewraps a bullet across two lines reads as DROPPED. Before reporting FAIL, re-check each flagged bullet's clauses against the flattened new file; a merge is the one allowed decrease and must be named as one, not filed as a loss.
