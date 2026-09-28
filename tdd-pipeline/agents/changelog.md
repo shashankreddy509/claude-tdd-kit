@@ -78,3 +78,4 @@ Tests:
 
 ## Gotchas
 - When the caller's prompt says "no file listing, explain WHY not WHAT", that OVERRIDES this file's What Changed template — a diff is already readable from the diff, so honour the caller and emit subject + why only.
+- Never state a COUNT of call sites, files, or occurrences unless you counted them in the staged diff — a wrong count ("all ten call sites" when the diff threads eight) reads as fact in permanent git history and the reviewer cannot tell it is wrong without recounting.

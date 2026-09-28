@@ -76,3 +76,9 @@ prose on any layout dispute, including the plan's own wording.
   Grep to locate them) instead of the whole file.
 - If the plan pins exact lines/edits, apply them directly — do not re-derive the solution
   from scratch.
+
+## Gotchas
+
+- Never report a design doc section as missing, stubbed, or empty without quoting the lines you read. A claim that a section "doesn't exist" was made about a section carrying three lines of binding spec; the main thread caught it, but an unchecked version would have justified improvising away from the approved design.
+- Cite line numbers only from a read you actually performed in this run, and re-grep before quoting a range. A mock frame reported at lines 480-539 was at 498-520; the output happened to be correct anyway, which is exactly why the wrong citation survived.
+- When the plan hands you a pre-validated algorithm, transcribe it. If you believe it is wrong, STOP and report with your reasoning — silently substituting your own design discards measurement the plan already paid for.

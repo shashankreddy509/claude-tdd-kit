@@ -55,3 +55,6 @@ stages in sequence, reading the plan file at that path:
 5. STOP at the ship gate — /ship writes the commit message from the staged diff
 
 If tests fail after 5 attempts, the pipeline stops and reports what went wrong.
+
+## Gotchas
+- Never read the build-coordinator's REPORT as the run's outcome — verify from disk. One returned the literal string `placeholder` after 199k tokens and 309 tool calls, while the files, the test file and a receipt were all on disk and the receipt showed it had stopped at `stage:green` with the review stage never run. Check `tasks/receipts/<TICKET>.json`'s `stage` field and the created files before reporting anything; an empty hand-back is evidence about the hand-back, not about the work.
