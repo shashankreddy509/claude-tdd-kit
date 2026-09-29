@@ -57,7 +57,8 @@ between projects even on the same site.
 
 ## Commands
 - `build` — plan inline, iterate, click-approve, auto-hand off to the pipeline
-- `implement` — run the pipeline against an approved plan file
+- `implement` — run the pipeline against an approved plan file, then auto-run `ship`
+  when the receipt is complete
 - `review` — run the review gate standalone on the current diff
 - `ship` — branch, commit, push, open the PR, move the ticket to In Review
 - `merged` — after you merge: verify it, park the ticket for validation, sync the
@@ -71,13 +72,14 @@ money-logic-reviewer, concurrency-reviewer, memory-analyzer,
 kotlin-best-practices, planner, changelog
 
 ## Test-command detection
-test-runner and the verify-red stage auto-detect the suite, in order: `gradlew` →
-`./gradlew test`; pytest project → the venv's pytest (or `python3 -m pytest`);
-`package.json` → `npm test`; `go.mod` → `go test ./...`; `Cargo.toml` → `cargo test`;
-`pom.xml` → `mvn -q test`; `.csproj`/`.sln` → `dotnet test`; `composer.json` →
-`vendor/bin/phpunit`; `Gemfile` → `bundle exec rspec`; a `Makefile` test target →
-`make test`. A test command named in CLAUDE.md or CI config overrides all of them.
-No match = ask for the command, never guess one.
+The pipeline is stack-agnostic. build-coordinator resolves `TEST_CMD` once, before any test
+is written, and every stage runs that exact command. First hit wins: a `Test: <command>`
+line in CLAUDE.md (plus an optional `Test-filter:`), then the test step of the CI config
+(GitHub Actions, Azure Pipelines, GitLab, Bitrise, Fastfile, Jenkinsfile), then build files
+at the root or two levels down (Gradle, pytest, npm, go, cargo, Maven, `dotnet test <sln>`,
+`swift test`, `xcodebuild test`, phpunit, rspec, `make test`). No match = stop and ask for
+a `Test:` line, never guess. A missing tool (`dotnet`, `xcodebuild`) stops the run before
+Stage 1 instead of surfacing as a test failure.
 
 ## Install
 

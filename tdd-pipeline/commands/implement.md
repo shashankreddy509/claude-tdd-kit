@@ -48,13 +48,22 @@ plan file (e.g. `<KEY>` from `tasks/plans/<KEY>_plan.md`).
 
 Pass the resolved plan path to the build-coordinator agent. The coordinator will run these
 stages in sequence, reading the plan file at that path:
+0. resolve `TEST_CMD` once for any stack (CLAUDE.md `Test:` line → CI config → build files)
 1. test-writer — writes failing tests from the plan
 2. implementer — writes implementation to make tests pass
-3. test-runner — runs tests, fixes failures (max 5 attempts)
+3. test-runner → implementer (fix) → test-runner, max 5 fix rounds
 4. code-review-coordinator — reviews the diff
-5. STOP at the ship gate — /ship writes the commit message from the staged diff
+5. finalize the receipt and hand back
 
-If tests fail after 5 attempts, the pipeline stops and reports what went wrong.
+If tests still fail after 5 fix rounds, or the failure is environmental, the pipeline stops
+and reports what went wrong.
+
+### Auto-ship
+When the coordinator returns, read `tasks/receipts/<TICKET>.json` from disk (see Gotchas).
+- `stage == "complete"` → run this plugin's `ship` command now (Skill tool,
+  `tdd-pipeline:ship`), with no extra confirmation. Its receipt gate still stops on red
+  tests, stale sha, or any Critical / Must-fix, and still asks before shipping with warnings.
+- Anything else → report the stage it stopped at and do NOT ship.
 
 ## Gotchas
 - Never read the build-coordinator's REPORT as the run's outcome — verify from disk. One returned the literal string `placeholder` after 199k tokens and 309 tool calls, while the files, the test file and a receipt were all on disk and the receipt showed it had stopped at `stage:green` with the review stage never run. Check `tasks/receipts/<TICKET>.json`'s `stage` field and the created files before reporting anything; an empty hand-back is evidence about the hand-back, not about the work.
