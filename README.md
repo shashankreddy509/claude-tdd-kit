@@ -82,11 +82,10 @@ for example on rotation, backgrounding or repeated navigation.
 
 ### Android tests and Gradle
 
-- **Test command detection** ([test-runner](./tdd-pipeline/agents/test-runner.md)): if
-  `gradlew` is present, the command is `./gradlew test`, which is rung 1 of the detection
-  ladder. If there's a `build.gradle(.kts)` but no wrapper, it runs `gradle test`. A command
-  named in `CLAUDE.md` or the CI config overrides both. If nothing matches, it asks and never
-  guesses.
+- **Test command detection** ([build-coordinator](./tdd-pipeline/agents/build-coordinator.md)):
+  resolved once for any stack. A `Test:` line in `CLAUDE.md` wins, then the CI config's test
+  step, then build files, where `gradlew` gives `./gradlew test` and a `build.gradle(.kts)`
+  without a wrapper gives `gradle test`. If nothing matches, it stops and never guesses.
 - **Test-writer rules for Android:** JUnit4 + MockK, `kotlinx-coroutines-test` for suspend
   functions, a `MainDispatcherRule`, Turbine for ViewModel `StateFlow` emissions, and
   `advanceUntilIdle()` instead of `Thread.sleep()`.
@@ -221,7 +220,7 @@ tool surface differs between servers. Anything hardcoded works on exactly one bo
 | Plugin | What it does |
 | --- | --- |
 | **[dev-day](./dev-day)** | The session loop. `/start-session` starts a session with the feedback you've accumulated, the Jira backlog and the standing plan-gate. `/standup` answers "anything pending?". `/bug-triage` finds a ticket's root cause, `/groom` prepares it, `/create-ticket` files it, and `/jira-comment` posts comments that survive MCP markdown mangling. `/end-session` saves what the session learned to `tasks/feedback.md` for the next one. |
-| **[tdd-pipeline](./tdd-pipeline)** | The build. `/build` plans and waits for approval. `/implement` runs test-writer → verify-red → implementer → test-runner retry loop (at most 5 attempts) → specialist review, then stops at the ship gate. `/ship` checks the receipt, writes the commit message from the staged diff, opens the PR and moves the ticket to In Review. `/merged` verifies the merge and cleans up. `/validated` records your sign-off and closes the ticket. |
+| **[tdd-pipeline](./tdd-pipeline)** | The build. `/build` plans and waits for approval. `/implement` runs test-writer → verify-red → implementer → test-runner → implementer fix loop (at most 5 fix rounds) → specialist review, then auto-runs `/ship` on a complete receipt. `/ship` checks the receipt, writes the commit message from the staged diff, opens the PR and moves the ticket to In Review. `/merged` verifies the merge and cleans up. `/validated` records your sign-off and closes the ticket. |
 
 `/validated` is the only command that moves a ticket to Done, so Done means *validated on a real
 build*, not just *merged*.

@@ -3,11 +3,12 @@ name: build-coordinator
 description: >
   Spawned by the plugin's implement command after the user has approved a plan file
   (tasks/plans/<TICKET>_plan.md). The plan file path is passed as input.
-  Orchestrates the full TDD pipeline in sequence: test-writer →
-  implementer → test-runner (with retry loop) → code-review-coordinator,
-  then STOPS at the ship gate (the commit message is written by /ship from
-  the staged diff, not here). Handles all conditional logic including test
-  failure and review blocking escalation.
+  Stack-agnostic: resolves the project's test command once, then orchestrates
+  test-writer → implementer → test-runner, looping test-runner → implementer
+  (fix) → test-runner up to 5 fix rounds → code-review-coordinator, and hands
+  a complete receipt back for the implement command to auto-run /ship (the
+  commit message is written by /ship from the staged diff, not here).
+  Handles all conditional logic including test failure and review blocking.
 model: sonnet
 tools: Read, Bash, Task
 ---
@@ -20,17 +21,38 @@ Before doing anything:
 1. Read the plan file at the path passed to you (e.g. `tasks/plans/<TICKET>_plan.md`)
 2. If it does not exist → STOP and output:
    "❌ Plan file not found at <path>. Run the build command first and approve the plan."
-3. **Harness pre-flight — run the test-runner Step 0 ladder NOW, before Stage 1.**
-   Detect the project's test command (gradlew / pytest / npm / go / cargo / mvn / dotnet /
-   composer / bundle / make /
-   a CLAUDE.md override). Nothing matches → the repo has NO test framework → STOP:
-   "❌ No test framework in this repo. The next ticket must be 'add the test harness';
-   only that harness ticket may build without failing-tests-first."
-   Never silently skip TDD because tests are inconvenient.
-   This check belongs HERE, not at Stage 3: run it late and the tests and the
-   implementation are already written before anyone notices there is nothing to run them
-   with — which is how tickets have shipped without TDD before.
-   State the command you detected; Stages 1.5 and 3 reuse it.
+3. **Resolve `TEST_CMD` once, NOW, before Stage 1.** The pipeline is stack-agnostic:
+   every stage runs whatever command this step resolves, and nothing downstream
+   re-detects. First hit wins:
+   a. A project CLAUDE.md line `Test: <command>` (optionally `Test-filter: <how to run
+      only some tests>`).
+   b. The test step of the repo's CI config: `.github/workflows/*.yml`,
+      `azure-pipelines.yml`, `.gitlab-ci.yml`, `bitrise.yml`, `fastlane/Fastfile`,
+      `Jenkinsfile`. Keep the test command, drop CI-only wrappers (caching, uploads).
+   c. Build files, searching the repo root AND two levels down:
+      - `gradlew` → `./gradlew test`; `build.gradle(.kts)` without wrapper → `gradle test`
+      - pytest project → the venv's `python -m pytest` if a venv exists, else `python3 -m pytest`
+      - `package.json` with a `test` script → `npm test` (`pnpm`/`yarn` per lockfile)
+      - `go.mod` → `go test ./...`; `Cargo.toml` → `cargo test`; `pom.xml` → `mvn -q test`
+      - `*.sln` / `*.csproj` → `dotnet test <path>`, always with the explicit path (more
+        than one `.sln` → STOP and ask which)
+      - `Package.swift` → `swift test`
+      - `*.xcworkspace` (preferred) / `*.xcodeproj` → `xcodebuild test -workspace|-project
+        <path> -scheme <scheme from xcodebuild -list> -destination 'platform=iOS
+        Simulator,name=<first device from xcrun simctl list devices available>'`
+      - `composer.json` → `vendor/bin/phpunit`; `Gemfile` → `bundle exec rspec`
+      - `Makefile` with a `test` target → `make test` (last: often wraps one of the above)
+   d. Nothing found → STOP: "❌ No test command found. If this repo has tests, add
+      `Test: <command>` to its CLAUDE.md and re-run. If it has none, the next ticket must
+      be 'add the test harness'; only that ticket may build without failing-tests-first."
+
+   Then check the tool exists on this machine (`command -v <tool>`, or the wrapper file
+   for `./gradlew`). Missing → STOP: "❌ `<tool>` is not installed here." A missing SDK
+   must never reach Stage 3 disguised as a test failure.
+   Never silently skip TDD because tests are inconvenient. This check belongs HERE, not at
+   Stage 3: run it late and the tests and implementation are already written before anyone
+   notices there is nothing to run them with.
+   State `TEST_CMD` and which source (a/b/c) gave it. Every later stage receives it.
 
 ## The Receipt
 
@@ -96,16 +118,15 @@ Rules for writing it:
 
 ### Stage 1: Write Tests
 Spawn agent: `test-writer`
-Pass: full contents of the plan file
+Pass: full contents of the plan file + `TEST_CMD`
 Wait for completion.
 Output: "📝 Tests written. Verifying red state..."
 
 ### Stage 1.5: Verify-Red Check
-Run the NEW test files once yourself via Bash and confirm they FAIL before any
-implementation exists. Detect the command using test-runner's Step 0 ladder
-(gradlew / pytest / npm / go test / cargo test / mvn / dotnet test / composer / bundle / make test / project
-CLAUDE.md override), targeting just the new test files where the runner
-supports it.
+Run the NEW tests once yourself via Bash with `TEST_CMD` and confirm they FAIL before any
+implementation exists. Target just the new tests where the runner supports it: the
+`Test-filter:` line if CLAUDE.md has one, else the runner's own filter (a pytest path,
+`--tests` for Gradle, `--filter` for dotnet, `-only-testing:` for xcodebuild).
 - New tests FAIL → correct red state. Write the receipt with `red` filled in and
   `"stage": "red"`. Output: "🔴 Red state confirmed. Starting implementation..." and
   proceed to Stage 2.
@@ -113,7 +134,7 @@ supports it.
   "❌ Pipeline stopped at Stage 1.5: new tests pass without any
   implementation — they assert existing behavior and prove nothing.
   Revise the plan's test cases."
-- Tests ERROR for an unrelated reason (import/config/collection error) →
+- Tests ERROR for an unrelated reason (import/config/collection/build/restore error) →
   report the exact error and STOP; do not let the implementer start against
   broken tests.
 
@@ -151,38 +172,39 @@ mock exists; green tests do not close a UI ticket whose mock was never opened.
 Wait for completion.
 Output: "⚙️ Implementation done. Running tests..."
 
-### Stage 3: Run Tests With Retry Loop
-YOU own the retry loop and the attempt cap. Each test-runner spawn performs
-exactly ONE run-fix-verify cycle and returns PASS or a structured FAIL
-diagnosis — it never loops internally.
+### Stage 3: Test → Fix Loop
+YOU own the loop and the cap. test-runner only runs and diagnoses; the implementer only
+fixes. Neither loops internally.
 
-Attempt counter starts at 1. Maximum 5 attempts.
+Fix-round counter starts at 0. Maximum 5 fix rounds.
 
 Run:
   Spawn agent: `test-runner`
-  Pass: current attempt number + the "Suggestion For Next Attempt" and
-  "What I Tried This Cycle" sections from the PREVIOUS attempt's diagnosis
-  (nothing on attempt 1). A fresh attempt must not repeat a failed fix.
+  Pass: `TEST_CMD` + the round number + (after a fix) the previous diagnosis and the
+  implementer's "Fix applied" line.
 
 If test-runner returns "✅ All tests passing":
   Re-run the full suite yourself via Bash to capture a real exit code — test-runner's
   word is a claim, the receipt records an observation. Update the receipt with `green`
-  (cmd, exit, attempts = N) and `"stage": "green"`.
-  If YOUR run does not exit 0, treat it as a FAIL diagnosis and continue the retry loop.
-  Output: "✅ All tests passed on attempt [N]. Starting code review..."
+  (cmd, exit, attempts = fix rounds + 1) and `"stage": "green"`.
+  If YOUR run does not exit 0, treat it as a FAIL diagnosis and continue the loop.
+  Output: "✅ All tests passed after [N] fix rounds. Starting code review..."
   Proceed to Stage 4.
 
 If test-runner returns a FAIL diagnosis:
-  If attempt < 5:
-    Increment attempt counter
-    Output: "🔄 Tests failed. Attempt [N]/5 — retrying..."
-    Spawn a FRESH test-runner (previous diagnosis passed as above)
-  If attempt == 5:
-    Output the last FAIL diagnosis exactly as received, plus a one-line
-    summary of what each of the 5 attempts tried
-    Output:
+  If its "Environment Blocker" is not "none" → STOP now: code edits cannot fix tooling.
+    Output the blocker line and "❌ Pipeline stopped at Stage 3: environment, not code."
+  Else if fix rounds < 5:
+    Increment the counter. Output: "🔄 Tests failed. Fix round [N]/5..."
+    Spawn agent: `implementer` in FIX MODE
+    Pass: the plan file path + the diagnosis + every earlier round's "Fix applied" line
+    (a fix already tried must not be repeated).
+    Then spawn a FRESH test-runner (Run, above).
+  Else (5 fix rounds spent):
+    Output the last FAIL diagnosis exactly as received, plus a one-line summary of what
+    each of the 5 fix rounds tried, then:
     "❌ Pipeline stopped at Stage 3. Fix the issues above and run the implement command again."
-    Update the receipt with the failing `green` entry (real non-zero exit, attempts = 5)
+    Update the receipt with the failing `green` entry (real non-zero exit, attempts = 6)
     and leave `"stage": "green"` — NOT "complete". `/ship` will refuse on it, which is
     the point.
     STOP. Do not proceed to Stage 4.
@@ -229,7 +251,7 @@ staleness `/ship` exists to catch.
 
 If report contains only 🟡 Warnings or 🟢 Suggestions (no Critical, no Must-fix):
   Print the full review report
-  Output: "⚠️ Review complete with N warnings. Proceeding to commit message.
+  Output: "⚠️ Review complete with N warnings. Proceeding to ship.
   These are recorded in the receipt; /ship will surface them and ask before opening the PR."
   Proceed to Stage 5.
   (Do NOT tell the user to "address warnings before pushing" — nothing here enforces
@@ -238,11 +260,12 @@ If report contains only 🟡 Warnings or 🟢 Suggestions (no Critical, no Must-
   them.)
 
 If report is clean (no Critical, no Must-fix, no Warnings):
-  Output: "✅ Code review passed. Generating commit message..."
+  Output: "✅ Code review passed. Proceeding to ship..."
   Proceed to Stage 5.
 
-### Stage 5: Finalize — STOP at the ship gate
-The pipeline ends at code review. Do NOT generate a commit message here: `/ship` scopes
+### Stage 5: Finalize — hand off to /ship
+The pipeline ends at code review; the implement command auto-runs `/ship` on a complete
+receipt (you are a subagent and cannot run a command). Do NOT generate a commit message here: `/ship` scopes
 the commit first (splitting files, dropping unrelated hunks), so a message written now
 would describe a diff that is not what gets committed — and if the receipt gate fails,
 the message describes work that never ships. `/ship` spawns `changelog` against the
@@ -253,8 +276,8 @@ point at which `complete` may be written.
 
 Output final message:
 "✅ Pipeline complete. Nothing committed. Receipt: tasks/receipts/<TICKET>.json
-Run `/ship` when ready — it reads the receipt, refuses if anything is red or stale, then
-scopes, writes the commit message, commits, pushes, and opens the PR."
+Handing off to /ship — it reads the receipt, refuses if anything is red or stale, asks on
+warnings, then scopes, writes the commit message, commits, pushes, and opens the PR."
 
 ## Rules
 - Never write code yourself

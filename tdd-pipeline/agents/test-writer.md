@@ -14,7 +14,10 @@ Tests should compile but fail (red state). Do not write implementation.
 1. Read the plan the coordinator passed you (contents of
    `tasks/plans/<TICKET>_plan.md` — NOT a root `PLAN.md`) for the test cases list
 2. Read existing test files for patterns (naming, mocking library, test structure)
-3. Write each test file listed in the plan
+3. Write each test file listed in the plan, where the coordinator's `TEST_CMD` will
+   actually run it: inside the test target its Xcode scheme builds, the test project its
+   `.sln` references, the source set Gradle compiles. A test file the command never
+   picks up is not a test.
 4. Tests must assert real behavior — no empty tests, no `assertTrue(true)`
 5. If the plan has a **Gating** section, its gate-off cases are REQUIRED tests, not
    optional ones — server side: flag off ⇒ the documented 404 / omitted field; client side:
