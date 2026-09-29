@@ -78,8 +78,9 @@ line in CLAUDE.md (plus an optional `Test-filter:`), then the test step of the C
 (GitHub Actions, Azure Pipelines, GitLab, Bitrise, Fastfile, Jenkinsfile), then build files
 at the root or two levels down (Gradle, pytest, npm, go, cargo, Maven, `dotnet test <sln>`,
 `swift test`, `xcodebuild test`, phpunit, rspec, `make test`). No match = stop and ask for
-a `Test:` line, never guess. A missing tool (`dotnet`, `xcodebuild`) stops the run before
-Stage 1 instead of surfacing as a test failure.
+a `Test:` line, never guess. A missing tool (`dotnet`, `xcodebuild`) or uninstalled
+dependencies (`Pods/`, `node_modules/`, gems, Carthage) stop the run before Stage 1 with
+the install command to run, instead of surfacing as a test failure.
 
 ## Install
 

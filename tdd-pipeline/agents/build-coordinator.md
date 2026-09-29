@@ -49,6 +49,16 @@ Before doing anything:
    Then check the tool exists on this machine (`command -v <tool>`, or the wrapper file
    for `./gradlew`). Missing → STOP: "❌ `<tool>` is not installed here." A missing SDK
    must never reach Stage 3 disguised as a test failure.
+   Then check dependencies are installed, for package managers `TEST_CMD` does not run
+   itself (Gradle, Maven, cargo, go, SPM and `dotnet test` restore on their own):
+   - `Podfile` without `Pods/Manifest.lock` → `bundle exec pod install` if the Gemfile
+     names cocoapods, else `pod install`
+   - `Cartfile` without `Carthage/Build/` → `carthage bootstrap`
+   - `package.json` without `node_modules/` → `npm ci` (`pnpm`/`yarn install` per lockfile)
+   - `Gemfile` where `bundle check` fails → `bundle install`
+   Missing → STOP: "❌ Dependencies not installed. Run `<install command>` and re-run."
+   Never run the install yourself: it is network-bound and often needs private-registry
+   auth the owner has to set up.
    Never silently skip TDD because tests are inconvenient. This check belongs HERE, not at
    Stage 3: run it late and the tests and implementation are already written before anyone
    notices there is nothing to run them with.
