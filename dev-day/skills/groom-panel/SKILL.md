@@ -1,6 +1,6 @@
 ---
 name: groom-panel
-description: Groom a RAW IDEA into a build-ready ticket set by running a four-role panel — a business analyst who interrogates the requirements with the user and then convenes a UI designer, a developer and a tester in parallel on one brief. The BA synthesizes the four views into a groomed package with disagreements surfaced, not smoothed, puts each answerable hard objection back to the one specialist who can answer it over at most two resolution rounds, and carries whatever survives to the user as the decisions only they can make. Runs BEFORE any plan or code; writes ONE markdown artifact (plus one mock HTML when a ticket adds a new screen, approved by the user at a design gate), creates the Epic and — after an approval gate — its child tickets in Jira, but touches no code and no other repo state. Distinct from `/groom`, which analyzes ONE EXISTING Jira ticket for estimation readiness — this one turns "I want to build X" into the tickets themselves. Use on "/groom-panel <idea>", "groom this idea", "run a grooming session", "get the panel on this".
+description: Groom a RAW IDEA into a build-ready ticket set by running a four-role panel — a business analyst who interrogates the requirements with the user and then convenes a UI designer, a developer and a tester in parallel on one brief. The BA synthesizes the four views into a groomed package with disagreements surfaced, not smoothed, puts each answerable hard objection back to the one specialist who can answer it over at most two resolution rounds, and carries whatever survives to the user as the decisions only they can make. Runs BEFORE any plan or code; writes ONE markdown artifact (plus one platform-styled mock HTML when a ticket adds a new screen, or a review of the user's existing mocks, approved by the user at a design gate), creates the Epic and — after an approval gate — its child tickets in Jira, but touches no code and no other repo state. Distinct from `/groom`, which analyzes ONE EXISTING Jira ticket for estimation readiness — this one turns "I want to build X" into the tickets themselves. Use on "/groom-panel <idea>", "groom this idea", "run a grooming session", "get the panel on this".
 allowed-tools: Read, Grep, Glob, Bash, Agent, AskUserQuestion, Write, ToolSearch, createJiraIssue, searchJiraIssuesUsingJql
 arguments:
   - name: idea
@@ -247,16 +247,34 @@ Runs only when a ticket adds a screen the UI role marked NEW; a change to an exi
 Approving the ticket package in step 8 is NOT approving a design: a text layout is not a design, and
 the user must see the look before anyone builds it.
 
-1. Write 2-3 visual directions to `docs/mocks/<epic-slug>.html` in the invoking repo: one
-   self-contained file, sample data labeled as sample, the same content in every direction, and a
-   States section covering every state the UI role listed. Every control in the mock must be in the
-   ticket's scope; invent no commands, routes or buttons.
-2. Screenshot each direction (a headless browser) and look at it before showing the user; fix overflow
-   or a broken script first. A page that renders blank is not a mock.
-3. Ask with `AskUserQuestion`: pick a direction / revise / defer. A pick goes into the artifact under
-   `## Design approval` (path, direction, date), into that ticket's **Design:** line, and into its
-   acceptance criteria ("built to match the approved mock, direction X").
-4. Defer still files the ticket, with `**Design:** NOT APPROVED, needs mock sign-off before build` at
+1. **Resolve the platform** of each NEW screen from the repo: `AndroidManifest.xml` / Gradle app
+   module → Android; an Xcode project with an iOS target → iOS; a macOS target → Mac; otherwise web.
+   A multiplatform repo or no code yet → ask the user which platforms. Never default a mobile or
+   desktop app to a web page.
+2. **Ask whether mocks already exist** (`AskUserQuestion`: "I have mocks" + path / "make them").
+   Accept PNG, JPG, PDF or HTML. A design-tool link needs an export to one of those unless a
+   connector for that tool is available.
+3. **Existing mocks → review, do not redraw.** Read every file and check, per ticket: every screen
+   the UI role listed is present; every state (empty, loading, error, permission-refused) is shown;
+   no control, route or feature outside the ticket's scope; the flow between screens matches; the
+   look follows the platform from 1 (no iOS controls in an Android app). Report "matches" or
+   "gaps: ..." per ticket. The review finds gaps; it never approves on its own.
+4. **No mocks → draw them.** Write 2-3 visual directions to `docs/mocks/<epic-slug>.html` in the
+   invoking repo: one self-contained file, sample data labeled as sample, the same content in every
+   direction, and a States section covering every state the UI role listed. Every control must be
+   in the ticket's scope; invent no commands, routes or buttons. Render in the platform from 1, at
+   device size: Android → phone frame ~412x915 with Material 3 components; iOS → iPhone frame
+   ~390x844 with iOS (HIG) components; Mac → a window with title bar and sidebar; web → page.
+   Multiplatform → the platforms side by side.
+5. Screenshot each direction or reviewed screen (a headless browser, viewport at the device size
+   from 4) and look at it before showing the user; fix overflow or a broken script first. A page
+   that renders blank is not a mock.
+6. Ask with `AskUserQuestion`: approve (pick a direction, or the reviewed mocks) / approve with
+   known gaps / revise / defer. An approval goes into the artifact under `## Design approval`
+   (path, direction, date, gaps accepted), into that ticket's **Design:** line, and into its
+   acceptance criteria ("built to match the approved mock, direction X"). Accepted gaps are listed
+   in the ticket description so the build does not invent the missing states.
+7. Defer still files the ticket, with `**Design:** NOT APPROVED, needs mock sign-off before build` at
    the top of its description.
 
 ### 8. The approval gate
@@ -291,7 +309,7 @@ step 1.5 resolution found) to the user at the end.
 ## Boundaries
 
 - Read-only on the repo. One markdown file written, plus `docs/mocks/<epic-slug>.html` when step 7.5
-  runs; nothing else.
+  draws mocks; nothing else.
 - Creates the Epic (step 1.5) and, after approval, its children (step 9) — and nothing beyond
   that: never edits or deletes an existing ticket, never touches git.
 - Never relays a specialist's verdict as established fact. If a role asserts something load-bearing,
