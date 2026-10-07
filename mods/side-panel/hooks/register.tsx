@@ -1,8 +1,8 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 
-import type { Section, Undone } from '../types'
-import { agentBoard, jiraKeyOf, paSections, todoSection, topicOf } from './panel'
+import type { JiraState, Section, Undone } from '../types'
+import { agentBoard, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, todoSection, topicOf } from './panel'
 import { KEYS, addUndone, doItNow, fileTodos, saidUndone } from './undone'
 
 // Right-side dock (fullscreen terminal, wide enough): a read-only dashboard of what needs the owner,
@@ -16,6 +16,8 @@ const agents = atom({ plugin: 'side-panel', key: 'agents' } as const, { counts: 
 const undone = atom({ plugin: 'side-panel', key: 'undone' } as const, [])
 const topic = atom({ plugin: 'side-panel', key: 'topic' } as const, '')
 const project = atom({ plugin: 'side-panel', key: 'project' } as const, '')
+// Caught from start-session's own Jira search (no URL or login of ours); refreshed by any later project-wide search.
+const jira = atom({ plugin: 'side-panel', key: 'jira' } as const, 'waiting' as JiraState)
 // When this mod first saw each agent (ms); resets on reload, so elapsed restarts then.
 const seen: Record<string, number> = {}
 // A tile's count is dim when its source is off, red when undone items wait, cyan otherwise.
@@ -47,18 +49,24 @@ async function getJson($: EngineInterface, url: string) {
 
 type Urls = { pa: string; desk: string }
 
-// A source with no URL set is left out entirely (its tile and card hidden).
+async function projectKey($: EngineInterface) {
+  return jiraKeyOf(await $.fs.read(`${await $.session.cwd()}/CLAUDE.md`).catch(() => ''))
+}
+
+// A source with no URL set is left out entirely (its tile and card hidden). Jira needs no URL.
 async function refresh($: EngineInterface, urls: Urls) {
   const cwd = await $.session.cwd()
   const name = cwd.split('/').pop() ?? cwd
-  const [cards, todos, claudeMd] = await Promise.all([
+  const [cards, todos, key, tickets] = await Promise.all([
     urls.pa ? getJson($, urls.pa) : null,
     urls.desk ? getJson($, urls.desk) : null,
-    $.fs.read(`${cwd}/CLAUDE.md`).catch(() => ''),
+    projectKey($),
+    read($, jira),
   ])
   await update($, project, () => name)
   await update($, sections, () => [
-    ...(urls.pa ? paSections(cards, jiraKeyOf(claudeMd)) : []),
+    ...(urls.pa ? [needsSection(cards, key)] : []),
+    jiraSection(tickets, key),
     ...(urls.desk ? [todoSection(todos, name)] : []),
   ])
 }
@@ -106,6 +114,17 @@ export const register: Register = (on, options) => {
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const ran = await next(e)
     await noteUndone($, 'file', fileTodos(e.file_path, e.new_string, e.old_string)).catch(() => undefined)
+    return ran
+  })
+
+  on('tool.call', async ($, e, next) => {
+    const ran = await next(e)
+    if (!e.tool.endsWith('searchJiraIssuesUsingJql') || 'deny' in ran) return ran
+    const key = await projectKey($).catch(() => undefined)
+    if (key && isProjectSearch(String((e as { jql?: unknown }).jql ?? ''), key)) {
+      await update($, jira, () => (ran.isError ? 'unavailable' : issuesOf(ran.text))).catch(() => undefined)
+      void refresh($, urls)
+    }
     return ran
   })
 
