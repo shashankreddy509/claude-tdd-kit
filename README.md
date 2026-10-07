@@ -231,6 +231,36 @@ Each plugin's own README has the full command list and the stage-by-stage flow.
 
 ---
 
+## Mods
+
+Three optional Claude Code mods (hook plugins that draw inside the terminal or the desktop Code
+tab) live under `mods/`. Each installs on its own and needs neither plugin above, except where noted.
+
+- **side-panel**: a right-side dashboard pane for the project the session is open in. Count
+  tiles, the session's agents (working / waiting / done, with timers), the current topic, and a
+  "Left undone" card that collects TODOs and skipped tests Claude writes plus "I did not run..."
+  lines from its replies; click an entry to put "You left this undone: ... Do it now." in the
+  prompt box. Needs-you, Jira and todos cards appear only after you set their URLs in `/config`
+  (`pa_url`, `desk_url`); Jira is matched to the repo's `Jira: cloudId=... key=KEY` line. The
+  pane docks in the fullscreen layout from 144 columns.
+- **cache-keeper**: a band above the prompt with the prompt-cache countdown, the cost of a cold
+  rewrite, 5h / weekly usage, what is eating the context (with a trim hint), and handoff buttons.
+  The handoff buttons run `dev-day:end-session`, so they need dev-day installed.
+- **next-steps**: turns the numbered list under a bold **Questions** heading at the end of a
+  reply into answer buttons (1-9 answer, 0 sends the picks as one reply). It does nothing for
+  replies without that block, so it pairs with a reply format that ends in one.
+
+```
+/plugin install side-panel@claude-tdd-kit
+/plugin install cache-keeper@claude-tdd-kit
+/plugin install next-steps@claude-tdd-kit
+```
+
+Each mod's logic has `*.test.ts` files; run them with `claude plugin test mods/<name>`. CI does
+not run them.
+
+---
+
 ## Install
 
 ```
@@ -275,6 +305,7 @@ the kit, with no SSH key and no second clone:
 
 - `dev-day/`: the session-loop plugin
 - `tdd-pipeline/`: the build pipeline plugin
+- `mods/`: the three optional mods (side-panel, cache-keeper, next-steps)
 
 This kit is the canonical install source.
 

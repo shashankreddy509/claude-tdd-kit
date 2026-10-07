@@ -12,7 +12,22 @@
     {
       "name": "tdd-pipeline",
       "source": "./tdd-pipeline",
-      "description": "Gated TDD build pipeline, ticket to Done: /build plans with click-approval; /implement runs test-writer → implementer → test-runner → multi-specialist review (security, quality, money-logic, concurrency) → changelog; /ship verifies the build receipt, then branches, commits, pushes and opens the PR, moving the ticket to In Review; /merged verifies the merge, parks the ticket for validation and cleans up branches; /validated records your sign-off and closes it. Jira optional; nothing hardcoded."
+      "description": "Gated TDD build pipeline, ticket to Done: /build plans with click-approval; /implement runs test-writer \u2192 implementer \u2192 test-runner \u2192 multi-specialist review (security, quality, money-logic, concurrency) \u2192 changelog; /ship verifies the build receipt, then branches, commits, pushes and opens the PR, moving the ticket to In Review; /merged verifies the merge, parks the ticket for validation and cleans up branches; /validated records your sign-off and closes it. Jira optional; nothing hardcoded."
+    },
+    {
+      "name": "side-panel",
+      "source": "./mods/side-panel",
+      "description": "Mod: right-side dashboard pane for the open project (needs-you, Jira, todos, agents, current topic, left-undone items)"
+    },
+    {
+      "name": "cache-keeper",
+      "source": "./mods/cache-keeper",
+      "description": "Mod: prompt-cache countdown, cold-rewrite cost, context eaters and one-key handoff above the prompt"
+    },
+    {
+      "name": "next-steps",
+      "source": "./mods/next-steps",
+      "description": "Mod: numbered answer buttons for the Questions block that ends a reply"
     }
   ]
 }
