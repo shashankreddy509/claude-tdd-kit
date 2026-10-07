@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 
 import type { JiraState, Section, Undone } from '../types'
-import { agentBoard, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, todoSection, topicOf } from './panel'
+import { agentBoard, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
 import { KEYS, addUndone, doItNow, fileTodos, saidUndone } from './undone'
 
 // Right-side dock (fullscreen terminal, wide enough): a read-only dashboard of what needs the owner,
@@ -122,7 +122,9 @@ export const register: Register = (on, options) => {
     if (!e.tool.endsWith('searchJiraIssuesUsingJql') || 'deny' in ran) return ran
     const key = await projectKey($).catch(() => undefined)
     if (key && isProjectSearch(String((e as { jql?: unknown }).jql ?? ''), key)) {
-      await update($, jira, () => (ran.isError ? 'unavailable' : issuesOf(ran.text))).catch(() => undefined)
+      const saved = savedPathOf(ran.text)
+      const text = saved ? await $.fs.read(saved).catch(() => undefined) : ran.text
+      await update($, jira, () => (ran.isError ? 'unavailable' : issuesOf(text))).catch(() => undefined)
       void refresh($, urls)
     }
     return ran
