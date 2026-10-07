@@ -129,3 +129,7 @@ merging".
   Only write down what was settled in step 3; unsettled points go under Hard questions.
 - Before pushing back on an outside tool's limits (billing, auth, where it runs), read its README
   first — "a proxy needs an API key" was asserted and wrong; that router passed the login through.
+- If the owner escapes or rejects an `AskUserQuestion` dialog, re-ask those same questions as
+  numbered plain text in the reply; never drop them or move on as if answered.
+- For a build-and-try idea (a mod, a script, a local tool), do not settle its permanent home
+  (plugin, kit, repo) before the owner has tried it; that is a Hard question for after the test.
