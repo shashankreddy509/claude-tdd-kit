@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { ROWS, agentBoard, clock, jiraKeyOf, paSections, todoSection, topicOf } from './panel'
+import { JIRA_ROWS, ROWS, agentBoard, clock, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, todoSection, topicOf } from './panel'
 
 // Payload shapes sampled from real cards/todos servers on 2026-10-07.
 const CARDS = {
@@ -10,13 +10,6 @@ const CARDS = {
     { source: 'calendar', key: 'cal-1', text: 'Dentist 3pm' },
     { source: 'jira', key: 'AOF-84', text: 'AOF-84 Engine switch' },
   ],
-  items: {
-    jira: [
-      { key: 'AOF-84', text: 'AOF-84 Engine switch' },
-      { key: 'AOF-85', text: 'AOF-85 Keystrokes' },
-      { key: 'AOFX-1', text: 'AOFX-1 other project' },
-    ],
-  },
 }
 
 test('Jira key comes from the repo CLAUDE.md line', () => {
@@ -24,18 +17,52 @@ test('Jira key comes from the repo CLAUDE.md line', () => {
   expect(jiraKeyOf('# graphify only')).toBe(undefined)
 })
 
-test('needs you and Jira keep only this project key, never calendar or other keys', () => {
-  const [needs, jira] = paSections(CARDS, 'AOF')
-  expect(needs!.rows).toEqual(['AOF-84 Engine switch'])
-  expect(jira!.count).toBe(2)
-  expect(jira!.rows).toEqual(['AOF-84 Engine switch', 'AOF-85 Keystrokes'])
+test('needs you keeps only this project key, never calendar or other keys', () => {
+  expect(needsSection(CARDS, 'AOF').rows).toEqual(['AOF-84 Engine switch'])
 })
 
-test('no Jira line, PA down, or stale says so', () => {
-  expect(paSections(CARDS, undefined)[1]!.note).toBe('no Jira for this project')
-  expect(paSections(CARDS, undefined)[0]!.count).toBe(0)
-  expect(paSections(null, 'AOF')[0]!.note).toBe('cards URL offline')
-  expect(paSections({ ...CARDS, stale: true }, 'AOF')[1]!.note).toBe('stale')
+test('needs you: no Jira line, PA down, or stale says so', () => {
+  expect(needsSection(CARDS, undefined).note).toBe('no Jira for this project')
+  expect(needsSection(CARDS, undefined).count).toBe(0)
+  expect(needsSection(null, 'AOF').note).toBe('cards URL offline')
+  expect(needsSection({ ...CARDS, stale: true }, 'AOF').note).toBe('stale')
+})
+
+// The Jira MCP search tool's text, shape sampled from a real searchJiraIssuesUsingJql call on 2026-10-07.
+const issue = (key: string, status: string, summary = key) => ({ key, fields: { summary, status: { name: status } } })
+const SEARCH = JSON.stringify({
+  issues: [issue('PA-19', 'Build Testing', 'pop-ups P1'), issue('PA-52', 'In Progress'), issue('PA-101', 'To Do'), issue('AOF-84', 'To Do'), issue('PA-109', 'To Do')],
+  isLast: true,
+})
+
+test('only a whole-project search replaces the Jira card', () => {
+  expect(isProjectSearch('project = PA AND statusCategory != Done ORDER BY status ASC', 'PA')).toBe(true)
+  expect(isProjectSearch('project="PA" AND type = Bug', 'PA')).toBe(true)
+  expect(isProjectSearch('key in (PA-68, AOF-90) OR project in (PA, AOF)', 'PA')).toBe(false)
+  expect(isProjectSearch('project = PAX', 'PA')).toBe(false)
+})
+
+test('Jira card: this project only, grouped by status in search order, count is tickets', () => {
+  const s = jiraSection(issuesOf(SEARCH), 'PA')
+  expect(s.count).toBe(4)
+  expect(s.note).toBe(undefined)
+  expect(s.rows).toEqual(['▸ Build Testing (1)', 'PA-19 pop-ups P1', '▸ In Progress (1)', 'PA-52 PA-52', '▸ To Do (2)', 'PA-101 PA-101', 'PA-109 PA-109'])
+})
+
+test('Jira card: long lists end in a more line', () => {
+  const many = JSON.stringify({ issues: Array.from({ length: 30 }, (_, i) => issue(`PA-${i}`, 'To Do')) })
+  const s = jiraSection(issuesOf(many), 'PA')
+  expect(s.count).toBe(30)
+  expect(s.rows.length).toBe(JIRA_ROWS)
+  expect(s.rows[JIRA_ROWS - 1]).toBe('… +17 more')
+})
+
+test('Jira card: no Jira line, not fetched yet, or a failed search says so', () => {
+  expect(jiraSection(issuesOf(SEARCH), undefined).note).toBe('no Jira for this project')
+  expect(jiraSection('waiting', 'PA').note).toBe('waiting for start-session')
+  expect(jiraSection(issuesOf('Error: 401 Unauthorized'), 'PA').note).toBe('Jira unavailable')
+  expect(jiraSection(issuesOf(undefined), 'PA').note).toBe('Jira unavailable')
+  expect(jiraSection(issuesOf('{"errorMessages":["bad JQL"]}'), 'PA').note).toBe('Jira unavailable')
 })
 
 test('todos: this project, open only, newest first, capped', () => {
