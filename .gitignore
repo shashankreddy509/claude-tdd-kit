@@ -4,3 +4,5 @@
 **/__pycache__/
 **/.venv/
 **/node_modules/
+# Written by Claude Code when a mod loads; regenerated per build
+mods/*/.claude-plugin/types/

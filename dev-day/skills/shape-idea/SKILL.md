@@ -135,3 +135,7 @@ merging".
   numbered plain text in the reply; never drop them or move on as if answered.
 - For a build-and-try idea (a mod, a script, a local tool), do not settle its permanent home
   (plugin, kit, repo) before the owner has tried it; that is a Hard question for after the test.
+- When the target has no Jira AND is not on GitHub (local-only work), neither kind fits: offer a
+  local build prompt (Why / What exists / Decided / Do / Do NOT / Hard questions / Done means) instead.
+- After writing the prompt, offer to run it in THIS session when context is still small; do not
+  default to "open a fresh session" — the owner asked "can we do the prompt here only".
