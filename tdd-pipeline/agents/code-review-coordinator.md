@@ -92,8 +92,8 @@ naming the guard that refuted it. Every finding a specialist marked `MUST-FIX` g
 failure, the fix direction, and ✅ verified / ⚠️ unverified.]
 
 ### 🟠 Must-fix (blocks ship — pipeline hard-stops here)
-[Not necessarily bugs yet, but not shippable. Classes: dead code · duplicated logic · plan file
-not delivered · unwired new entry point · unverified success claim (code-quality-reviewer) ·
+[Not necessarily bugs yet, but not shippable. Classes: dead code · duplicated logic · reuse skipped ·
+plan file not delivered · unwired new entry point · unverified success claim (code-quality-reviewer) ·
 sensitive data in logs/output (security-reviewer). Each: file:line (every copy, for
 duplication), the evidence (caller grep, named copies, untouched plan file), and the fix.]
 

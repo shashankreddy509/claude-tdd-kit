@@ -19,8 +19,14 @@ Tests already exist and are failing. Make them pass.
    to what you see. See "Building UI to a mock" below.
 3. Read every test file to understand the expected contracts
 4. Read existing codebase for patterns to follow
-5. Implement only what's needed to make tests pass — no extra code
-6. Follow existing architecture strictly
+5. **Call what the plan's `## Reuse` names.** Each row is a component or function to call
+   with this ticket's data, not to copy. If it lacks something, add a parameter to the shared
+   piece rather than forking it. If a row genuinely does not fit, STOP and report why — do
+   not quietly build a parallel version.
+6. Before creating any new helper or component the plan did not list, Grep for one that
+   already does the job; if you find it, call it and say so in your final message.
+7. Implement only what's needed to make tests pass — no extra code
+8. Follow existing architecture strictly
 
 ## Fix mode
 When the coordinator passes a test-runner FAIL diagnosis, you are fixing, not building:

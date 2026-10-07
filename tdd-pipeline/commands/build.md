@@ -36,6 +36,11 @@ Feature request: $ARGUMENTS
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore`
   subagents in parallel for breadth, or the `planner` subagent as a research helper
   to draft an approach — but those return text to you; they do NOT write any file.
+- **Find code to reuse.** Before planning anything new, search the repo for components,
+  functions and methods that already do part of the job — the same UI shape (a card, a row, a
+  dialog) or the same data read/write — and that this ticket could call with its own data or
+  labels. Each one goes in the plan's `## Reuse`. A near-copy the plan never named is the
+  duplication the reviewer will block later.
 - **UI ticket? Resolve its mock now.** Check the ticket for a mock reference, then the project's
   design directory (CLAUDE.md may name it, e.g. `design/exports/`). Whatever you find goes in the
   plan's `## Design Reference`. A UI ticket with no mock anywhere is worth surfacing — without one
@@ -77,6 +82,10 @@ Show the full plan directly in chat using this format:
 [2-3 sentences]
 ## Approach
 [architecture decision — why this over alternatives]
+## Reuse (existing code to call)
+- `Symbol` @ `path:line` — call with [this ticket's data/labels] instead of building [X];
+  [any parameter it needs added]
+- Nothing fits: "none found — searched: [terms/paths]", so a skipped search is visible.
 ## Success Criteria
 - [observable condition that makes this done — a state someone else could check, not "it works"]
 - Prover: [the exact check that proves it landed — a field read back, a hash compared, an exit

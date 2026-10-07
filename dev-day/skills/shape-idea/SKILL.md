@@ -33,8 +33,9 @@ already clear from the idea:
 
 ### 2. Inventory what already exists — before any question
 Spawn ONE `Explore` agent on the target repo: its CLAUDE.md, handoff/status docs, existing
-features, connectors, open Jira epics named in docs, and anything in the idea that may already be
-built. End its prompt with the verified-vs-inferred return contract. Spot-check any "already
+features, connectors, open Jira epics named in docs, anything in the idea that may already be
+built, and the shared components and functions (UI pieces, data writers) the idea could call with
+its own data instead of rebuilding. End its prompt with the verified-vs-inferred return contract. Spot-check any "already
 exists" / "missing" claim yourself (one grep) before relaying it. Half of a past idea's asks
 already existed; this step is what found it.
 
@@ -83,7 +84,7 @@ ticket conventions the owner's CLAUDE.md files set (fields, naming).
 ## Setup (run first)
 git config user.name "<name>" && git config user.email "<email>"
 ## Why
-## What already exists
+## What already exists (reuse, do not rebuild)
 ## Decided with the owner (do not relitigate)
 ## Do
 ## Do NOT
@@ -94,7 +95,8 @@ Fill `<name>`/`<email>` from the owner's local `git config user.name` / `user.em
 commits are authored by the owner. The cloud session cannot read the owner's local config, so
 before-commit always carries: run `<test command>` and paste the pass/fail summary line; any
 commit/PR conventions from the owner's CLAUDE.md files (e.g. attribution rules), written out in
-full; open a PR, never merge.
+full; open a PR, never merge. `## Do` always carries: call each piece listed under What already
+exists with this task's data, extending it by a parameter rather than copying it.
 
 Both kinds end with this paragraph, verbatim:
 > Before returning, state explicitly what you VERIFIED (a log line, a file read, a command output)
@@ -129,3 +131,7 @@ merging".
   Only write down what was settled in step 3; unsettled points go under Hard questions.
 - Before pushing back on an outside tool's limits (billing, auth, where it runs), read its README
   first — "a proxy needs an API key" was asserted and wrong; that router passed the login through.
+- If the owner escapes or rejects an `AskUserQuestion` dialog, re-ask those same questions as
+  numbered plain text in the reply; never drop them or move on as if answered.
+- For a build-and-try idea (a mod, a script, a local tool), do not settle its permanent home
+  (plugin, kit, repo) before the owner has tried it; that is a Hard question for after the test.
