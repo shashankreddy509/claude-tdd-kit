@@ -25,6 +25,11 @@ Tests should compile but fail (red state). Do not write implementation.
    entry must behave as OFF (fail closed). An untested off-path is discovered during the
    incident it was built for. Both sides fail closed, so absent reads as OFF and only an
    affirmative `true` renders the surface.
+6. If the plan has a **Reuse** section, write one test per row proving the new code goes
+   THROUGH that shared piece with this ticket's data — e.g. the settings screen renders the
+   shared profile card with the settings user's name. Reach it via the real screen or entry
+   point, never by calling the shared piece directly; a test that calls it directly passes
+   against a copy too.
 
 ## Stack Rules — apply ONLY the section matching the project
 Detect the stack from the repo (build files, existing tests) and follow the

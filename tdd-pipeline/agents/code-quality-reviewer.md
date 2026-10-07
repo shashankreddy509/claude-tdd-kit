@@ -40,7 +40,12 @@ Report every hit below as `MUST-FIX`; the coordinator hard-stops on these.
 - **Duplicated logic**: the same sequence of steps, guards or checks in two or more
   places (one new, or both), near-identical functions differing only in a value, or a
   helper re-implemented instead of imported from where it already lives. Name every
-  copy with `file:line`.
+  copy with `file:line`. The diff alone cannot show the last case: for each NEW function
+  or component, Grep the whole repo for its name stem and its distinctive body (a
+  literal, a call sequence, a layout shape) and cite the search.
+- **Reuse skipped** (only when the plan has a `## Reuse` section): a row the diff never
+  calls, or new code that near-copies a listed piece, and the plan was not amended with
+  a reason.
 - Fix: delete the dead symbol; extract ONE shared function (a class only when the
   copies share real state) or import the existing helper, and call it from each site.
 - **Plan not delivered** (only when a plan file is provided): a file listed under the

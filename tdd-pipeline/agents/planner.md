@@ -16,7 +16,11 @@ only on approval, persist it to `tasks/plans/<TICKET>_plan.md`.
 ## Steps
 1. Read the existing codebase structure relevant to the feature
 2. Identify affected files, new files needed, and architecture layers
-3. Check for existing patterns to follow (naming, DI, architecture)
+3. Check for existing patterns to follow (naming, DI, architecture), AND for existing
+   components, functions and methods this feature can CALL instead of rebuilding — the same
+   UI shape (card, row, dialog) or the same data read/write, passed this ticket's data or
+   labels. List each in the plan's `## Reuse` with `file:line`; if none fit, write what you
+   searched.
 4. **If this ticket builds or changes UI, find its design reference.** Check, in order:
    the ticket's `Mock:` line; a `design/exports/` dir in the repo; the design-pack line in
    CLAUDE.md. Put the resolved path in the plan's `## Design Reference` section. If the
@@ -34,6 +38,11 @@ only on approval, persist it to `tasks/plans/<TICKET>_plan.md`.
 
 ## Approach
 [Architecture decision — why this approach over alternatives]
+
+## Reuse (existing code to call)
+- `Symbol` @ `path:line` — call with [this ticket's data/labels] instead of building [X];
+  [any parameter it needs added]
+- Nothing fits: "none found — searched: [terms/paths]", so a skipped search is visible.
 
 ## Success Criteria
 - [observable condition that makes this done — a state someone else could check, not "it works"]

@@ -128,7 +128,10 @@ fallback — unchanged from before this skill read from `docs/business/`:
   one NEW (no UI exists to extend) or CHANGED. Do not choose architecture or scope.
 - **Developer**: feasibility against the ACTUAL codebase (read it), what modules and files this
   touches, where the work naturally splits, what is riskiest, what existing code it can reuse. Climb
-  the reuse ladder before proposing anything new. Do not expand scope or write code.
+  the reuse ladder before proposing anything new: an existing component or function called with
+  this ticket's data first, the same one extended by a parameter second, new code last. Name each
+  reused piece with `file:line` — it becomes the ticket's `Reuse:` line. Do not expand scope or
+  write code.
 - **Tester**: what could break, what is hard to verify, what needs a real device or real data, what
   acceptance criteria each proposed unit needs, and which parts will end up asserted-not-verified.
   Say explicitly what CANNOT be tested and why.
@@ -209,6 +212,7 @@ Parent epic: <KEY>
 **What:** ...
 **Acceptance criteria:** ... (from the tester)
 **Touches:** ... (from the developer)
+**Reuse:** `Symbol` @ `file:line` — call with <data> | none found (from the developer)
 **Screens/states:** ... (from the UI role, where it applies)
 **Design:** <mock path, picked direction, approved date> | NOT APPROVED (new screens only, from step 7.5)
 **Concerns raised:** ... (attributed: "Tester: ...", "Dev: ...")
@@ -292,7 +296,7 @@ Offer the presented package to the user with `AskUserQuestion`: approve / revise
 For each `### ` unit in the artifact's `## Tickets` section, create a child issue
 (`issuetype: Task`, `subtask: false`, `parent: <Epic key>` — not a subtask; the MCP schema's
 "Parent for subtasks" description is narrower than its actual behaviour) with a description
-assembled from that unit's What / Acceptance / Touches / Concerns and any preserved unrecognized
+assembled from that unit's What / Acceptance / Touches / Reuse / Concerns and any preserved unrecognized
 fields — do not drop them.
 
 Blocked units (flagged in their `### ` heading) get filed too, with the blocked status surfaced
