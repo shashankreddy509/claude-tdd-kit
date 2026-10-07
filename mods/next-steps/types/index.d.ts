@@ -5,6 +5,7 @@ declare module 'claude-code' {
     'next-steps': {
       questions: Question[] | null
       picks: Record<string, string>
+      hidden: boolean
     }
   }
 }

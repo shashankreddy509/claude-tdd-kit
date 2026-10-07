@@ -8,6 +8,8 @@ import { allYesNo, buildReply, cut, isRisky, parseQuestions } from './steps'
 // tap answers, then send them as one reply, e.g. "1 yes 3 91".
 const questions = atom({ plugin: 'next-steps', key: 'questions' } as const, null)
 const picks = atom({ plugin: 'next-steps', key: 'picks' } as const, {})
+// `/nextsteps off` hides the buttons for this session; `/nextsteps on` shows them again.
+const hidden = atom({ plugin: 'next-steps', key: 'hidden' } as const, false)
 
 // Digits work straight from an empty prompt box; letters need ctrl+x tab first. So answers take 1-9 and
 // 0 sends; yes to all, dismiss and any option past the ninth are click-only (owner ruled 2026-10-07).
@@ -30,6 +32,18 @@ async function send($: EngineInterface, text: string, answered: Question[]) {
 }
 
 export const register: Register = on => {
+  on('session.start', async ($, e, next) => {
+    await $.command.register({ name: 'nextsteps', description: 'Next Steps: hide or show the answer buttons for this session', argumentHint: 'on | off' })
+    return next(e)
+  })
+
+  on('command.run', { command: 'nextsteps' }, async ($, e) => {
+    const word = e.args.trim()
+    if (word !== 'on' && word !== 'off') return { text: 'Usage: /nextsteps on | off' }
+    await update($, hidden, () => word === 'off')
+    return { text: `Next Steps ${word} for this session` }
+  })
+
   on('turn.complete', async ($, e, next) => {
     if (e.agentId !== undefined) return next(e)
     const qs = e.reason === 'answer' && !e.isAborted ? parseQuestions(e.answer) : []
@@ -43,12 +57,14 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('prompt.suggest', async ($, e, next) => ((await read($, questions)) ? { isShown: false } : next(e)))
+  on('prompt.suggest', async ($, e, next) =>
+    (await read($, questions)) && !(await read($, hidden)) ? { isShown: false } : next(e),
+  )
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const below = await next(e)
     const qs = await read($, questions)
-    if (!qs || e.props.hasSurvey || e.props.isWorking) return below
+    if (!qs || e.props.hasSurvey || e.props.isWorking || (await read($, hidden))) return below
     const chosen = await read($, picks)
     const { Box, Button, Text } = $.ui.resolve(e)
     const reply = buildReply(chosen)

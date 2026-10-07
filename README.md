@@ -256,6 +256,10 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
 /plugin install next-steps@claude-tdd-kit
 ```
 
+Hide or show a mod for the current session with `/sidepanel` (opens or closes the pane),
+`/cachekeeper on|off` or `/nextsteps on|off`. To turn one off for good, use
+`claude plugin disable <mod>@claude-tdd-kit` (and `enable` to bring it back).
+
 Each mod's logic has `*.test.ts` files; run them with `claude plugin test mods/<name>`. CI does
 not run them.
 

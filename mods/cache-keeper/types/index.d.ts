@@ -10,6 +10,7 @@ declare module 'claude-code' {
       warnedFor: number | null
       pending: Pending
       eating: string
+      hidden: boolean
     }
   }
 }

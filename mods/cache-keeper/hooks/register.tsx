@@ -15,6 +15,8 @@ const tick = atom({ plugin: 'cache-keeper', key: 'tick' } as const, 0)
 const warnedFor = atom({ plugin: 'cache-keeper', key: 'warnedFor' } as const, null)
 const pending = atom({ plugin: 'cache-keeper', key: 'pending' } as const, null)
 const eating = atom({ plugin: 'cache-keeper', key: 'eating' } as const, '')
+// `/cachekeeper off` hides the band for this session; `/cachekeeper on` shows it again.
+const hidden = atom({ plugin: 'cache-keeper', key: 'hidden' } as const, false)
 
 // Local estimate only (`summary` sends no requests); refreshed once per main-loop turn, not per draw.
 async function measureEating($: EngineInterface) {
@@ -70,7 +72,7 @@ function limitsText(limits: SessionRateLimit[]) {
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'cachekeeper', description: 'Cache Keeper: set the cache TTL for testing', argumentHint: 'ttl <minutes>' })
+    await $.command.register({ name: 'cachekeeper', description: 'Cache Keeper: hide/show the band for this session, or set the cache TTL', argumentHint: 'on | off | ttl <minutes>' })
     $.clock.every(TICK_MS, () => void onTick($))
     await onTick($)
     return next(e)
@@ -78,8 +80,12 @@ export const register: Register = on => {
 
   on('command.run', { command: 'cachekeeper' }, async ($, e) => {
     const [word, value] = e.args.trim().split(/\s+/)
+    if (word === 'on' || word === 'off') {
+      await update($, hidden, () => word === 'off')
+      return { text: `Cache Keeper ${word} for this session` }
+    }
     const minutes = Number(value ?? DEFAULT_TTL_MIN)
-    if (word !== 'ttl' || !(minutes > 0)) return { text: 'Usage: /cachekeeper ttl <minutes> (no number resets to 60)' }
+    if (word !== 'ttl' || !(minutes > 0)) return { text: 'Usage: /cachekeeper on | off | ttl <minutes> (no number resets to 60)' }
     await update($, ttlMin, () => minutes)
     await onTick($)
     return { text: `Cache Keeper TTL set to ${minutes}m` }
@@ -124,7 +130,7 @@ export const register: Register = on => {
   // Draw whatever the plugins beneath draw too (Next Steps' row), under this one.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const below = await next(e)
-    if (e.props.hasSurvey) return below
+    if (e.props.hasSurvey || (await read($, hidden))) return below
     const { Box, Button, Text } = $.ui.resolve(e)
     await read($, tick)
     const last = await read($, lastAt)
