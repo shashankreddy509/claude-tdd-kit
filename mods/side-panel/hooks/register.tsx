@@ -76,11 +76,19 @@ export const register: Register = (on, options) => {
   const urls: Urls = { pa: String(options.pa_url ?? ''), desk: String(options.desk_url ?? '') }
 
   on('session.start', async ($, e, next) => {
+    await $.command.register({ name: 'sidepanel', description: 'Side panel: open it if closed, close it if open (this session)' })
     void $.ui.open({ id: PANE, title: 'Dashboard' })
     void refresh($, urls)
     $.clock.every(REFRESH_MS, () => void refresh($, urls))
     $.clock.every(AGENTS_MS, () => void refreshAgents($).catch(() => undefined))
     return next(e)
+  })
+
+  on('command.run', { command: 'sidepanel' }, async $ => {
+    const isOpen = (await $.ui.panes()).some(p => p.id === PANE)
+    if (isOpen) await $.ui.close({ id: PANE })
+    else await $.ui.open({ id: PANE, title: 'Dashboard' })
+    return { text: `Side panel ${isOpen ? 'closed' : 'opened'}` }
   })
 
   on('prompt.submit', async ($, e, next) => {

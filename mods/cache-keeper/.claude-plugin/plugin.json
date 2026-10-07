@@ -1,1 +1,6 @@
-{ "name": "cache-keeper", "version": "0.1.0", "description": "Prompt-cache countdown, cold-rewrite cost and one-click handoff", "types": "./types/index.d.ts" }
+{
+  "name": "cache-keeper",
+  "version": "0.1.1",
+  "description": "Prompt-cache countdown, cold-rewrite cost and one-click handoff",
+  "types": "./types/index.d.ts"
+}
