@@ -2,11 +2,12 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
 
 import type { Pending } from '../types'
-import { cacheState, eatingText, kTokens } from './cache'
+import { cacheState, eatingText, filled, kTokens, warmthSvg } from './cache'
 
 // This session's prompt cache lives 1h; `/cachekeeper ttl <min>` overrides it for testing.
 const DEFAULT_TTL_MIN = 60
 const TICK_MS = 15_000
+const WARMTH_CELLS = 10
 
 const lastAt = atom({ plugin: 'cache-keeper', key: 'lastAt' } as const, null)
 const model = atom({ plugin: 'cache-keeper', key: 'model' } as const, null)
@@ -131,7 +132,8 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const below = await next(e)
     if (e.props.hasSurvey || (await read($, hidden))) return below
-    const { Box, Button, Text } = $.ui.resolve(e)
+    const ui = $.ui.resolve(e)
+    const { Box, Button, Text } = ui
     await read($, tick)
     const last = await read($, lastAt)
     const s = cacheState(last, await $.clock.now(), (await read($, ttlMin)) * 60_000, null)
@@ -151,18 +153,26 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="column">
-        <Box>
+        <Box columnGap={1} alignItems="center">
           {s === null ? (
             <Text dimColor>○ no cache yet</Text>
           ) : (
-            <Text color={s.warm ? 'success' : 'error'}>● cache {s.warm ? `warm ${left}` : 'cold'}</Text>
+            <Text bold color={s.tone}>{`● cache ${s.warm ? `warm ${left}` : 'cold'}`}</Text>
           )}
-          <Text dimColor>{parts.map(p => ` | ${p}`).join('')} </Text>
+          {s === null ? null : e.surface !== 'terminal' && 'Svg' in ui ? (
+            <ui.Svg source={warmthSvg(s.left, s.tone)} alt={`cache ${Math.round(s.left * 100)}% warm`} />
+          ) : (
+            <Box key="warmth">
+              <Text color={s.tone}>{'━'.repeat(filled(s.left, WARMTH_CELLS))}</Text>
+              <Text color="subtle">{'━'.repeat(WARMTH_CELLS - filled(s.left, WARMTH_CELLS))}</Text>
+            </Box>
+          )}
+          <Text dimColor>{parts.map(p => `| ${p}`).join(' ')}</Text>
           {busy ? (
             <Text dimColor>handoff running…</Text>
           ) : (
             <Box>
-              <Button key="handoff" label="handoff" hotkey="h" onPress={() => handoff($, 'handoff')} />
+              <Button key="handoff" variant="primary" label="handoff" hotkey="h" onPress={() => handoff($, 'handoff')} />
               <Button key="start" label="handoff+start" hotkey="s" onPress={() => handoff($, 'start')} />
             </Box>
           )}

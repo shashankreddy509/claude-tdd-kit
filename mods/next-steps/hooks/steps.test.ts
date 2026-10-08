@@ -44,3 +44,22 @@ test('yes to all only when every question is yes/no', async () => {
   expect(allYesNo(qs.slice(0, 1))).toBe(true)
   expect(allYesNo([])).toBe(false)
 })
+
+const BAND = { component: 'AbovePrompt', props: { hasSurvey: false, isWorking: false, maxRows: 20, bodyColumns: 80, scroll: { offset: 0, bodyRows: 20 }, view: {} } } as const
+
+test('band: question chips, and send is the primary button once an answer is picked', async ($, on) => {
+  on('turn.complete', () => ({ text: '' }))
+  on('ui.render', ($, e) => h($.ui.resolve(e).Box, {}) as never)
+  await $.turn.complete({ answer: 'Done.\n\n**Questions**\n1. Ship it (yes/no)?', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount({ plugin: 'next-steps', surface, ...BAND })
+    expect((await ui.find({ type: 'Text', text: ' Q1 ' }))?.props.backgroundColor).toBe('permission')
+    // Picks are session state, so the first surface picks and the second sees the same send.
+    if (surface === 'terminal') {
+      expect(await ui.find({ key: 'send' })).toBeUndefined()
+      await ui.press({ key: 'opt1' })
+    }
+    expect((await ui.find({ key: 'send' }))?.props.variant).toBe('primary')
+    await ui.unmount()
+  }
+})

@@ -2,7 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 
 import type { JiraState, Section, Undone } from '../types'
-import { agentBoard, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
+import { BAR, PARTS, agentSvg, segments } from './look'
+import { WORKING, agentBoard, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
 import { KEYS, addUndone, doItNow, fileTodos, saidUndone } from './undone'
 
 // Right-side dock (fullscreen terminal, wide enough): a read-only dashboard of what needs the owner,
@@ -20,11 +21,11 @@ const project = atom({ plugin: 'side-panel', key: 'project' } as const, '')
 const jira = atom({ plugin: 'side-panel', key: 'jira' } as const, 'waiting' as JiraState)
 // When this mod first saw each agent (ms); resets on reload, so elapsed restarts then.
 const seen: Record<string, number> = {}
-// A tile's count is dim when its source is off, red when undone items wait, cyan otherwise.
-function tileColor(s: Section): string | undefined {
+// A tile's count is dim when its source is off, error-colored when undone items wait, the accent otherwise.
+const needsAction = (s: Section) => s.title === 'Left undone' && s.count > 0
+function tileColor(s: Section) {
   if (s.note) return undefined
-  if (s.title === 'Left undone' && s.count) return 'red'
-  return 'cyan'
+  return needsAction(s) ? 'error' : 'claude'
 }
 const ICON: Record<string, string> = { 'Needs you': '🔔', Jira: '🎫', Todos: '📝', 'Left undone': '⚠️' }
 
@@ -36,7 +37,6 @@ async function doNow($: EngineInterface, u: Undone) {
   await update($, undone, list => list.filter(x => x.text !== u.text))
   await $.prompt.fill({ text: doItNow(u) })
 }
-const STATUS_COLOR: Record<string, string> = { running: 'green', waiting: 'yellow', pending: 'yellow' }
 
 async function getJson($: EngineInterface, url: string) {
   try {
@@ -139,7 +139,8 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Button, Text } = $.ui.resolve(e)
+    const ui = $.ui.resolve(e)
+    const { Box, Button, Text } = ui
     const list = await read($, sections)
     const live = await read($, agents)
     const open = await read($, undone)
@@ -147,51 +148,76 @@ export const register: Register = (on, options) => {
     const name = await read($, project)
     const tileWidth = Math.max(10, Math.floor((e.props.bodyColumns - 1) / 2))
     const isStale = list.some(s => s.note)
+    const { counts } = live
+    const legend = PARTS.filter(([k]) => counts[k] || k !== 'stuck').map(([k]) => `${counts[k]} ${k}`).join(' · ')
     const line = (text: string, key: string, dim = false) => (
       <Text key={key} wrap="truncate-end" dimColor={dim}>
         {text}
       </Text>
     )
+    const chip = (text: string, color: string) => (
+      <Text backgroundColor={color} color="inverseText">{` ${text} `}</Text>
+    )
     const card = (title: string, body: RenderChildren, key = title) => (
-      <Box key={key} flexDirection="column" borderStyle="round" borderDimColor paddingX={1}>
+      <Box key={key} flexDirection="column" borderStyle="round" borderColor="subtle" paddingX={1}>
         <Text bold>{title}</Text>
         {body}
       </Box>
     )
+    // Terminal: the count bar in theme-colored cells over a subtle track, a status chip per agent row.
+    const barWidth = Math.max(4, e.props.bodyColumns - 4)
+    const barCells = segments(PARTS.map(([k]) => counts[k]), barWidth)
+    const terminalAgents = [
+      <Text key="bar">
+        {PARTS.map(([k, color], i) => (barCells[i] ? <Text key={k} color={color}>{BAR.repeat(barCells[i])}</Text> : null))}
+        {barCells.some(Boolean) ? null : <Text color="subtle">{BAR.repeat(barWidth)}</Text>}
+      </Text>,
+      line(legend, 'legend', true),
+      ...(live.rows.length
+        ? live.rows.map((a, i) => (
+            <Box key={`agent${i}`} columnGap={1}>
+              <Box flexGrow={1}>{line(a.label, 'label')}</Box>
+              {chip(a.status, WORKING.has(a.status) ? 'success' : 'warning')}
+              <Text dimColor>{a.elapsed}</Text>
+            </Box>
+          ))
+        : [line('none running', 'none', true)]),
+    ]
+    // Remote surfaces (desktop, editor, phone) draw the same card as one SVG. The terminal's table is padded
+    // with every element name, so `'Svg' in ui` alone is true there too: the surface decides.
+    const agentBody =
+      e.surface !== 'terminal' && 'Svg' in ui ? (
+        <ui.Svg
+          source={agentSvg(counts, live.rows)}
+          alt={`Agents: ${legend}${live.rows.map(a => `; ${a.label} ${a.status} ${a.elapsed}`).join('')}`}
+          isInteractive={live.rows.some(a => WORKING.has(a.status)) || undefined}
+        />
+      ) : (
+        terminalAgents
+      )
     return (
       <Box flexDirection="column">
-        <Box>
-          <Text bold>{`📊 ${name || 'Dashboard'} `}</Text>
-          <Text color={isStale ? 'yellow' : 'green'}>{isStale ? '● partial' : '● live'}</Text>
+        <Box columnGap={1}>
+          <Text bold>{`📊 ${name || 'Dashboard'}`}</Text>
+          {chip(isStale ? 'partial' : 'live', isStale ? 'warning' : 'success')}
         </Box>
         <Box flexWrap="wrap" columnGap={1}>
           {[...list, { title: 'Left undone', count: open.length, rows: [] }].map(s => (
-            <Box key={`tile-${s.title}`} width={tileWidth} flexDirection="column" borderStyle="round" borderDimColor paddingX={1}>
-              <Text bold color={tileColor(s)}>
+            <Box key={`tile-${s.title}`} width={tileWidth} flexDirection="column" borderStyle="round" borderColor={needsAction(s) ? 'error' : 'subtle'} paddingX={1}>
+              <Text bold color={tileColor(s)} dimColor={!!s.note}>
                 {`${ICON[s.title] ?? ''} ${s.note ? '–' : s.count}`}
               </Text>
               {line(s.note ? `${s.title} · ${s.note}` : s.title, 'label', true)}
             </Box>
           ))}
         </Box>
-        {card(
-          `🤖 Agents  ${live.counts.working} working · ${live.counts.waiting} waiting · ${live.counts.done} done${live.counts.stuck ? ` · ${live.counts.stuck} stuck` : ''}`,
-          live.rows.length
-            ? live.rows.map((a, i) => (
-                <Box key={`agent${i}`}>
-                  <Box flexGrow={1}>{line(a.label, 'label')}</Box>
-                  <Text color={STATUS_COLOR[a.status]} dimColor={!STATUS_COLOR[a.status]}>{` ● ${a.status} ${a.elapsed}`}</Text>
-                </Box>
-              ))
-            : line('none running', 'none', true),
-          'Agents',
-        )}
+        {card('🤖 Agents', agentBody, 'Agents')}
         {card('💬 Now', line(now || 'nothing yet', 'now', !now))}
         {open.length > 0 && (
-          <Box flexDirection="column" borderStyle="round" borderColor="red" paddingX={1}>
+          <Box flexDirection="column" borderStyle="round" borderColor="error" paddingX={1}>
             <Box>
               <Box flexGrow={1}>
-                <Text bold color="red">{`⚠️ Left undone ${open.length}`}</Text>
+                <Text bold color="error">{`⚠️ Left undone ${open.length}`}</Text>
               </Box>
               <Button plain dimColor key="clear" label="clear all" hotkey="x" onPress={() => update($, undone, () => [])} />
             </Box>

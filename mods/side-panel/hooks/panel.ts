@@ -77,7 +77,7 @@ export function todoSection(payload: { todos?: Todo[] } | null, project: string)
   return section('Todos', open.map(t => t.text ?? ''))
 }
 
-const WORKING = new Set(['running', 'pending'])
+export const WORKING = new Set(['running', 'pending'])
 const WAITING = new Set(['waiting', 'idle'])
 const DONE = new Set(['completed'])
 const STUCK = new Set(['failed', 'killed'])
