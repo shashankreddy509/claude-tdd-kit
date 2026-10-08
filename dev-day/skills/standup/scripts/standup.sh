@@ -35,11 +35,18 @@ fi
 
 REPO="$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")"
 
+# Default branch — never assume main. Local origin/HEAD first, else ask the remote.
+DEFAULT="$(git symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null)"
+DEFAULT="${DEFAULT#origin/}"
+[ -z "$DEFAULT" ] && DEFAULT="$(git ls-remote --symref origin HEAD 2>/dev/null \
+  | awk '/^ref:/{sub("refs/heads/","",$2); print $2; exit}')"
+
 # Best-effort refresh of remote refs + tags (read-only). Silent on failure.
-git fetch origin main --tags -q >/dev/null 2>&1 || true
+git fetch origin ${DEFAULT:+"$DEFAULT"} --tags -q >/dev/null 2>&1 || true
 
 echo "== standup facts =="
 echo "repo: ${REPO}"
+echo "default_branch: ${DEFAULT:-(unknown)}"
 
 # --- 1. git working state ----------------------------------------------------
 BRANCH="$(git branch --show-current 2>/dev/null)"
@@ -85,7 +92,7 @@ else
   fi
 fi
 
-# --- 3. deploy gap (latest tag vs origin/main, app-code only) ----------------
+# --- 3. deploy gap (latest tag vs origin/<default>, app-code only) -----------
 echo "deploy_gap:"
 LATEST_TAG="$(git tag -l 'v*' 2>/dev/null | sort -V | tail -1)"
 if [ -z "$LATEST_TAG" ]; then
@@ -97,11 +104,12 @@ if [ -z "$LATEST_TAG" ]; then
   echo "  NOTE: no tags found — cannot compute deploy gap."
 else
   echo "  latest_tag: ${LATEST_TAG}"
-  if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
-    echo "  NOTE: origin/main not found — cannot compute deploy gap."
+  BASE="origin/$DEFAULT"
+  if [ -z "$DEFAULT" ] || ! git rev-parse --verify -q "$BASE" >/dev/null 2>&1; then
+    echo "  NOTE: origin/${DEFAULT:-<default branch>} not found — cannot compute deploy gap."
   else
     # app-code file changes since the tag (content, not PR title)
-    CHANGED_ALL="$(git diff --name-only "${LATEST_TAG}"..origin/main 2>/dev/null)"
+    CHANGED_ALL="$(git diff --name-only "${LATEST_TAG}..${BASE}" 2>/dev/null)"
     APP_CHANGED=""
     for p in $APP_PATHS; do
       MATCH="$(printf '%s\n' "$CHANGED_ALL" | grep "^${p}" 2>/dev/null)"
@@ -119,7 +127,7 @@ else
       echo "  app_files_changed:"
       printf '%s\n' "$APP_CHANGED" | sed 's/^/    /'
       echo "  app_commits:"
-      git log --oneline "${LATEST_TAG}"..origin/main -- $APP_PATHS 2>/dev/null \
+      git log --oneline "${LATEST_TAG}..${BASE}" -- $APP_PATHS 2>/dev/null \
         | sed 's/^/    /'
     fi
   fi

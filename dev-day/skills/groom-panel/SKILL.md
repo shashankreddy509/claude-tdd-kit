@@ -77,8 +77,8 @@ Rules that make this step useful rather than an interrogation:
 
 Once interrogation with the user converges (step 1 is settled, no more open questions), the BA
 proposes an Epic title + description. The MAIN THREAD — not the BA sub-agent, which holds no
-Jira tools — first resolves the Jira project and MCP dialect exactly as `/create-ticket` steps 1
-and 1b do (the project CLAUDE.md `Jira:` line, else ask; never hardcode a tool name or site),
+Jira tools — first resolves the Jira project and MCP dialect exactly as `/create-ticket` steps 1,
+1b and 2 do (the project CLAUDE.md `Jira:` line, else ask; never hardcode a tool name or site),
 then creates it via the create-issue verb (`issueTypeName: Epic`), and writes
 `Parent epic: <KEY>` into the artifact header once step 6 produces it.
 
@@ -294,8 +294,10 @@ Offer the presented package to the user with `AskUserQuestion`: approve / revise
 ### 9. File the children
 
 For each `### ` unit in the artifact's `## Tickets` section, create a child issue
-(`issuetype: Task`, `subtask: false`, `parent: <Epic key>` — not a subtask; the MCP schema's
-"Parent for subtasks" description is narrower than its actual behaviour) with a description
+(issue type: `Task` if the fetched types include it, else ask once (AskUserQuestion listing those
+types) and use the answer for every child; `subtask: false`, `parent: <Epic key>` — not a subtask; the MCP schema's
+"Parent for subtasks" description is narrower than its actual behaviour; parameter names come
+from the resolved schema) with a description
 assembled from that unit's What / Acceptance / Touches / Reuse / Concerns and any preserved unrecognized
 fields — do not drop them.
 
@@ -304,7 +306,7 @@ prominently in the title or the top of the description — never skipped, never 
 work.
 
 Before filing each unit, check for an existing child with the same title under this Epic
-(`searchJiraIssuesUsingJql`, or read the Epic's children directly) — an exact title match is
+(the JQL-search verb resolved in step 1.5, or read the Epic's children directly) — an exact title match is
 reported as "already exists" and skipped, not re-created.
 
 Report the filed keys and their URLs (`https://<site>.atlassian.net/browse/<KEY>`, the site the

@@ -84,11 +84,7 @@ writes free.
 
 1. Load prior feedback: read `tasks/feedback.md` if it exists. Silently internalize any rules — do not recite them back. Also read `tasks/session-notes.md` if it exists (the 2-line "Left off" note from the last `/end-session`) — surface it in the confirmation message so the user can resume where they stopped.
 2. Determine the project's Jira config: scan the loaded project CLAUDE.md (any of the project/root/.claude CLAUDE.md files in context) for a `Jira: cloudId=<uuid> key=<KEY>` line.
-   - **If found** — pull pending work. Load the tool via `ToolSearch` query `select:searchJiraIssuesUsingJql`, then call `searchJiraIssuesUsingJql` with:
-     - `cloudId`: the `cloudId` from the line
-     - `jql`: `project = <KEY> AND statusCategory != Done ORDER BY status ASC, created DESC`
-     - `fields`: `["key","summary","status","issuetype"]`
-     - `maxResults`: `50`, `responseContentFormat`: `"markdown"`
+   - **If found** — pull pending work. Resolve the Jira MCP dialect exactly as `/create-ticket` step 1b does, for the JQL-search verb (ToolSearch keyword `+jira search`). Call it with `jql` = `project = <KEY> AND statusCategory != Done ORDER BY status ASC, created DESC` (keep this exact JQL — the side-panel mod matches it). Pass `cloudId`, `fields` key/summary/status/issuetype, a 50-result limit and markdown content only where its schema has those parameters.
      - Group the issues by status name (To Do / In Progress / Product Backlog / etc.) for the confirmation message; one line each: `KEY — summary (issuetype)`.
      - If the MCP call fails (auth/offline), say so in one line ("Jira unavailable") and show "None" — do not fall back to a local file.
    - **If not found** — no Jira for this project. Skip the task list: the confirmation message's pending-tasks body is just "None (no Jira configured for this project)".

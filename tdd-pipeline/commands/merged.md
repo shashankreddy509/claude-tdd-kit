@@ -23,17 +23,14 @@ modified `tasks/plans/*_plan.md`, or from the current branch (`feat/PROJ-12-slug
   for this machine and whether `cloudId` is a parameter (and if so, where to read it from).
   No Atlassian MCP resolved → log the skip line from that file, run the git cleanup, and skip
   every Jira step below.
-- Determine the default branch — do NOT assume `main`:
-  ```bash
-  git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' \
-    || gh repo view --json defaultBranchRef --jq .defaultBranchRef.name
-  ```
+- Determine `<default>` per `references/git-host.md` — do NOT assume `main`.
 
 ### Step 1 — Verify the merge actually happened
 
 Don't trust the caller, and don't treat "closed" as "merged" — a closed-unmerged PR must
 never close a ticket or delete a branch.
 
+GitHub path:
 ```bash
 gh pr view <#|branch> --json number,url,state,mergedAt,mergeCommit,headRefName
 ```
@@ -42,6 +39,9 @@ Falling back to a search when only a key is known:
 ```bash
 gh pr list --search "<KEY>" --state merged --json number,url,mergedAt,mergeCommit,headRefName --limit 5
 ```
+
+Manual path → `references/git-host.md` merge confirmation; "Not yet" = `OPEN` → stop;
+`headRefName` = the branch you pushed.
 
 - `MERGED` → continue; capture PR URL, merge commit, merged-at, and `headRefName` (the branch
   to delete later — take it from here, never guess).
@@ -138,7 +138,8 @@ If the project has its own deploy ritual, mention that deploying is separate. **
 - The two-stage close (verification column → validated) exists so "Done" means *validated*,
   not merely *merged*. On boards without such a column the distinction can't be expressed,
   so Done is correct there.
-- Verifies the merge from the GitHub API rather than trusting the caller.
+- Verifies the merge from the GitHub API (or your confirmation on other hosts) rather than
+  trusting the caller.
 - Nothing hardcoded: no cloudId, site, key, transition id, status-name mapping, or default
   branch name. Two projects on the same site do differ.
 - Idempotent: re-running logs no-ops rather than erroring.

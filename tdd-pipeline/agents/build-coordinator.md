@@ -38,8 +38,11 @@ Before doing anything:
         than one `.sln` → STOP and ask which)
       - `Package.swift` → `swift test`
       - `*.xcworkspace` (preferred) / `*.xcodeproj` → `xcodebuild test -workspace|-project
-        <path> -scheme <scheme from xcodebuild -list> -destination 'platform=iOS
-        Simulator,name=<first device from xcrun simctl list devices available>'`
+        <path> -scheme <scheme from xcodebuild -list> -destination <D>`, where `<D>` comes
+        from `xcodebuild -showdestinations -workspace|-project <path> -scheme <scheme>`: the
+        first non-placeholder `platform:… Simulator` entry → `'id=<its id>'` (prefer it even
+        if a 'My Mac … Designed for iPad/iPhone' line is listed first); no simulator entry
+        (macOS-only scheme) → `'platform=macOS'`
       - `composer.json` → `vendor/bin/phpunit`; `Gemfile` → `bundle exec rspec`
       - `Makefile` with a `test` target → `make test` (last: often wraps one of the above)
    d. Nothing found → STOP: "❌ No test command found. If this repo has tests, add

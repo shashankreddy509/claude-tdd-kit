@@ -1,6 +1,6 @@
 {
   "name": "tdd-pipeline",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "Gated TDD build pipeline: /build plans a feature or bug fix and waits for click-approval; /implement resolves the test command for any stack, runs the build-coordinator through test-writer \u2192 verify-red \u2192 implementer \u2192 test-runner/implementer fix loop \u2192 adversarially-verified code review (Critical and Must-fix findings hard-stop, post-review edits must re-pass review), then auto-runs /ship, which gates the commit on a verification receipt, then posts the pipeline summary to Jira and moves the ticket to In Review. Plans carry a Design Reference so UI tickets are built to their mockup PNG instead of generic sample UI.",
   "author": {
     "name": "Shashank Reddy Ganta"

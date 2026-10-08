@@ -13,6 +13,7 @@ surface. Two known dialects:
 | Names | camelCase, `mcp__atlassian__getJiraIssue` | snake_case under a `jira` prefix, e.g. `..._jira_get_issue` |
 | Site | `cloudId` is a **required** parameter | no `cloudId` — the server resolves the site internally |
 | Issue arg | `issueIdOrKey` | `issue_key` |
+| JQL search | `searchJiraIssuesUsingJql(cloudId, jql)` → `{issues:[{key, fields:{summary, status:{name}}}]}` or `{issues:{nodes:[...]}}` | UNVERIFIED |
 
 A plugin written against one dialect does nothing useful on the other. Detect, then call.
 
@@ -46,6 +47,7 @@ table is documentation, the schema is truth. Match by what each tool does:
 | apply a transition | transitions/moves an issue, takes a transition id |
 | comment | adds a comment to an issue |
 | read an issue | gets a single issue's fields |
+| search issues by JQL | takes a JQL string, returns matching issues |
 
 **Step 3 — neither resolves → no Jira MCP on this machine.**
 

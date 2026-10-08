@@ -41,9 +41,9 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
 
    No ticket key at all (a genuine chore/docs ship with no Jira issue) → skip this step; the receipt gate covers ticketed feature work.
 
-1. **Inspect the tree.**
+1. **Inspect the tree.** Resolve `<default>` per `references/git-host.md`, then:
    ```bash
-   git status --short && git branch --show-current && git fetch origin main -q && git rev-parse origin/main HEAD
+   git status --short && git branch --show-current && git fetch origin <default> -q && git rev-parse origin/<default> HEAD
    ```
 
 2. **Confirm the Jira issue is In Progress.** The work being shipped should map to an issue in the project key from CLAUDE.md. If one exists and isn't already In Progress, move it there using the list-transitions and transition verbs **resolved in step 0** (never a hardcoded tool name) → match `to.name == "In Progress"`; if no issue exists for non-trivial feature work, flag it (offer to create one) but don't block the ship.
@@ -54,8 +54,8 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
    - If a touched file mixes the feature with unrelated hunks: split by logical concern — isolate via `git apply --cached` of a hand-built single-hunk patch (or `git add -p`), then commit from the index with a **bare** `git commit` (NO pathspec — `git commit <file>` leaks the full working tree).
 
 4. **Pick the branch.**
-   - If currently on `main`: branch first (main is PR-only; never push main).
-   - If the work is a chore UNRELATED to the active feature branch, or HEAD is behind `origin/main`: base off `origin/main` for a clean PR — `git checkout -b <type>/<slug> origin/main` (working changes carry over).
+   - If on `<default>`: branch first (PR-only; never push it).
+   - If the work is a chore UNRELATED to the active feature branch, or HEAD is behind `origin/<default>`: base off `origin/<default>` for a clean PR — `git checkout -b <type>/<slug> origin/<default>` (working changes carry over).
    - Branch name: `feat/`, `fix/`, `chore/`, `docs/` + kebab slug.
    - **Jira link:** if the work maps to an issue, put the key in the branch slug: `feat/<KEY>-12-strong-bias-only`. Use the key the user gave, or one obvious from the work via the Atlassian MCP; if there's no issue, skip the key — don't invent one.
 
@@ -83,8 +83,9 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
 7. **Push + open PR.**
    ```bash
    git push -u origin <branch>
-   gh pr create --base main --title "<conventional title>" --body "<what / why / safety>"
+   gh pr create --base <default> --title "<conventional title>" --body "<what / why / safety>"
    ```
+   - Not GitHub, or `gh` unusable (`references/git-host.md` probe) → push, then that file's manual path; the report gives the compare/MR URL plus the title/body to paste.
    - **Jira:** include the `<KEY>-NN` key in the PR title (e.g. `<KEY>-12 feat(trading): strong bias only`) when the work maps to an issue, so the GitHub-for-Jira app links the PR to the issue.
    **PR body = what / why / safety + the Jira link. Nothing else.**
    - **what** — the change, from the staged diff (same content as the commit subject/body, step 5).

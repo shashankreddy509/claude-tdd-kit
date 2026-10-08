@@ -79,7 +79,7 @@ ticket conventions the owner's CLAUDE.md files set (fields, naming).
 
 **cloud** — plain instructions, sections in this order:
 ```
-<Task in one line>. Repo: <owner/repo>, branch off main as <branch>.
+<Task in one line>. Repo: <owner/repo>, branch off the repo's default branch as <branch>.
 
 ## Setup (run first)
 git config user.name "<name>" && git config user.email "<email>"

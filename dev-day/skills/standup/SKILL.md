@@ -2,7 +2,7 @@
 name: standup
 description: >-
   Read-only "anything pending?" sweep of live project state — git branch + dirty
-  files, open PRs, the deploy gap (latest tag vs origin/main, app-code only), and
+  files, open PRs, the deploy gap (latest tag vs origin/<default>, app-code only), and
   open Jira issues (statusCategory != Done). Answers "what's left / anything
   pending / what's next" in one shot WITHOUT acting on anything. Use on '/standup',
   "anything pending?", "what's next", "where are we". Never commits, ships, or
@@ -48,7 +48,8 @@ abort; derive sources 1–3 by hand, read-only:
 - **git**: `git rev-parse --abbrev-ref HEAD`, `git status --short`, `git rev-list --left-right --count @{u}...HEAD`.
 - **PRs**: `gh pr list --state open --json number,title,headRefName` — targeting the RESOLVED repo
   (`-R <owner/repo>`), not necessarily the cwd (see the dashboard section below).
-- **deploy gap**: latest plain `v*` tag (exclude `-rc`) vs `origin/main`; `git diff --name-only <tag>..origin/main`
+- **deploy gap**: latest plain `v*` tag (exclude `-rc`) vs `origin/<default>` (the script's `default_branch:`; by hand
+  `git ls-remote --symref origin HEAD`); `git diff --name-only <tag>..origin/<default>`
   filtered to the repo's app-source prefix (see `--app-paths` below). Zero app files → up-to-date; else pending vX.Y.(Z+1).
 
 The script prints, read-only and macOS/bash-3.2 safe (degrading gracefully when gh/tags are absent):
@@ -58,7 +59,7 @@ The script prints, read-only and macOS/bash-3.2 safe (degrading gracefully when 
    feature work.
 2. **Open PRs** — `gh pr list --state open` (number · title · head branch). Notes if gh is
    missing/unauth instead of crashing.
-3. **Deploy gap (merged ≠ deployed)** — latest `v*` tag (or `git describe`) vs `origin/main`,
+3. **Deploy gap (merged ≠ deployed)** — latest `v*` tag (or `git describe`) vs `origin/<default>`,
    classified by CONTENT not PR title: it lists only app-code files/commits under the app-source
    prefix(es). Default prefixes are permissive (`app/ src/ lib/`); override per-project with
    `--app-paths` / `STANDUP_APP_PATHS`. `status: PENDING` → "deploy pending (vX.Y.(Z+1))";
@@ -66,8 +67,8 @@ The script prints, read-only and macOS/bash-3.2 safe (degrading gracefully when 
 
 4. **Open tickets (if the project has a Jira line in CLAUDE.md `Jira: cloudId=<uuid> key=<KEY>`).**
    This source stays MODEL work (needs the Atlassian MCP) — the script does not touch it.
-   Query `project = <KEY> AND statusCategory != Done ORDER BY updated DESC` via the Atlassian
-   MCP (`searchJiraIssuesUsingJql`), group by status. List key · summary · status. If no Jira
+   Query `project = <KEY> AND statusCategory != Done ORDER BY updated DESC` via the JQL-search
+   verb, resolved as `/start-session` step 2 does, group by status. List key · summary · status. If no Jira
    line → skip this source (don't fall back to a todo file).
 
 5. **Stale feature-flag entries (ONLY when CLAUDE.md has a `Gating:` line naming a flag store).**
