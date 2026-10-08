@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { agentSvg, segments } from './look'
+import { barSvg, dotSvg, segments } from './look'
 
 const PANE = { component: 'Pane', requestId: 'side-panel', props: { title: 'Dashboard', isFocused: false, bodyColumns: 40, placement: 'dock', scroll: { offset: 0, bodyRows: 30 }, view: {} } } as const
 
@@ -11,16 +11,15 @@ test('count bar: fills the width by share, every non-zero part keeps a cell', ()
   expect(segments([0, 0, 0, 0], 10)).toEqual([0, 0, 0, 0])
 })
 
-test('agent svg: a row per live agent, working ones pulse, labels escaped', () => {
-  const svg = agentSvg({ working: 1, waiting: 1, done: 2, stuck: 0 }, [
-    { label: 'map <mods> & tests', status: 'running', elapsed: '0:12' },
-    { label: 'idle one', status: 'waiting', elapsed: '1:00' },
-  ])
-  expect(svg).toContain('map &#60;mods&#62; &#38; tests')
-  expect(svg.match(/<circle/g)?.length).toBe(2)
-  expect(svg.match(/pulse/g)?.length).toBe(2) // the CSS rule + the one working row
-  expect(svg).not.toContain('class="stuck"')
-  expect(agentSvg({ working: 0, waiting: 0, done: 0, stuck: 0 }, [])).toContain('none running')
+test('desktop bar and dot: stretchable bar, no text, a pulse only while working', () => {
+  const bar = barSvg({ working: 1, waiting: 1, done: 2, stuck: 0 })
+  expect(bar).toContain('preserveAspectRatio="none"')
+  expect(bar).not.toContain('<text')
+  expect(bar).not.toContain('class="stuck"')
+  expect(bar.match(/<rect class="(working|waiting|done)"/g)?.length).toBe(3)
+  expect(dotSvg(true)).toContain('class="working pulse"')
+  expect(dotSvg(false)).toContain('class="waiting"')
+  expect(dotSvg(false)).not.toContain('class="working')
 })
 
 test('agents card: SVG on desktop, theme-colored text bar in the terminal', async $ => {
@@ -33,6 +32,7 @@ test('agents card: SVG on desktop, theme-colored text bar in the terminal', asyn
       expect(await ui.find({ type: 'Text', text: /━{8}/ })).toBeDefined()
     }
     expect((await ui.find({ type: 'Text', text: ' live ' }))?.props.backgroundColor).toBe('success')
+    expect(await ui.find({ type: 'Text', text: 'none running' })).toBeDefined() // rows stay text on every surface
     await ui.unmount()
   }
 })

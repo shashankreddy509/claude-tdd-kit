@@ -1,6 +1,5 @@
-// Pure drawing helpers: a stacked count bar (terminal cells or SVG pixels) and the desktop's SVG agent card.
-import type { Agent, AgentCounts } from '../types'
-import { WORKING } from './panel'
+// Pure drawing helpers: a stacked count bar (terminal cells or SVG pixels) and the desktop's status dot.
+import type { AgentCounts } from '../types'
 
 export const BAR = '━'
 // Count bar parts, in order, with the theme color the terminal draws each in.
@@ -22,19 +21,15 @@ export function segments(parts: readonly number[], width: number): number[] {
   return cells
 }
 
-const esc = (s: string) => s.replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`)
-const cut = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 const W = 320
-const ROW = 22
 // Light palette; the dark one swaps in when the desktop is dark.
-const CSS = `.t{font:12px -apple-system,system-ui,sans-serif;fill:#1f2328}.d{fill:#6e7781}.track{fill:#d0d7de}
-.working{fill:#1a7f37}.waiting{fill:#9a6700}.done{fill:#8c959f}.stuck{fill:#cf222e}
+const CSS = `.track{fill:#d0d7de}.working{fill:#1a7f37}.waiting{fill:#9a6700}.done{fill:#8c959f}.stuck{fill:#cf222e}
 .pulse{animation:p 1.2s ease-in-out infinite}@keyframes p{50%{opacity:.25}}
-@media (prefers-color-scheme:dark){.t{fill:#e6edf3}.d{fill:#8b949e}.track{fill:#30363d}
-.working{fill:#3fb950}.waiting{fill:#d29922}.done{fill:#6e7681}.stuck{fill:#f85149}}`
+@media (prefers-color-scheme:dark){.track{fill:#30363d}.working{fill:#3fb950}.waiting{fill:#d29922}.done{fill:#6e7681}.stuck{fill:#f85149}}`
 
-// The Agents card on desktop: the count bar, then one row per live agent (a pulsing dot while it works).
-export function agentSvg(counts: AgentCounts, rows: readonly Agent[]): string {
+// The desktop's count bar. It stretches to the card's width on purpose (preserveAspectRatio none): a bar reads
+// right at any width, which is why the agent rows stay text and only shapes are SVG.
+export function barSvg(counts: AgentCounts): string {
   const widths = segments(PARTS.map(([k]) => counts[k]), W)
   let x = 0
   const bar = PARTS.map(([k], i) => {
@@ -43,16 +38,13 @@ export function agentSvg(counts: AgentCounts, rows: readonly Agent[]): string {
     x += w
     return r
   }).join('')
-  const lines = rows.length
-    ? rows.map((a, i) => {
-        const y = 32 + i * ROW
-        const kind = WORKING.has(a.status) ? 'working pulse' : 'waiting'
-        return `<circle class="${kind}" cx="5" cy="${y - 4}" r="4"/><text class="t" x="16" y="${y}">${esc(cut(a.label, 44))}</text>` +
-          `<text class="t d" x="${W}" y="${y}" text-anchor="end">${esc(`${a.status} ${a.elapsed}`)}</text>`
-      })
-    : ['<text class="t d" x="0" y="32">none running</text>']
-  const h = 32 + Math.max(rows.length, 1) * ROW - 12
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${h}" viewBox="0 0 ${W} ${h}"><style>${CSS}</style>` +
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} 8" preserveAspectRatio="none"><style>${CSS}</style>` +
     `<clipPath id="c"><rect width="${W}" height="8" rx="4"/></clipPath><rect class="track" width="${W}" height="8" rx="4"/>` +
-    `<g clip-path="url(#c)">${bar}</g>${lines.join('')}</svg>`
+    `<g clip-path="url(#c)">${bar}</g></svg>`
+}
+
+// A 10px status dot for an agent row: pulsing green while it works, amber while it waits.
+export function dotSvg(working: boolean): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><style>${CSS}</style>` +
+    `<circle class="${working ? 'working pulse' : 'waiting'}" cx="5" cy="5" r="4"/></svg>`
 }

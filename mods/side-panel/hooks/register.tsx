@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 
 import type { JiraState, Section, Undone } from '../types'
-import { BAR, PARTS, agentSvg, segments } from './look'
+import { BAR, PARTS, barSvg, dotSvg, segments } from './look'
 import { WORKING, agentBoard, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
 import { KEYS, addUndone, doItNow, fileTodos, saidUndone } from './undone'
 
@@ -164,37 +164,37 @@ export const register: Register = (on, options) => {
         {body}
       </Box>
     )
-    // Terminal: the count bar in theme-colored cells over a subtle track, a status chip per agent row.
+    // Remote surfaces (desktop, editor, phone) draw the count bar and each working agent's pulsing dot as SVG.
+    // The terminal's table is padded with every element name, so `'Svg' in ui` alone is true there too: the
+    // surface decides. Only shapes are SVG: the desktop scales an SVG to its slot, which would blow up text.
+    const Svg = e.surface !== 'terminal' && 'Svg' in ui ? ui.Svg : undefined
     const barWidth = Math.max(4, e.props.bodyColumns - 4)
     const barCells = segments(PARTS.map(([k]) => counts[k]), barWidth)
-    const terminalAgents = [
-      <Text key="bar">
+    const bar = Svg ? (
+      <Svg source={barSvg(counts)} alt={`Agents: ${legend}`} height={8} />
+    ) : (
+      <Text>
         {PARTS.map(([k, color], i) => (barCells[i] ? <Text key={k} color={color}>{BAR.repeat(barCells[i])}</Text> : null))}
         {barCells.some(Boolean) ? null : <Text color="subtle">{BAR.repeat(barWidth)}</Text>}
-      </Text>,
+      </Text>
+    )
+    const agentBody = [
+      <Box key="bar">{bar}</Box>,
       line(legend, 'legend', true),
       ...(live.rows.length
-        ? live.rows.map((a, i) => (
-            <Box key={`agent${i}`} columnGap={1}>
-              <Box flexGrow={1}>{line(a.label, 'label')}</Box>
-              {chip(a.status, WORKING.has(a.status) ? 'success' : 'warning')}
-              <Text dimColor>{a.elapsed}</Text>
-            </Box>
-          ))
+        ? live.rows.map((a, i) => {
+            const working = WORKING.has(a.status)
+            return (
+              <Box key={`agent${i}`} columnGap={1} alignItems="center">
+                {Svg ? <Svg source={dotSvg(working)} alt={a.status} width={10} height={10} isInteractive={working || undefined} /> : null}
+                <Box flexGrow={1}>{line(a.label, 'label')}</Box>
+                {chip(a.status, working ? 'success' : 'warning')}
+                <Text dimColor>{a.elapsed}</Text>
+              </Box>
+            )
+          })
         : [line('none running', 'none', true)]),
     ]
-    // Remote surfaces (desktop, editor, phone) draw the same card as one SVG. The terminal's table is padded
-    // with every element name, so `'Svg' in ui` alone is true there too: the surface decides.
-    const agentBody =
-      e.surface !== 'terminal' && 'Svg' in ui ? (
-        <ui.Svg
-          source={agentSvg(counts, live.rows)}
-          alt={`Agents: ${legend}${live.rows.map(a => `; ${a.label} ${a.status} ${a.elapsed}`).join('')}`}
-          isInteractive={live.rows.some(a => WORKING.has(a.status)) || undefined}
-        />
-      ) : (
-        terminalAgents
-      )
     return (
       <Box flexDirection="column">
         <Box columnGap={1}>
