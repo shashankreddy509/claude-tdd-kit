@@ -33,14 +33,15 @@ export function optionsOf(q: string): string[] {
   return YES_NO
 }
 
-// Ticket keys go in as their number, the way the owner types them: DESK-91 → 91.
-export const answerText = (opt: string) => TICKET_RE.exec(opt)?.[1] ?? (/^(yes|no)$/i.test(opt) ? opt.toLowerCase() : opt)
+// Opt-in (`ticket_number_only`): PROJ-91 → 91.
+export const answerText = (opt: string, numberOnly = false) =>
+  (numberOnly ? TICKET_RE.exec(opt)?.[1] : undefined) ?? (/^(yes|no)$/i.test(opt) ? opt.toLowerCase() : opt)
 
-export function buildReply(picks: Record<string, string>): string {
+export function buildReply(picks: Record<string, string>, numberOnly = false): string {
   return Object.keys(picks)
     .map(Number)
     .sort((a, b) => a - b)
-    .map(n => `${n} ${answerText(picks[n]!)}`)
+    .map(n => `${n} ${answerText(picks[n]!, numberOnly)}`)
     .join(' ')
 }
 

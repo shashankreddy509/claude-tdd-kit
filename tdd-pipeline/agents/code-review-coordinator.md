@@ -21,8 +21,8 @@ periodic `/deep-audit` backstop, not this gate. Be thorough on what the change a
 ### 1. Read + classify the diff
 Read the provided diff / file list. Identify: language(s), platform (Android / iOS / web /
 backend), and which modules changed. Note whether the diff touches any of:
-- **money/trading/payment code** (order, position, trade, price, level, PnL, balance, billing,
-  broker, SL/TP) → money review needed.
+- **money/trading/payment code** (order, position, trade, price, PnL, balance, billing, invoice, refund, currency)
+  → money review needed.
 - **concurrency-sensitive code** (thread, async, coroutine, lock, cache, background worker, a
   state-changing HTTP endpoint, shared mutable state) → concurrency review needed.
 

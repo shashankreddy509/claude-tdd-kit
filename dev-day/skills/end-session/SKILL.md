@@ -24,9 +24,9 @@ Read the entire conversation from this session. Extract and synthesize everythin
 3. **`tasks/session-notes.md`** — the 2-line "Left off" note (see below).
 4. **Optional task inbox** — if a local task-inbox service is running, first propose CLOSING the
    points this session finished (user confirms; never auto-close), then push this session's
-   remaining unfinished points, so they reach a daily brief / phone instead of dying in a
+   remaining unfinished points, so they persist across sessions instead of dying in a
    session-notes file nobody opens. Close before adding — adding first pollutes the list you
-   then scan. Skipped silently when no such service is running (see below).
+   then scan. Skipped silently when `TASK_INBOX_URL` is unset or no service answers (see below).
 
 ### session-notes.md detail
 
@@ -47,12 +47,12 @@ Jira — this is only the "where I stopped" pointer, not a todo list.
 
 The "Left off" note is two lines and gets OVERWRITTEN each session, so anything not
 carried forward is lost. If an optional local task inbox is available, push this session's
-**open points** there instead — they persist and can surface in a daily brief or on the phone.
+**open points** there instead — they persist across sessions.
 
 The inbox is an optional local HTTP service — any service implementing the small contract below
 (`GET /api/todos`, `POST /api/todos/add`, `POST /api/todos/toggle`). Set `TASK_INBOX_URL` to point
-at yours; the default is `http://localhost:8765`. It is NOT required infrastructure, and every step
-below degrades silently when nothing answers.
+at yours; when it is unset this step is skipped silently (no default). It is NOT required
+infrastructure, and every step below degrades silently when nothing answers.
 
 What qualifies: a concrete unfinished thing with a next action. A bug found but not
 fixed, a ticket to file, a deploy step deferred, a decision waiting on the user.
@@ -64,7 +64,7 @@ What does NOT: work completed this session, behavioral preferences (those go to
 **Probe FIRST — one fast call, and if it does not answer, skip this whole step silently:**
 
 ```bash
-curl -s --max-time 2 "${TASK_INBOX_URL:-http://localhost:8765}/api/todos" >/dev/null && echo up || echo down
+[ -n "${TASK_INBOX_URL:-}" ] && curl -s --max-time 2 "$TASK_INBOX_URL/api/todos" >/dev/null && echo up || echo down
 ```
 
 `down` (non-zero exit / timeout / no service) → do NOT retry, do NOT print an error, and
@@ -75,13 +75,13 @@ one `- ` bullet each. That is the fallback; the session still ends cleanly.
 `up` → **dedup first**, since this runs every session and must not pile up duplicates:
 
 ```bash
-curl -s --max-time 2 "${TASK_INBOX_URL:-http://localhost:8765}/api/todos" | python3 -c "import json,sys; [print(t['text']) for t in json.load(sys.stdin)['todos'] if not t.get('done')]"
+curl -s --max-time 2 "$TASK_INBOX_URL/api/todos" | python3 -c "import json,sys; [print(t['text']) for t in json.load(sys.stdin)['todos'] if not t.get('done')]"
 ```
 
 Skip anything already open with substantially the same meaning. Then add each new point:
 
 ```bash
-curl -s -X POST "${TASK_INBOX_URL:-http://localhost:8765}/api/todos/add" \
+curl -s -X POST "$TASK_INBOX_URL/api/todos/add" \
   -H 'Content-Type: application/json' \
   -d '{"text":"<point>","project":"<repo dir name>","kind":"task"}'
 ```
@@ -121,7 +121,7 @@ Answered but caveated (read before closing):
 The user replies with numbers, `all`, or `none`. Then per chosen id:
 
 ```bash
-curl -s -X POST "${TASK_INBOX_URL:-http://localhost:8765}/api/todos/toggle" \
+curl -s -X POST "$TASK_INBOX_URL/api/todos/toggle" \
   -H 'Content-Type: application/json' -d '{"id":"<todo id>"}'
 ```
 

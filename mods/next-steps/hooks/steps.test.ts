@@ -8,7 +8,7 @@ const REPLY = [
   '',
   '**Questions**',
   '1. Copy Next Steps now (yes/no)?',
-  '2. Which ticket first: DESK-91, DESK-38, or DESK-32?',
+  '2. Which ticket first: PROJ-91, PROJ-38, or PROJ-32?',
   '3. Build ctx bar + agent card only? (Yes / build all four / ctx bar only)',
   '',
 ].join('\n')
@@ -16,7 +16,7 @@ const REPLY = [
 test('parses the trailing Questions block into options', async () => {
   expect(parseQuestions(REPLY).map(q => [q.n, q.options])).toEqual([
     [1, ['yes', 'no']],
-    [2, ['DESK-91', 'DESK-38', 'DESK-32']],
+    [2, ['PROJ-91', 'PROJ-38', 'PROJ-32']],
     [3, ['Yes', 'build all four', 'ctx bar only']],
   ])
   expect(parseQuestions('**Questions**\n1. Ok (yes/no)?\n\nmore text after')).toEqual([])
@@ -31,8 +31,9 @@ test('option shapes and the yes/no fallback', async () => {
   expect(optionsOf('What should the label say?')).toEqual(['yes', 'no'])
 })
 
-test('picks build the owner reply; ticket keys become numbers', async () => {
-  expect(buildReply({ 3: 'DESK-91', 1: 'Yes' })).toBe('1 yes 3 91')
+test('picks build the reply; ticket keys become numbers only when opted in', async () => {
+  expect(buildReply({ 3: 'PROJ-91', 1: 'Yes' })).toBe('1 yes 3 PROJ-91')
+  expect(buildReply({ 3: 'PROJ-91', 1: 'Yes' }, true)).toBe('1 yes 3 91')
   expect(buildReply({ 2: 'no' })).toBe('2 no')
   expect(answerText('build all four')).toBe('build all four')
 })

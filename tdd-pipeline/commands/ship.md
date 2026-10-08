@@ -57,7 +57,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
    - If on `<default>`: branch first (PR-only; never push it).
    - If the work is a chore UNRELATED to the active feature branch, or HEAD is behind `origin/<default>`: base off `origin/<default>` for a clean PR — `git checkout -b <type>/<slug> origin/<default>` (working changes carry over).
    - Branch name: `feat/`, `fix/`, `chore/`, `docs/` + kebab slug.
-   - **Jira link:** if the work maps to an issue, put the key in the branch slug: `feat/<KEY>-12-strong-bias-only`. Use the key the user gave, or one obvious from the work via the Atlassian MCP; if there's no issue, skip the key — don't invent one.
+   - **Jira link:** if the work maps to an issue, put the key in the branch slug: `feat/<KEY>-12-password-reset`. Use the key the user gave, or one obvious from the work via the Atlassian MCP; if there's no issue, skip the key — don't invent one.
 
 5. **Write the commit message — from what is STAGED, not from the plan alone.**
    Spawn the `changelog` agent, passing it the plan file path (`tasks/plans/<TICKET>_plan.md`) so the **Why** comes from the original intent rather than a restatement of the diff. Tell it to read `git diff --cached` (what is actually staged after step 3's scoping), NOT `git diff HEAD`.
@@ -66,7 +66,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
 
    No plan file (chore/docs ship) → write the message inline in the same format; the Why comes from the user's stated reason.
 
-   Then commit. Conventional Commits, subject ≤50 chars, body explains the WHY. **Prefix the subject with the Jira key when one applies** so the GitHub-for-Jira app auto-links it: `<KEY>-12 feat(trading): strong bias only`.
+   Then commit. Conventional Commits, subject ≤50 chars, body explains the WHY. **Prefix the subject with the Jira key when one applies** so the GitHub-for-Jira app auto-links it: `<KEY>-12 feat(auth): add password reset`.
 
    **No AI attribution in the commit message by default**: no `Co-Authored-By: Claude ...` trailer,
    no `🤖 Generated with Claude Code`, no `Claude-Session:` / `claude.ai/code` session link.
@@ -86,7 +86,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
    gh pr create --base <default> --title "<conventional title>" --body "<what / why / safety>"
    ```
    - Not GitHub, or `gh` unusable (`references/git-host.md` probe) → push, then that file's manual path; the report gives the compare/MR URL plus the title/body to paste.
-   - **Jira:** include the `<KEY>-NN` key in the PR title (e.g. `<KEY>-12 feat(trading): strong bias only`) when the work maps to an issue, so the GitHub-for-Jira app links the PR to the issue.
+   - **Jira:** include the `<KEY>-NN` key in the PR title (e.g. `<KEY>-12 feat(auth): add password reset`) when the work maps to an issue, so the GitHub-for-Jira app links the PR to the issue.
    **PR body = what / why / safety + the Jira link. Nothing else.**
    - **what** — the change, from the staged diff (same content as the commit subject/body, step 5).
    - **why** — the reason it was made; from the plan file's intent, or the user's stated reason.
