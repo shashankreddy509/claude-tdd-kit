@@ -139,3 +139,6 @@ merging".
   local build prompt (Why / What exists / Decided / Do / Do NOT / Hard questions / Done means) instead.
 - After writing the prompt, offer to run it in THIS session when context is still small; do not
   default to "open a fresh session" — the owner asked "can we do the prompt here only".
+- When the idea is a big build (new apps, new platforms), give a worth-building verdict with the
+  cheaper path BEFORE detail questions; the owner rejected a detail round and asked "is it worth
+  building" first.
