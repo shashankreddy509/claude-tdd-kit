@@ -76,10 +76,14 @@ export const register: Register = (on, options) => {
     // One question per line, its options stacked under it as numbered rows (next-steps/docs/ui-reference.md).
     return (
       <Box flexDirection="column">
-        <Text dimColor>next:</Text>
+        <Text bold color="permission">next</Text>
         {qs.map(q => (
           <Box key={`q${q.n}`} flexDirection="column">
-            <Text dimColor>{`  Q${q.n} ${cut(q.text, textWidth)}`}</Text>
+            <Box>
+              <Text>{'  '}</Text>
+              <Text backgroundColor="permission" color="inverseText">{` Q${q.n} `}</Text>
+              <Text>{` ${cut(q.text, textWidth)}`}</Text>
+            </Box>
             {q.options.map(option => {
               key += 1
               return (
@@ -87,6 +91,7 @@ export const register: Register = (on, options) => {
                   <Text>{'      '}</Text>
                   <Button
                     plain
+                    key={`opt${key}`}
                     label={`${chosen[q.n] === option ? '✓ ' : ''}${cut(option, textWidth - 6)}`}
                     hotkey={key <= ANSWER_KEYS ? String(key) : undefined}
                     onPress={() => pick($, q.n, option)}
@@ -98,7 +103,7 @@ export const register: Register = (on, options) => {
         ))}
         <Box>
           <Text>  </Text>
-          {reply ? <Button plain key="send" label={`send "${reply}"${answered.some(q => isRisky(q.text)) ? ' …' : ''}`} hotkey="0" onPress={() => send($, reply, answered)} /> : null}
+          {reply ? <Button variant="primary" key="send" label={`send "${reply}"${answered.some(q => isRisky(q.text)) ? ' …' : ''}`} hotkey="0" onPress={() => send($, reply, answered)} /> : null}
           {reply ? <Text>   </Text> : null}
           {allYesNo(qs) ? <Button plain key="yes" label="yes to all" onPress={() => send($, 'yes to all', qs)} /> : null}
           {allYesNo(qs) ? <Text>   </Text> : null}
