@@ -23,14 +23,22 @@ export function needsSection(cards: Cards | null, key: string | undefined): Sect
   return section('Needs you', mine, cards.stale ? 'stale' : undefined)
 }
 
-// Only a search over this whole project (start-session's `project = KEY ...`) replaces the card;
-// a narrower or cross-project search would show a partial list.
-export const isProjectSearch = (jql: string, key: string) => new RegExp(`\\bproject\\s*=\\s*"?${key}\\b`, 'i').test(jql)
+// Only start-session's own search (`project = KEY AND statusCategory != Done`, any ORDER BY) replaces
+// the card; any narrower or cross-project search would show a partial list.
+export function isProjectSearch(jql: string, key: string): boolean {
+  const where = jql.replace(/\s+order\s+by[\s\S]*$/i, '').replace(/["']/g, '').replace(/\s+/g, ' ').trim()
+  return new RegExp(`^project ?= ?${key} and statusCategory ?!= ?Done$`, 'i').test(where)
+}
 
-// The Jira search tool's text (JSON with `issues`) → slim issues; 'unavailable' when it is not that.
+// A result too big for the model is replaced by a note naming the file it was saved to.
+export const savedPathOf = (text: string | undefined) => /saved to (\/\S+?\.(?:txt|json))/.exec(text ?? '')?.[1]
+
+// The Jira search tool's JSON → slim issues; the MCP returns `issues: [...]` or `issues: { nodes: [...] }`
+// depending on the machine. 'unavailable' when it is neither.
 export function issuesOf(text: string | undefined): JiraState {
   try {
-    const issues = JSON.parse(text ?? '').issues
+    const found = JSON.parse(text ?? '').issues
+    const issues = Array.isArray(found) ? found : found?.nodes
     if (!Array.isArray(issues)) return 'unavailable'
     return issues.map((i: { key?: string; fields?: { summary?: string; status?: { name?: string } } }) => ({
       key: i.key ?? '',
@@ -42,14 +50,18 @@ export function issuesOf(text: string | undefined): JiraState {
   }
 }
 
-// This project's tickets under a header per status, in the order the search returned them.
+const notStarted = (status: string) => /^(to do|backlog|product backlog)$/i.test(status)
+
+// This project's tickets under a header per status: started work first, To Do / Backlog last,
+// otherwise in the order the search returned them (a 15-line card must not bury the 2 active ones).
 export function jiraSection(state: JiraState, key: string | undefined): Section {
   if (!key) return section('Jira', [], 'no Jira for this project')
   if (state === 'waiting') return section('Jira', [], 'waiting for start-session')
   if (state === 'unavailable') return section('Jira', [], 'Jira unavailable')
   const groups = new Map<string, JiraIssue[]>()
   for (const i of state.filter(i => i.key.startsWith(`${key}-`))) groups.set(i.status, [...(groups.get(i.status) ?? []), i])
-  const rows = [...groups].flatMap(([status, list]) => [`▸ ${status} (${list.length})`, ...list.map(i => `${i.key} ${i.summary}`)])
+  const ordered = [...groups].sort(([a], [b]) => Number(notStarted(a)) - Number(notStarted(b)))
+  const rows = ordered.flatMap(([status, list]) => [`▸ ${status} (${list.length})`, ...list.map(i => `${i.key} ${i.summary}`)])
   const count = rows.length - groups.size
   if (rows.length <= JIRA_ROWS) return { title: 'Jira', count, rows }
   const shown = rows.slice(0, JIRA_ROWS - 1)

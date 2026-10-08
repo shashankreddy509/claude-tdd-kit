@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { JIRA_ROWS, ROWS, agentBoard, clock, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, todoSection, topicOf } from './panel'
+import { JIRA_ROWS, ROWS, agentBoard, clock, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
 
 // Payload shapes sampled from real cards/todos servers on 2026-10-07.
 const CARDS = {
@@ -35,18 +35,34 @@ const SEARCH = JSON.stringify({
   isLast: true,
 })
 
-test('only a whole-project search replaces the Jira card', () => {
-  expect(isProjectSearch('project = PA AND statusCategory != Done ORDER BY status ASC', 'PA')).toBe(true)
-  expect(isProjectSearch('project="PA" AND type = Bug', 'PA')).toBe(true)
+test('only start-session\'s own search replaces the Jira card', () => {
+  expect(isProjectSearch('project = PA AND statusCategory != Done ORDER BY status ASC, created DESC', 'PA')).toBe(true)
+  expect(isProjectSearch('project="PA"  and statusCategory!=Done', 'PA')).toBe(true)
+  expect(isProjectSearch('project = PA AND statusCategory != Done AND issuetype != Epic AND parent is not EMPTY', 'PA')).toBe(false)
   expect(isProjectSearch('key in (PA-68, AOF-90) OR project in (PA, AOF)', 'PA')).toBe(false)
-  expect(isProjectSearch('project = PAX', 'PA')).toBe(false)
+  expect(isProjectSearch('project = PAX AND statusCategory != Done', 'PA')).toBe(false)
 })
 
-test('Jira card: this project only, grouped by status in search order, count is tickets', () => {
-  const s = jiraSection(issuesOf(SEARCH), 'PA')
+// Seen live 2026-10-07: a 57k-char result reached the hook as this note, with the JSON in the file.
+test('a too-big result points at the file it was saved to', () => {
+  const note = 'Error: result (57,684 characters) exceeds maximum allowed tokens. Output has been saved to /Users/me/.claude/projects/x/tool-results/mcp-atlassian-searchJiraIssuesUsingJql-1791412093761.txt.\nFormat: JSON'
+  expect(savedPathOf(note)).toBe('/Users/me/.claude/projects/x/tool-results/mcp-atlassian-searchJiraIssuesUsingJql-1791412093761.txt')
+  expect(savedPathOf(SEARCH)).toBe(undefined)
+})
+
+test('both Jira MCP dialects read the same: issues list or issues.nodes', () => {
+  const nodes = JSON.stringify({ issues: { nodes: JSON.parse(SEARCH).issues, pageInfo: { hasNextPage: false } } })
+  expect(issuesOf(nodes)).toEqual(issuesOf(SEARCH))
+  expect(jiraSection(issuesOf(nodes), 'PA').count).toBe(4)
+})
+
+test('Jira card: this project only, started work first, To Do last, count is tickets', () => {
+  // Real searches return To Do first (43 of 45 on 2026-10-07), which buried the active tickets.
+  const todoFirst = JSON.stringify({ issues: [...JSON.parse(SEARCH).issues].reverse() })
+  const s = jiraSection(issuesOf(todoFirst), 'PA')
   expect(s.count).toBe(4)
   expect(s.note).toBe(undefined)
-  expect(s.rows).toEqual(['▸ Build Testing (1)', 'PA-19 pop-ups P1', '▸ In Progress (1)', 'PA-52 PA-52', '▸ To Do (2)', 'PA-101 PA-101', 'PA-109 PA-109'])
+  expect(s.rows).toEqual(['▸ In Progress (1)', 'PA-52 PA-52', '▸ Build Testing (1)', 'PA-19 pop-ups P1', '▸ To Do (2)', 'PA-109 PA-109', 'PA-101 PA-101'])
 })
 
 test('Jira card: long lists end in a more line', () => {
