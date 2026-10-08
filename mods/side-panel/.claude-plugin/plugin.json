@@ -1,16 +1,16 @@
 {
   "name": "side-panel",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Right-side dashboard pane for the open project: needs-you, Jira, todos, agents, current topic, left-undone items",
   "types": "./types/index.d.ts",
   "userConfig": {
-    "pa_url": {
+    "needs_url": {
       "type": "string",
       "title": "Cards URL (needs-you)",
       "description": "GET endpoint returning {needs_you, stale}; empty hides the Needs you card",
       "default": ""
     },
-    "desk_url": {
+    "todos_url": {
       "type": "string",
       "title": "Todos URL",
       "description": "GET endpoint returning {todos:[{text,done,deletedAt,updatedAt,project}]}; empty hides the Todos card",

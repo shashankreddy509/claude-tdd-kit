@@ -242,8 +242,8 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
   lines from its replies; click an entry to put "You left this undone: ... Do it now." in the
   prompt box. The Jira card lists the project's open tickets by status, caught from the search
   `/start-session` already runs for the repo's `Jira: cloudId=... key=KEY` line (no setup).
-  Needs-you and todos cards appear only after you set their URLs in `/config` (`pa_url`,
-  `desk_url`). The
+  Needs-you and todos cards appear only after you set their URLs in `/config` (`needs_url`,
+  `todos_url`). The
   pane docks in the fullscreen layout from 144 columns.
 - **cache-keeper**: a band above the prompt with the prompt-cache countdown, the cost of a cold
   rewrite, 5h / weekly usage, what is eating the context (with a trim hint), and handoff buttons.

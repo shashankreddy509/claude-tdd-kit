@@ -1,6 +1,14 @@
 {
   "name": "next-steps",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Numbered answer buttons for the **Questions** block a reply ends with; picks send as one reply (1-9 answer, 0 send)",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "ticket_number_only": {
+      "type": "boolean",
+      "title": "Send ticket numbers only",
+      "description": "Answer a ticket option like PROJ-91 as 91 instead of the full key",
+      "default": false
+    }
+  }
 }

@@ -5,7 +5,7 @@ import type { Question } from '../types'
 import { allYesNo, buildReply, cut, isRisky, parseQuestions } from './steps'
 
 // Reads the **Questions** block every reply ends with (a numbered list under a bold **Questions** heading):
-// tap answers, then send them as one reply, e.g. "1 yes 3 91".
+// tap answers, then send them as one reply, e.g. "1 yes 3 PROJ-91".
 const questions = atom({ plugin: 'next-steps', key: 'questions' } as const, null)
 const picks = atom({ plugin: 'next-steps', key: 'picks' } as const, {})
 // `/nextsteps off` hides the buttons for this session; `/nextsteps on` shows them again.
@@ -31,7 +31,9 @@ async function send($: EngineInterface, text: string, answered: Question[]) {
   else await $.prompt.submit({ text, asUser: true })
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const numberOnly = options.ticket_number_only === true
+
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'nextsteps', description: 'Next Steps: hide or show the answer buttons for this session', argumentHint: 'on | off' })
     return next(e)
@@ -67,7 +69,7 @@ export const register: Register = on => {
     if (!qs || e.props.hasSurvey || e.props.isWorking || (await read($, hidden))) return below
     const chosen = await read($, picks)
     const { Box, Button, Text } = $.ui.resolve(e)
-    const reply = buildReply(chosen)
+    const reply = buildReply(chosen, numberOnly)
     const answered = qs.filter(q => chosen[q.n] !== undefined)
     const textWidth = Math.max(12, e.props.bodyColumns - 8)
     let key = 0

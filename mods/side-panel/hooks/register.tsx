@@ -47,7 +47,7 @@ async function getJson($: EngineInterface, url: string) {
   }
 }
 
-type Urls = { pa: string; desk: string }
+type Urls = { needs: string; todos: string }
 
 async function projectKey($: EngineInterface) {
   return jiraKeyOf(await $.fs.read(`${await $.session.cwd()}/CLAUDE.md`).catch(() => ''))
@@ -58,16 +58,16 @@ async function refresh($: EngineInterface, urls: Urls) {
   const cwd = await $.session.cwd()
   const name = cwd.split('/').pop() ?? cwd
   const [cards, todos, key, tickets] = await Promise.all([
-    urls.pa ? getJson($, urls.pa) : null,
-    urls.desk ? getJson($, urls.desk) : null,
+    urls.needs ? getJson($, urls.needs) : null,
+    urls.todos ? getJson($, urls.todos) : null,
     projectKey($),
     read($, jira),
   ])
   await update($, project, () => name)
   await update($, sections, () => [
-    ...(urls.pa ? [needsSection(cards, key)] : []),
+    ...(urls.needs ? [needsSection(cards, key)] : []),
     jiraSection(tickets, key),
-    ...(urls.desk ? [todoSection(todos, name)] : []),
+    ...(urls.todos ? [todoSection(todos, name)] : []),
   ])
 }
 
@@ -81,7 +81,7 @@ async function refreshAgents($: EngineInterface) {
 }
 
 export const register: Register = (on, options) => {
-  const urls: Urls = { pa: String(options.pa_url ?? ''), desk: String(options.desk_url ?? '') }
+  const urls: Urls = { needs: String(options.needs_url ?? ''), todos: String(options.todos_url ?? '') }
 
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'sidepanel', description: 'Side panel: open it if closed, close it if open (this session)' })
