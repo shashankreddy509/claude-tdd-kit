@@ -60,7 +60,7 @@ prose on any layout dispute, including the plan's own wording.
 ### Android / Kotlin
 - MVVM: ViewModel → Repository → DataSource
 - Expose StateFlow from ViewModel, never MutableStateFlow publicly
-- Use Hilt for all dependency injection
+- Use the project's existing DI framework (Hilt when none exists yet)
 - No business logic in Composables
 - No `!!` operators without explicit justification in comment
 
