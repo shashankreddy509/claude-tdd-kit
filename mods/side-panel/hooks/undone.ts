@@ -5,7 +5,9 @@ import type { Undone } from '../types'
 export const MAX_UNDONE = 9
 export const KEYS = 'abcdefghi'
 
-const TODO_RE = /\b(TODO|FIXME)\b|\.skip\(|\bx(it|describe)\(|@pytest\.mark\.skip|@Ignore\b/
+// Skip markers: JS (.skip, xit), pytest, JUnit 4/5, Go t.Skip, Rust #[ignore], Swift XCTSkip / .disabled(.
+const TODO_RE =
+  /\b(TODO|FIXME)\b|\.skip\(|\bx(it|describe)\(|@pytest\.mark\.skip|@Ignore\b|@Disabled\b|\bt\.Skip(?:f|Now)?\(|#\[ignore\]|\bXCTSkip\b|\.disabled\(/
 const SAID_RE =
   /\b(did not|didn't|have not|haven't) (run|test|verify|check|finish|do|get to)|\bnot (yet|tested|verified|proven|run)\b|\bstill (open|pending|untested|todo)\b|\bleft (undone|open)\b|\bskipped\b/i
 

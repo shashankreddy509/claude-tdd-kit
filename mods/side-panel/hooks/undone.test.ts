@@ -11,6 +11,9 @@ test('file TODOs and skipped tests: only lines this write added', () => {
   ])
   expect(fileTodos('t.py', '@pytest.mark.skip\nok = 1\n')).toEqual(['t.py: @pytest.mark.skip'])
   expect(fileTodos('a.ts', 'const todo = 1\n')).toEqual([])
+  const skips = ['@Disabled("flaky")', 't.Skip("needs db")', '#[ignore]', 'throw XCTSkip("ci")', '@Test(.disabled("slow"))']
+  expect(fileTodos('s.txt', skips.join('\n'))).toEqual(skips.map(l => `s.txt: ${l}`))
+  expect(fileTodos('s.go', 't.Skipped()\n')).toEqual([])
 })
 
 test('reply lines that admit something was left undone', () => {

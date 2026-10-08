@@ -4,7 +4,7 @@ import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
 import type { Pending } from '../types'
 import { cacheState, eatingText, filled, kTokens, warmthSvg } from './cache'
 
-// This session's prompt cache lives 1h; `/cachekeeper ttl <min>` overrides it for testing.
+// Assumes a 60-minute prompt-cache TTL; yours may differ (e.g. 5 min), so set it with `/cachekeeper ttl <min>`.
 const DEFAULT_TTL_MIN = 60
 const TICK_MS = 15_000
 const WARMTH_CELLS = 10
