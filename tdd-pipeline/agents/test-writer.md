@@ -37,7 +37,7 @@ matching section. In every stack, MIRROR the existing suite's framework and
 conventions — never introduce a new test framework into a project.
 
 ### Android / Kotlin
-- Use JUnit4 + MockK for unit tests
+- Use the suite's existing test framework (JUnit4 + MockK when none exists yet)
 - Use kotlinx-coroutines-test for suspend functions
 - Use `@get:Rule val mainDispatcherRule = MainDispatcherRule()`
 - ViewModels: test StateFlow emissions with Turbine
