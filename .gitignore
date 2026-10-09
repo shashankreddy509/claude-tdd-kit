@@ -6,3 +6,5 @@
 **/node_modules/
 # Written by Claude Code when a mod loads; regenerated per build
 mods/*/.claude-plugin/types/
+# Per-machine session state (feedback.md, session-notes.md) from the dev-day skills
+tasks/
