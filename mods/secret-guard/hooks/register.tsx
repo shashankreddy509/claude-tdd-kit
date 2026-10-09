@@ -2,14 +2,22 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Choice } from '../types'
+import { DEFAULT_PATTERNS } from './defaults'
 import { compile, scan } from './secrets'
 
 const off = atom({ plugin: 'secret-guard', key: 'off' } as const, false)
 const CHOICES: Choice[] = ['Mask', 'Send anyway', 'Cancel']
 
-// Read per prompt so an edit to the shared file applies at once.
+// Read per prompt so an edit to the shared file applies at once. No file → built-in list (never
+// fail open); a file that is present but broken still throws, so the prompt is held.
 async function loadPatterns($: EngineInterface) {
-  return compile(JSON.parse(await $.fs.read(`${await $.env.get('HOME')}/.claude/secret-patterns.json`)))
+  let text: string
+  try {
+    text = await $.fs.read(`${await $.env.get('HOME')}/.claude/secret-patterns.json`)
+  } catch {
+    return compile(DEFAULT_PATTERNS)
+  }
+  return compile(JSON.parse(text))
 }
 
 // Drop the prompt and put the typed text back so nothing is lost.

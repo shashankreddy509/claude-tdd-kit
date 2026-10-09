@@ -257,7 +257,8 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
 - **secret-guard**: checks each prompt before it is sent against the regexes in
   `~/.claude/secret-patterns.json` (a JSON array of `{ "kind", "pattern", "flags" }`) and, on a
   hit, asks Mask, Send anyway or Cancel; the dialog shows only the kinds, never the value. It
-  fails closed: with no pattern file it holds every prompt, so create the file first.
+  fails closed: with no pattern file it uses a built-in list of 14 common key formats, and a
+  pattern file that is present but broken holds every prompt until fixed.
   `node mods/secret-guard/check-patterns.mjs` tests your file against fake samples.
 
 ```
