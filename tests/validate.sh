@@ -55,7 +55,7 @@ fi
 #    A trailing comma here means every install of the marketplace fails.
 # ---------------------------------------------------------------------------
 head_ "1. manifests parse"
-MANIFESTS=".claude-plugin/marketplace.json dev-day/.claude-plugin/plugin.json tdd-pipeline/.claude-plugin/plugin.json mods/side-panel/.claude-plugin/plugin.json mods/cache-keeper/.claude-plugin/plugin.json mods/next-steps/.claude-plugin/plugin.json"
+MANIFESTS=".claude-plugin/marketplace.json dev-day/.claude-plugin/plugin.json tdd-pipeline/.claude-plugin/plugin.json mods/side-panel/.claude-plugin/plugin.json mods/cache-keeper/.claude-plugin/plugin.json mods/next-steps/.claude-plugin/plugin.json mods/secret-guard/.claude-plugin/plugin.json"
 for m in $MANIFESTS; do
   if [ ! -f "$m" ]; then
     bad "$m (missing)"

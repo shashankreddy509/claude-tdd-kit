@@ -28,6 +28,11 @@
       "name": "next-steps",
       "source": "./mods/next-steps",
       "description": "Mod: numbered answer buttons for the Questions block that ends a reply"
+    },
+    {
+      "name": "secret-guard",
+      "source": "./mods/secret-guard",
+      "description": "Mod: catch secrets in a prompt before it is sent: mask, send anyway or cancel"
     }
   ]
 }
