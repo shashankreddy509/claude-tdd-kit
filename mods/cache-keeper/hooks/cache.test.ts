@@ -45,7 +45,7 @@ test('warmth: share left, tone by lead, bar cells', () => {
 
 const BAND = { component: 'AbovePrompt', props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} } } as const
 
-test('band: warmth bar is SVG on desktop, cells in the terminal; handoff is the primary button', async ($, on) => {
+test('band: warmth bar is SVG on desktop, cells in the terminal; handoff is the primary button, clear sits beside it with a gap', async ($, on) => {
   mock.clock(on)
   mock.store(on)
   on('turn.complete', () => ({ text: '' }))
@@ -55,6 +55,8 @@ test('band: warmth bar is SVG on desktop, cells in the terminal; handoff is the 
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'cache-keeper', surface, ...BAND })
     expect((await ui.find({ key: 'handoff' }))?.props.variant).toBe('primary')
+    expect((await ui.find({ key: 'clear' }))?.props.hotkey).toBe('c')
+    expect((await ui.find({ key: 'actions' }))?.props.columnGap).toBe(1)
     // Leaves (Text, Svg) drop their key, so the SVG is found by type.
     const svg = await ui.find({ type: 'Svg' })
     if (surface === 'desktop') expect(svg?.props.alt).toBe('cache 100% warm')
