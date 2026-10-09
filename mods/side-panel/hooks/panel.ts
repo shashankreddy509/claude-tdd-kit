@@ -54,8 +54,7 @@ const notStarted = (status: string) => /^(to do|backlog|product backlog)$/i.test
 
 // This project's tickets under a header per status: started work first, To Do / Backlog last,
 // otherwise in the order the search returned them (a 15-line card must not bury the 2 active ones).
-export function jiraSection(state: JiraState, key: string | undefined): Section {
-  if (!key) return section('Jira', [], 'no Jira for this project')
+export function jiraSection(state: JiraState, key: string): Section {
   if (state === 'waiting') return section('Jira', [], 'waiting for start-session')
   if (state === 'unavailable') return section('Jira', [], 'Jira unavailable')
   const groups = new Map<string, JiraIssue[]>()
@@ -97,4 +96,10 @@ export const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-export const topicOf = (prompt: string) => prompt.split('\n').map(l => l.trim()).find(Boolean)?.replace(/\s+/g, ' ') ?? ''
+// A reply made only of numbered answers ("1 yes 2 no", "1 Now", "1 yes 3 PROJ-91") or "yes to all" is not a
+// topic: '' keeps the previous one on the card.
+const ANSWER = /^(?:(?:\d+\s+[\w-]+\s*)+|yes to all)$/i
+export function topicOf(prompt: string): string {
+  const first = prompt.split('\n').map(l => l.trim()).find(Boolean)?.replace(/\s+/g, ' ') ?? ''
+  return ANSWER.test(first) ? '' : first
+}

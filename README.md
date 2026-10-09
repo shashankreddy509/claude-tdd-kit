@@ -238,8 +238,7 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
 
 - **side-panel**: a right-side dashboard pane for the project the session is open in. Count
   tiles, the session's agents (working / waiting / done, with timers), the current topic, and a
-  "Left undone" card that collects TODOs and skipped tests Claude writes plus "I did not run..."
-  lines from its replies; click an entry to put "You left this undone: ... Do it now." in the
+  "Left undone" card that collects TODOs and skipped tests Claude writes into files; click an entry to put "You left this undone: ... Do it now." in the
   prompt box. The Jira card lists the project's open tickets by status, caught from the search
   `/start-session` already runs for the repo's `Jira: cloudId=... key=KEY` line (no setup).
   Needs-you and todos cards appear only after you set their URLs in `/config` (`needs_url`,

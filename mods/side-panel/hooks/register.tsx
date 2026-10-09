@@ -4,7 +4,7 @@ import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 import type { JiraState, Section, Undone } from '../types'
 import { BAR, PARTS, barSvg, dotSvg, segments } from './look'
 import { WORKING, agentBoard, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
-import { KEYS, addUndone, doItNow, fileTodos, saidUndone } from './undone'
+import { KEYS, addUndone, doItNow, fileTodos } from './undone'
 
 // Right-side dock (fullscreen terminal, wide enough): a read-only dashboard of what needs the owner,
 // scoped to the OPEN project only (owner ruled 2026-10-07): its Jira key, its todos, this session's agents.
@@ -29,8 +29,8 @@ function tileColor(s: Section) {
 }
 const ICON: Record<string, string> = { 'Needs you': '🔔', Jira: '🎫', Todos: '📝', 'Left undone': '⚠️' }
 
-async function noteUndone($: EngineInterface, source: Undone['source'], texts: string[]) {
-  if (texts.length) await update($, undone, list => addUndone(list, source, texts))
+async function noteUndone($: EngineInterface, texts: string[]) {
+  if (texts.length) await update($, undone, list => addUndone(list, texts))
 }
 
 async function doNow($: EngineInterface, u: Undone) {
@@ -53,7 +53,8 @@ async function projectKey($: EngineInterface) {
   return jiraKeyOf(await $.fs.read(`${await $.session.cwd()}/CLAUDE.md`).catch(() => ''))
 }
 
-// A source with no URL set is left out entirely (its tile and card hidden). Jira needs no URL.
+// A source with no URL set is left out entirely (its tile and card hidden). Jira needs no URL; a repo with no
+// Jira line gets no Jira tile.
 async function refresh($: EngineInterface, urls: Urls) {
   const cwd = await $.session.cwd()
   const name = cwd.split('/').pop() ?? cwd
@@ -66,7 +67,7 @@ async function refresh($: EngineInterface, urls: Urls) {
   await update($, project, () => name)
   await update($, sections, () => [
     ...(urls.needs ? [needsSection(cards, key)] : []),
-    jiraSection(tickets, key),
+    ...(key ? [jiraSection(tickets, key)] : []),
     ...(urls.todos ? [todoSection(todos, name)] : []),
   ])
 }
@@ -100,20 +101,21 @@ export const register: Register = (on, options) => {
   })
 
   on('prompt.submit', async ($, e, next) => {
-    void update($, topic, () => topicOf(e.text)).catch(() => undefined)
+    const t = topicOf(e.text)
+    if (t) void update($, topic, () => t).catch(() => undefined)
     return next(e)
   })
 
   on('tool.call', { tool: 'Write' }, async ($, e, next) => {
     const before = await $.fs.read(e.file_path).catch(() => '')
     const ran = await next(e)
-    await noteUndone($, 'file', fileTodos(e.file_path, e.content, before)).catch(() => undefined)
+    await noteUndone($, fileTodos(e.file_path, e.content, before)).catch(() => undefined)
     return ran
   })
 
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const ran = await next(e)
-    await noteUndone($, 'file', fileTodos(e.file_path, e.new_string, e.old_string)).catch(() => undefined)
+    await noteUndone($, fileTodos(e.file_path, e.new_string, e.old_string)).catch(() => undefined)
     return ran
   })
 
@@ -133,7 +135,6 @@ export const register: Register = (on, options) => {
   on('turn.complete', async ($, e, next) => {
     if (e.agentId === undefined) {
       void refresh($, urls)
-      if (e.reason === 'answer' && !e.isAborted) await noteUndone($, 'said', saidUndone(e.answer)).catch(() => undefined)
     }
     return next(e)
   })
@@ -178,7 +179,9 @@ export const register: Register = (on, options) => {
         {barCells.some(Boolean) ? null : <Text color="subtle">{BAR.repeat(barWidth)}</Text>}
       </Text>
     )
-    const agentBody = [
+    // Idle (nothing ever ran or is running) is one line, not an empty bar and a row of zeros.
+    const idle = !live.rows.length && PARTS.every(([k]) => !counts[k])
+    const agentBody = idle ? line('none running', 'none', true) : [
       <Box key="bar">{bar}</Box>,
       line(legend, 'legend', true),
       ...(live.rows.length
@@ -223,7 +226,6 @@ export const register: Register = (on, options) => {
             </Box>
             {open.map((u, i) => (
               <Box key={`undone${i}`}>
-                <Text dimColor>{u.source === 'file' ? 'file ' : 'said '}</Text>
                 <Button plain key={`do${i}`} label={u.text} hotkey={KEYS[i]} onPress={() => doNow($, u)} />
               </Box>
             ))}
