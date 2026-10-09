@@ -11,12 +11,16 @@ const FIXTURE = [
 const TG = `${'1'.repeat(9)}:${'Ab'.repeat(17)}c`
 const KV = `password=${'x'.repeat(14)}`
 
-async function submit($: any, on: any, text: string, answer: string, file = JSON.stringify(FIXTURE)) {
+// file null = no pattern file on disk (fs.read throws).
+async function submit($: any, on: any, text: string, answer: string, file: string | null = JSON.stringify(FIXTURE)) {
   const asked: string[] = []
   const filled: string[] = []
   let sent: string | undefined
   mock.env(on, { HOME: '/home/test' })
-  on('fs.read', async () => ({ value: file }))
+  on('fs.read', async () => {
+    if (file === null) throw new Error('ENOENT')
+    return { value: file }
+  })
   on('prompt.fill', async (_: any, e: any) => (filled.push(e.text), { isFilled: true }))
   on('tool.call', { tool: 'AskUserQuestion' }, async (_: any, e: any) => {
     const q = e.questions[0].question
@@ -56,6 +60,15 @@ test('a broken pattern file holds the prompt (fail closed)', async ($, on) => {
   expect(sent).toBe(undefined)
   expect(filled).toEqual(['anything'])
   expect(String((res as any).drop)).toContain('Secret Guard error')
+})
+
+test('no pattern file falls back to the built-in list (still guards, never holds everything)', async ($, on) => {
+  const masked = await submit($, on, `a ${TG}`, 'Mask', null)
+  expect(masked.sent).toBe('a [REDACTED:telegram-token]')
+})
+
+test('no pattern file lets clean text through', async ($, on) => {
+  expect((await submit($, on, 'build the next mods now', 'Mask', null)).sent).toBe('build the next mods now')
 })
 
 test('compile rejects malformed entries', async () => {

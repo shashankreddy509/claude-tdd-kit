@@ -4,10 +4,10 @@ Build Blast Radius: before a Bash `rm -r` / `rm -rf` (globs included) runs, list
 
 Origin: reel #5 (a public reel), "Blast Radius" mod. Overview: kept outside the repo.
 
-Read first: the git-guards prompt (the shared parser plan, kept in a private repo), `~/.claude/hooks/deploy-merge-gate.js` (`commandSegments()` :53, `invokes()` :67, `deny()` :90), `~/.claude/hooks/shell-idiom-gate.js`, `~/.claude/hooks/tests/test-deploy-merge-gate.js` (real temp dirs), the `~/.claude/settings.json` PreToolUse block, and the notes on the deploy gate and its parity hooks.
+Read first: the git-guards prompt (the shared parser plan, kept in a private repo), your existing Bash PreToolUse guard hooks (find them from the `~/.claude/settings.json` PreToolUse block: look for the one that splits a command into segments, the one that checks shell idioms, and their tests on real temp dirs), and any notes you keep on those guards.
 
 ## Why a settings hook, not a mod (decided, do not relitigate)
-- Every existing command guard (deploy gate, no-AI-attribution, shell-idiom-gate) is a settings.json PreToolUse Bash hook. Secret Guard is a mod only because it needs prompt UI.
+- Every existing command guard (for example a deploy gate or a commit-message check) is a settings.json PreToolUse Bash hook. Secret Guard is a mod only because it needs prompt UI.
 - Mods do not run under `claude -p`; headless jobs and routines are where an unattended `rm -rf` hurts most. A settings hook covers them.
 - The git-guards plan already owns the Bash command parser (segments, quotes, heredocs, target dir from `cd X &&`). A kit mod could not import it (`claude plugin test` cannot read outside the mod folder), so a mod would duplicate it.
 
@@ -39,7 +39,7 @@ Git-guards ticket 2 builds ONE shared parser module in `~/.claude/hooks/`. Blast
 
 ## Done means
 - HOT ZONE: before editing settings.json, state what breaks (a buggy PreToolUse Bash hook can block every shell command in every session), who notices, how to reverse (remove the settings entry). Get explicit approval.
-- `node ~/.claude/hooks/tests/test-blast-radius.js` passes (pass/fail line pasted), and `test-deploy-merge-gate.js` still passes.
+- The Blast Radius test file passes (pass/fail line pasted), and the existing guard hooks' tests still pass.
 - Mutation check: break the flag match, the outside check and the glob expansion once each; the suite goes red each time.
 - One live check in a real session: `rm -rf` on a temp dir outside the repo is denied with the list; owner screenshot of the message.
 - No AI attribution in commits or the PR body (hard rule).
