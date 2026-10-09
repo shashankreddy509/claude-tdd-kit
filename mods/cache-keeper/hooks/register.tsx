@@ -153,7 +153,8 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="column">
-        <Box columnGap={1} alignItems="center">
+        {/* Wraps so the buttons drop to their own line in a narrow pane instead of being clipped. */}
+        <Box key="row" columnGap={1} alignItems="center" flexWrap="wrap">
           {s === null ? (
             <Text dimColor>○ no cache yet</Text>
           ) : (

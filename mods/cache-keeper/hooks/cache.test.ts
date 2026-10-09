@@ -57,6 +57,7 @@ test('band: warmth bar is SVG on desktop, cells in the terminal; handoff is the 
     expect((await ui.find({ key: 'handoff' }))?.props.variant).toBe('primary')
     expect((await ui.find({ key: 'clear' }))?.props.hotkey).toBe('c')
     expect((await ui.find({ key: 'actions' }))?.props.columnGap).toBe(1)
+    expect((await ui.find({ key: 'row' }))?.props.flexWrap).toBe('wrap')
     // Leaves (Text, Svg) drop their key, so the SVG is found by type.
     const svg = await ui.find({ type: 'Svg' })
     if (surface === 'desktop') expect(svg?.props.alt).toBe('cache 100% warm')
