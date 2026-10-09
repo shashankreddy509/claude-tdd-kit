@@ -1,6 +1,6 @@
 {
   "name": "side-panel",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "description": "Right-side dashboard pane for the open project: needs-you, Jira, todos, agents, current topic, left-undone items",
   "types": "./types/index.d.ts",
   "userConfig": {

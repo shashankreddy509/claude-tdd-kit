@@ -237,13 +237,16 @@ Three optional Claude Code mods (hook plugins that draw inside the terminal or t
 tab) live under `mods/`. Each installs on its own and needs neither plugin above, except where noted.
 
 - **side-panel**: a right-side dashboard pane for the project the session is open in. Count
-  tiles, the session's agents (working / waiting / done, with timers), the current topic, and a
+  tiles, the session's agents, the current topic, and a
   "Left undone" card that collects TODOs and skipped tests Claude writes into files; click an entry to put "You left this undone: ... Do it now." in the
   prompt box. The Jira card lists the project's open tickets by status, caught from the search
   `/start-session` already runs for the repo's `Jira: cloudId=... key=KEY` line (no setup).
   Needs-you and todos cards appear only after you set their URLs in `/config` (`needs_url`,
-  `todos_url`). The
-  pane docks in the fullscreen layout from 144 columns.
+  `todos_url`). The Agents card shows Cost / Tokens / Time tiles and a card per running agent:
+  a pixel avatar (a face emoji in the terminal), model · effort, context %, tokens, its share of
+  the session cost and elapsed time; finished agents fold into one "Finished" line. Cost is an
+  estimate (the session's $ split by tokens), and context % shows only when the agent runs the
+  session's model. The pane docks in the fullscreen layout from 144 columns.
 - **cache-keeper**: a band above the prompt with the prompt-cache countdown, the cost of a cold
   rewrite, 5h / weekly usage, what is eating the context (with a trim hint), and handoff buttons.
   It assumes a 60-minute cache TTL; set yours with `/cachekeeper ttl <minutes>`. The handoff

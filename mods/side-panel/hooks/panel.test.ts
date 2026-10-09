@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { JIRA_ROWS, ROWS, agentBoard, clock, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
+import { JIRA_ROWS, ROWS, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
 
 // Payload shapes sampled from real cards/todos servers on 2026-10-07.
 const CARDS = {
@@ -93,22 +93,6 @@ test('todos: this project, open only, newest first, capped', () => {
   expect(s.rows.length).toBe(ROWS)
   expect(s.rows[0]).toBe('new5')
   expect(todoSection(null, 'me').note).toBe('todos URL offline')
-})
-
-test('agent board: counts by status, rows for live ones with elapsed time', () => {
-  const list = [
-    { id: 'a', description: 'Summarise video', type: 'general-purpose', status: 'running' },
-    { id: 'b', description: '', type: 'Explore', status: 'waiting' },
-    { id: 'c', description: 'old', type: 'Explore', status: 'completed' },
-    { id: 'd', description: 'bad', type: 'Explore', status: 'failed' },
-  ]
-  const board = agentBoard(list, { a: 1_000, b: 60_000 }, 62_000)
-  expect(board.counts).toEqual({ working: 1, waiting: 1, done: 1, stuck: 1 })
-  expect(board.rows).toEqual([
-    { label: 'Summarise video', status: 'running', elapsed: '1:01' },
-    { label: 'Explore', status: 'waiting', elapsed: '0:02' },
-  ])
-  expect(clock(-5)).toBe('0:00')
 })
 
 test('topic is the first non-empty line, squashed', () => {

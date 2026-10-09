@@ -1,5 +1,5 @@
-// Pure logic: local server payloads and the agent list → dashboard sections for the OPEN project only.
-import type { Agent, AgentCounts, JiraIssue, JiraState, Section } from '../types'
+// Pure logic: local server payloads → dashboard sections for the OPEN project only.
+import type { JiraIssue, JiraState, Section } from '../types'
 
 export const ROWS = 4
 export const JIRA_ROWS = 15
@@ -7,7 +7,6 @@ export const JIRA_ROWS = 15
 type Card = { source?: string; key?: string; text?: string }
 type Cards = { needs_you?: Card[]; stale?: boolean }
 type Todo = { text?: string; done?: boolean; deletedAt?: string | null; updatedAt?: string; project?: string }
-type AgentLike = { id: string; description: string; type: string; status: string }
 
 const offline = (title: string, what: string): Section => ({ title, count: 0, rows: [], note: `${what} offline` })
 const section = (title: string, rows: string[], note?: string): Section => ({ title, count: rows.length, rows: rows.slice(0, ROWS), note })
@@ -74,26 +73,6 @@ export function todoSection(payload: { todos?: Todo[] } | null, project: string)
     .filter(t => !t.done && !t.deletedAt && t.project === project)
     .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
   return section('Todos', open.map(t => t.text ?? ''))
-}
-
-export const WORKING = new Set(['running', 'pending'])
-const WAITING = new Set(['waiting', 'idle'])
-const DONE = new Set(['completed'])
-const STUCK = new Set(['failed', 'killed'])
-
-// The session's agents as the reel's dock shows them: counts, and a row with elapsed time per live one.
-// `seen` maps an agent id to when this mod first saw it (ms); `now` is the clock in ms.
-export function agentBoard(list: readonly AgentLike[], seen: Record<string, number>, now: number): { counts: AgentCounts; rows: Agent[] } {
-  const count = (set: Set<string>) => list.filter(a => set.has(a.status)).length
-  const rows = list
-    .filter(a => WORKING.has(a.status) || WAITING.has(a.status))
-    .map(a => ({ label: a.description || a.type, status: a.status, elapsed: clock(now - (seen[a.id] ?? now)) }))
-  return { counts: { working: count(WORKING), waiting: count(WAITING), done: count(DONE), stuck: count(STUCK) }, rows }
-}
-
-export const clock = (ms: number) => {
-  const s = Math.max(0, Math.floor(ms / 1000))
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
 // A reply made only of numbered answers ("1 yes 2 no", "1 Now", "1 yes 3 PROJ-91") or "yes to all" is not a
