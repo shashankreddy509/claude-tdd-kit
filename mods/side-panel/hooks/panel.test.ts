@@ -74,8 +74,7 @@ test('Jira card: long lists end in a more line', () => {
   expect(s.rows[JIRA_ROWS - 1]).toBe('… +17 more')
 })
 
-test('Jira card: no Jira line, not fetched yet, or a failed search says so', () => {
-  expect(jiraSection(issuesOf(SEARCH), undefined).note).toBe('no Jira for this project')
+test('Jira card: not fetched yet, or a failed search says so', () => {
   expect(jiraSection('waiting', 'PROJ').note).toBe('waiting for start-session')
   expect(jiraSection(issuesOf('Error: 401 Unauthorized'), 'PROJ').note).toBe('Jira unavailable')
   expect(jiraSection(issuesOf(undefined), 'PROJ').note).toBe('Jira unavailable')
@@ -115,4 +114,6 @@ test('agent board: counts by status, rows for live ones with elapsed time', () =
 test('topic is the first non-empty line, squashed', () => {
   expect(topicOf('\n\n  fix   the band  \nmore')).toBe('fix the band')
   expect(topicOf('')).toBe('')
+  for (const answer of ['1 Now', '1 yes 2 no 3 Different', '1 yes 3 PROJ-91', 'yes to all']) expect(topicOf(answer)).toBe('')
+  expect(topicOf('1 more thing: fix the band')).toBe('1 more thing: fix the band')
 })

@@ -1,4 +1,4 @@
-import { expect, test } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
 
 import { barSvg, dotSvg, segments } from './look'
 
@@ -22,17 +22,36 @@ test('desktop bar and dot: stretchable bar, no text, a pulse only while working'
   expect(dotSvg(false)).not.toContain('class="working')
 })
 
-test('agents card: SVG on desktop, theme-colored text bar in the terminal', async $ => {
+test('agents card: one line when idle, on every surface', async $ => {
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'side-panel', surface, ...PANE })
-    const svg = await ui.find({ type: 'Svg' })
-    if (surface === 'desktop') expect(svg?.props.alt).toMatch(/^Agents: 0 working/)
-    else {
-      expect(svg).toBeUndefined()
-      expect(await ui.find({ type: 'Text', text: /━{8}/ })).toBeDefined()
-    }
+    // Idle: one dim line, no bar on either surface.
+    expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /━/ })).toBeUndefined()
     expect((await ui.find({ type: 'Text', text: ' live ' }))?.props.backgroundColor).toBe('success')
     expect(await ui.find({ type: 'Text', text: 'none running' })).toBeDefined() // rows stay text on every surface
+    await ui.unmount()
+  }
+})
+
+test('agents card: a live agent gets the count bar and a text row with its status chip', async ($, on) => {
+  const clock = mock.clock(on)
+  on('agent.list', () => ({ value: [{ id: 'a1', description: 'map the mods', type: 'Explore', status: 'running' }] }) as never)
+  // The world beneath session.start: commands, the pane, cwd and files answer as nothing special.
+  on('command.register', () => ({ value: undefined }) as never)
+  on('ui.open', () => ({ value: undefined }) as never)
+  on('session.cwd', () => ({ value: '/x/repo' }) as never)
+  on('fs.read', () => ({ deny: 'no file' }) as never)
+  on('session.start', () => ({ cwd: '/x/repo' }) as never)
+  await $.session.start({ source: 'startup', cwd: '/x/repo' } as never)
+  await clock.advance(3_100)
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount({ plugin: 'side-panel', surface, ...PANE })
+    expect(await ui.find({ type: 'Text', text: 'map the mods' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /Jira/ })).toBeUndefined() // no Jira line in the repo, no tile
+    expect((await ui.find({ type: 'Text', text: ' running ' }))?.props.backgroundColor).toBe('success')
+    if (surface === 'desktop') expect((await ui.find({ type: 'Svg' }))?.props.alt).toBe('Agents: 1 working · 0 waiting · 0 done')
+    else expect(await ui.find({ type: 'Text', text: /━/ })).toBeDefined()
     await ui.unmount()
   }
 })
