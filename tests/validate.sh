@@ -206,6 +206,22 @@ if [ -n "$EXPECTED_TAG" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# 6. No private details in the shipped plugins.
+#    merge-feedback appends session lessons to skill files; a lesson written as a
+#    story carries names, home paths and private project details into a public kit.
+#    plugin.json and LICENSE are skipped: author and copyright are attribution.
+# ---------------------------------------------------------------------------
+head_ "6. no private details in dev-day / tdd-pipeline"
+LEAKS='/Users/|Shashank|BTC|Desk Hub|personal-assistant|owner ruling|tcl_|the owner'
+hits="$(grep -rnE "$LEAKS" dev-day tdd-pipeline --exclude=plugin.json --exclude=LICENSE 2>/dev/null)"
+if [ -z "$hits" ]; then
+  ok "no private strings ($LEAKS)"
+else
+  bad "private strings found:"
+  printf '%s\n' "$hits" | cut -c1-160 | sed 's/^/        /'
+fi
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

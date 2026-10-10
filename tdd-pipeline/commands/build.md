@@ -23,14 +23,6 @@ Feature request: $ARGUMENTS
     iterate (step 3), and on approval (step 4) write it as the plan file.
 - If no triage file, this is the normal feature/plan path — continue to step 1.
 
-### 0.5. Automation admissibility check (OPTIONAL — requires an automation-approval gate)
-- Is this request a DURABLE AUTOMATION — a cron/scheduled job, a hook, a mirror/sync, a recurring
-  report, or a new always-on surface? If no, continue to step 1.
-- If yes AND your setup has an automation-approval gate, confirm it approved this process before
-  planning; a rejected verdict → STOP and report it, since planning a build the gate rejected
-  defeats the gate.
-- No such gate installed → continue to step 1. This check must never block a build.
-
 ### 1. Explore (read-only)
 - Enter plan mode.
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore`
@@ -158,7 +150,7 @@ session, not a typing exchange.
 - Never write the plan file before the user approves it.
 
 ## Gotchas
-- Step 5 hands off to `implement` (the build-coordinator AGENT pipeline) — the ONLY execution model. The former `inline-build` skill was REMOVED 2026-08-23 (owner ruling): never reimplement the pipeline inline in the main thread; it silently skips the independent-reviewer property the agent pipeline exists to provide.
+- Step 5 hands off to `implement` (the build-coordinator AGENT pipeline) — the ONLY execution model. Never reimplement the pipeline inline in the main thread; it silently skips the independent-reviewer property the agent pipeline exists to provide.
 - The feature request may name a ticket from ANOTHER repo/project. Before planning, confirm the ticket key's project matches the open repo — a number outside the project's known range is the tell. Planning against the wrong repo wastes a full exploration pass.
 - Spike any load-bearing visibility/API assumption with a throwaway compile BEFORE handing off to `implement`. A route read from a library's sources can still be rejected by the compiler (e.g. Kotlin: `@PublishedApi internal` is callable only inside the declaring module), and finding out mid-pipeline wastes the whole run.
 - Confirm a named verification command EXISTS before writing it into the plan's Prover. A plausible-looking task name can be wrong for the module (e.g. Kotlin Multiplatform: an Android-library-based KMP module runs `:shared:testDebugUnitTest`, not `:shared:jvmTest`), and the pipeline then has to correct the plan mid-run.

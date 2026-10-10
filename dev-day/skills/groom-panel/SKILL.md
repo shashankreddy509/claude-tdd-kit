@@ -329,25 +329,13 @@ step 1.5 resolution found) to the user at the end.
 
 ## Gotchas
 
-- Before running the panel to PROVE a change to this skill, get a real idea from the user — a
-  manufactured clash proves nothing, and "I don't have an idea to groom" is a legitimate answer that
-  means park the prover, not invent one.
 - A round that produces AGREEMENT deserves more suspicion than one that produces a retraction; the
   answering seat withdrawing its own earlier claim is the signal the round did real work.
 - Report the round count AND whether the cap was exercised. One round that closes everything proves
   the mechanism, never the limit — say which half went unwitnessed rather than reporting a flat PASS.
-- Check the brief's own facts before handing it to the specialists; a wrong premise in the brief
-  propagates to every seat at once, and they will each spend a tool call disproving it.
+- Check the brief's own facts and assumptions against the codebase before handing it to the specialists; a wrong premise (e.g. a "net-new" component that already exists) propagates to every seat at once, and they will each spend a tool call disproving it.
 - A clash only one seat can answer goes to that seat alone, not to the panel — but a clash NO seat
   can answer (a disagreement with the user's own ruling) is an escalation, not a round.
-- The role files' frontmatter can carry `description: >` (a folded YAML block scalar). A naive
-  parser that reads the raw line stores the literal two-character string `">"` as the value, not
-  the indented prose beneath it — and that literal `">"` is truthy, so a bare `if description:`
-  presence check passes while capturing nothing. This skill never parses the frontmatter at all
-  (step 0 reads the file BODY as the prompt, ignoring the frontmatter block entirely), so this
-  trap does not bite here — noted for anyone tempted to add frontmatter parsing later.
-- Check the brief's OWN assumptions against the codebase before handing it to the panel — one brief asserted a settings store was net-new when a settings module had existed for days with 18 tests, and two seats each spent a tool call disproving it. A wrong premise propagates to every seat at once.
-- A seat contradicting the USER's ruling is a signal to re-measure, not to relay. When the dev seat said a feature had no channel against an owner ruling that it did, both were partly right: the reference implementation used a PROMPT CONVENTION plus a file, not a hook. Find the third answer before escalating a false either/or.
-- To PROVE this skill reads the role FILES rather than its inlined fallbacks, plant a distinguishing marker in one role file's body (a nonsense token plus an instruction to lead the report with it), and verify before the run that the token appears in the file and NOWHERE in this SKILL.md. A run that merely succeeds proves nothing — the inlined prompts already produce good artifacts. Pair it with a second run from a directory that has no `docs/business/`, asserting the fallback still convenes the role and does not go hunting in another repo for a substitute file. Restore the edited file afterwards and confirm byte-identical.
-- A UI seat's written layout is not a design. One new dashboard page reached the build with only a text spec and no design sign-off; any NEW screen goes through step 7.5 before its ticket counts as groomed.
-- Never draw a mock without the user's "make them" answer from 7.5 step 2; a mock built unasked was rejected by the owner. Before step 6 says a mock is open, check `open`'s exit code: a `#hash` in the path makes `open` fail, and a pick made without seeing the page is not an approval.
+- A seat contradicting the USER's ruling is a signal to re-measure, not to relay. When the dev seat says a feature has no channel but the user's ruling says it does, both may be partly right (e.g. the reference implementation used a PROMPT CONVENTION plus a file, not a hook). Find the third answer before escalating a false either/or.
+- A UI seat's written layout is not a design. A new page that reaches the build with only a text spec has no design sign-off; any NEW screen goes through step 7.5 before its ticket counts as groomed.
+- Never draw a mock without the user's "make them" answer from 7.5 step 2; a mock built unasked is unwanted work. Before step 6 says a mock is open, check `open`'s exit code: a `#hash` in the path makes `open` fail, and a pick made without seeing the page is not an approval.

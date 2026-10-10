@@ -51,7 +51,9 @@ owns those and calls this only for the feedback piece).
    section at the end of the file if absent).
 
    Write the gotcha as an imperative rule with its trigger, not a story: "Before X, check Y — Z fails
-   silently otherwise." One line each. Skip this step entirely when no skill was driving; a
+   silently otherwise." One line each. In a plugin or any shared/public repo, write it generically: no
+   names, pronouns for a person, project keys or names, counts, dates or quotes — the lesson, not the
+   story. Skip this step entirely when no skill was driving; a
    correction from ordinary conversation belongs in `feedback.md` only.
 
    **Guards on this step — it must not sprawl:**

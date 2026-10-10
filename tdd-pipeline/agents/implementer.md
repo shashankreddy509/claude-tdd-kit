@@ -53,7 +53,7 @@ prose on any layout dispute, including the plan's own wording.
   silently pick one.
 - If the plan names a mock path that does not exist on disk, say so explicitly in your final
   message rather than proceeding as if there were no mock. A dangling path means the design
-  pack was never copied into the repo — the owner needs to know.
+  pack was never copied into the repo — the user needs to know.
 
 ## Stack Rules — apply ONLY the section matching the project
 

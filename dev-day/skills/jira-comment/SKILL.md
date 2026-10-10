@@ -72,7 +72,7 @@ Keep the prose, the meaning, and the CC line. Only strip the markup that won't s
 - **Confirm the ticket is right before posting** — a Jira comment is outward-facing and notifies
   watchers/CCs. This is the outward-facing action; invoking the skill IS authorization to post THIS
   comment to THIS ticket.
-- Personal Atlassian MCP has no edit-comment tool — this skill POSTS a new comment only. To fix a
+- If the resolved MCP has no edit-comment tool — this skill POSTS a new comment only. To fix a
   posted comment, post a corrected follow-up or edit in the Jira web editor.
 - Do not invent or restructure the user's content. If the source has bold that carried real meaning,
   convert it to a label line, don't delete the emphasis silently.

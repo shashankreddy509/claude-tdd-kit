@@ -25,7 +25,7 @@ only on approval, persist it to `tasks/plans/<TICKET>_plan.md`.
    the ticket's `Mock:` line; a `design/exports/` dir in the repo; the design-pack line in
    CLAUDE.md. Put the resolved path in the plan's `## Design Reference` section. If the
    ticket touches UI and NO mock exists anywhere, say so in that section explicitly —
-   "no mock found, UI built from spec prose" is a real finding the owner needs to see.
+   "no mock found, UI built from spec prose" is a real finding the user needs to see.
 5. List every new third-party API the plan depends on under Risks / Assumptions as
    UNPROVEN — you cannot call it; `/build` smoke-tests it before the plan is presented.
 6. Return the plan draft as text (do NOT write it to disk)

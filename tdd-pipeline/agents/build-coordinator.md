@@ -69,7 +69,7 @@ Before doing anything:
    - `Gemfile` where `bundle check` fails → `bundle install`
    Missing → STOP: "❌ Dependencies not installed. Run `<install command>` and re-run."
    Never run the install yourself: it is network-bound and often needs private-registry
-   auth the owner has to set up.
+   auth the user has to set up.
    Never silently skip TDD because tests are inconvenient. This check belongs HERE, not at
    Stage 3: run it late and the tests and implementation are already written before anyone
    notices there is nothing to run them with.
@@ -324,7 +324,7 @@ warnings, then scopes, writes the commit message, commits, pushes, and opens the
 - When a harness genuinely cannot reproduce a race, extract the decision into a pure function and test it in isolation — then state explicitly in the receipt what that proves (the logic) and what it does not (the race).
 - Record a zero-power control AS zero-power in the receipt with its root cause. Dropping it reads as if no control was needed.
 - Before reporting a Critical, verify its stated premise in live source. A review's factual claim can be wrong; relaying it unverified sends the pipeline down a wrong fix.
-- A fix that makes a pre-existing bug newly REACHABLE is in scope for the review even when the plan fenced off the file it lives in. Surface the tension; let the owner decide rather than silently honoring the boundary.
+- A fix that makes a pre-existing bug newly REACHABLE is in scope for the review even when the plan fenced off the file it lives in. Surface the tension; let the user decide rather than silently honoring the boundary.
 - Three rounds of Criticals in the same mechanism is a design signal, not a bug count. Stop and report rather than expanding scope a fourth time.
 - Seeding a feature toggle writes to a REAL store: resolve which environment before writing, and if the plan says dev-ON/prod-OFF, seed dev and never touch prod. Asserting on the DB client is necessary but not sufficient — it proves which project you reached, not that you were meant to reach it. A prod write nobody authorised is a hot-zone change even when the value is `false` and no code reads the key yet.
 - Never stamp the receipt `complete` from stage progress alone — reconcile every plan Files to Create/Modify item against `git status` first, and list each as built/not-built. A backend can clear six review rounds at 0/0 while the plan's UI files were never created; "complete" then overclaims and the ship gate inherits the lie.
