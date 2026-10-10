@@ -297,13 +297,14 @@ Offer the presented package to the user with `AskUserQuestion`: approve / revise
 
 ### 9. File the children
 
-For each `### ` unit in the artifact's `## Tickets` section, create a child issue
-(issue type: `Task` if the fetched types include it, else ask once (AskUserQuestion listing those
-types) and use the answer for every child; `subtask: false`, `parent: <Epic key>` — not a subtask; the MCP schema's
-"Parent for subtasks" description is narrower than its actual behaviour; parameter names come
-from the resolved schema) with a description
-assembled from that unit's What / Acceptance / Touches / Reuse / Concerns and any preserved unrecognized
-fields — do not drop them.
+For each `### ` unit in the artifact's `## Tickets` section, draft the child as `create-ticket` does
+(its draft step, then its self-check step, including the no-invention rule and test floor), using
+the unit's What / Acceptance / Touches / Reuse / Concerns and any preserved unrecognized fields as
+the context — do not drop them. Only the following differ from `create-ticket`: the type is picked
+once for the whole batch (`Task` if the fetched types include it, else ask once via AskUserQuestion
+and reuse the answer), the child is created with `subtask: false`, `parent: <Epic key>` — not a
+subtask; the MCP schema's "Parent for subtasks" description is narrower than its actual behaviour;
+parameter names come from the resolved schema — and approval is the step 8 gate, not a per-ticket one.
 
 Blocked units (flagged in their `### ` heading) get filed too, with the blocked status surfaced
 prominently in the title or the top of the description — never skipped, never filed as ordinary

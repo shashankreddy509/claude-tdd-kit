@@ -222,6 +222,18 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 7. Shared references stay identical.
+#    Each plugin installs alone, so each ships its own copy; an edit to one copy
+#    must reach the other.
+# ---------------------------------------------------------------------------
+head_ "7. shared references identical"
+if cmp -s dev-day/references/jira-mcp.md tdd-pipeline/references/jira-mcp.md; then
+  ok "references/jira-mcp.md matches in both plugins"
+else
+  bad "references/jira-mcp.md differs (or is missing) between dev-day and tdd-pipeline"
+fi
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

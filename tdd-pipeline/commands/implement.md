@@ -8,21 +8,12 @@ Precondition: an approved plan file must exist at `tasks/plans/<TICKET>_plan.md`
 - If no such file exists → STOP and tell the user to run this plugin's `build` command first and approve a plan.
 - State which plan file you resolved; if the user named a ticket and the resolved file doesn't match it, STOP and ask.
 
-### Approval gate (runs only if `$PLAN_GATE_CMD` is set; otherwise skip silently)
-`$PLAN_GATE_CMD` is a command where `check <plan>` prints approve/revise/discard/unanswered
-and `record <plan> <outcome>` stores an answer.
-A plan FILE is not an approval. Check the durable record for this exact version of the file:
-run `eval "$PLAN_GATE_CMD" check <resolved-plan-path>` and act on stdout:
-- `approve` → proceed.
-- `discard` → STOP: this plan was discarded. Never build a
-  discarded plan, whatever its mtime says.
-- `revise` → STOP: a revision was requested and the plan has not been rewritten since.
-  Tell the user to finish the revise (the rewrite reopens the gate).
-- `unanswered` → no recorded approval for this version. Ask via
-  `AskUserQuestion` ("Build this plan?" — Approve / Cancel); on Approve run
-  `eval "$PLAN_GATE_CMD" record <resolved-plan-path> approve`
-  so the answer is durable, on Cancel record `discard` and STOP. This closes the hole
-  where the newest plan file gets built with nobody on record approving it.
+### Approval gate (optional hook — only if `$PLAN_GATE_CMD` is set; otherwise skip silently)
+A plan FILE is not an approval. Run `eval "$PLAN_GATE_CMD" check <resolved-plan-path>` (prints
+approve/revise/discard/unanswered for this exact file version): `approve` → proceed; `discard`
+→ STOP, never build a discarded plan; `revise` → STOP until the plan is rewritten; `unanswered`
+→ ask via `AskUserQuestion` ("Build this plan?" — Approve / Cancel) and run
+`eval "$PLAN_GATE_CMD" record <resolved-plan-path> approve|discard` (Cancel → `discard` and STOP).
 
 ### Step 0 — Move Jira ticket to "In Progress" (if a ticket is in scope)
 Before spawning the build-coordinator, derive the Jira ticket key from the resolved

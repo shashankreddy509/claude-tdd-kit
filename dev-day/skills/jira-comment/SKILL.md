@@ -43,15 +43,9 @@ Keep the prose, the meaning, and the CC line. Only strip the markup that won't s
 
 ## Steps
 
-0. **Resolve the Jira MCP dialect first.** Atlassian MCP servers differ per machine: one exposes
-   camelCase names (`mcp__atlassian__addCommentToJiraIssue`) with `cloudId` as a REQUIRED parameter;
-   another exposes snake_case under a `jira` prefix and resolves the site internally, with no
-   `cloudId` at all. If the `tdd-pipeline` plugin is installed, its `references/jira-mcp.md` has the
-   full probe procedure — follow it. Otherwise probe inline: try
-   `ToolSearch "select:mcp__atlassian__addCommentToJiraIssue"`; if that resolves nothing, search by
-   keyword (`ToolSearch "+jira comment"`) and use whatever add-comment verb comes back. Pass
-   `cloudId` ONLY if the resolved schema has that parameter — otherwise omit it and ignore the
-   `cloudId=` half of the CLAUDE.md line. Never hardcode a tool name.
+0. **Resolve the Jira MCP dialect first** per `../../references/jira-mcp.md` (relative to this
+   SKILL.md); the verb needed is add-comment. Pass `cloudId` ONLY if the resolved schema has that
+   parameter — otherwise omit it and ignore the `cloudId=` half of the CLAUDE.md line.
 
 1. Load the add-comment tool resolved in step 0.
 2. Transform the source text per the render-safe rules above. Append the CC mentions verbatim on a

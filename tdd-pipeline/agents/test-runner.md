@@ -57,3 +57,9 @@ failure, signing error, runner crash. Quote the exact error line. Otherwise writ
 - Zero tests ran → FAIL, never PASS.
 - If a test looks fundamentally broken, say so in the diagnosis; never propose skipping,
   commenting out, or deleting it.
+
+## Gotchas
+- "Survives a restart" is proven only by a REAL restart of the real process, then re-reading the value WITHOUT re-setting it; unit tests usually exercise the rebuild path, not the already-loaded record a second start reads.
+- A mutation that PASSES falsifies the diagnosis, not the guard: stop writing tests and go back to measuring the live system. Never ship a regression guard without first proving it FAILS with the bug reintroduced.
+- Never verify by grepping a pipeline (`cmd | grep -q`, `a && grep && grep`): an earlier stage's exit status can win and report a false miss. Save the output to a file first, then grep the file.
+- A harness that RESTATES a production expression tests its own copy. Extract the shipped expression from the source at runtime, then mutate production and confirm the harness goes red.

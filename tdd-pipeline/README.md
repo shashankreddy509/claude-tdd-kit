@@ -82,6 +82,11 @@ a `Test:` line, never guess. A missing tool (`dotnet`, `xcodebuild`) or uninstal
 dependencies (`Pods/`, `node_modules/`, gems, Carthage) stop the run before Stage 1 with
 the install command to run, instead of surfacing as a test failure.
 
+## Optional hooks
+- `$PLAN_GATE_CMD` — a command with `check <plan>` / `record <plan> <outcome>` that stores plan
+  approvals durably; `build` records and `implement` checks it. Unset → both skip silently.
+- Feature-flag gating — a `Gating:` line in CLAUDE.md turns on `references/gating.md`.
+
 ## Install
 
 Via the [claude-tdd-kit](https://github.com/shashankreddy509/claude-tdd-kit) marketplace

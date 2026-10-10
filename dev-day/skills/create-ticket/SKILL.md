@@ -29,14 +29,9 @@ cloudId / project key / issue types — everything is discovered at runtime.
    - **Not found** → say "no Jira configured for this project" and stop. Do not guess a site or key.
    - **Found, but the resolved dialect (step 1b) needs no `cloudId`** → use the key only.
 
-1b. **Resolve the Jira MCP dialect.** Atlassian MCP servers differ per machine: one exposes
-   camelCase names (`mcp__atlassian__getJiraProjectIssueTypesMetadata`) with `cloudId` REQUIRED;
-   another exposes snake_case under a `jira` prefix and resolves the site internally, with no
-   `cloudId` at all. If the `tdd-pipeline` plugin is installed, follow its `references/jira-mcp.md`.
-   Otherwise probe inline: try the camelCase names via `ToolSearch`; if nothing resolves, search by
-   keyword (`ToolSearch "+jira create issue"`, `"+jira project"`) and use what comes back.
-   **Pass `cloudId` ONLY when the resolved schema has that parameter** — otherwise omit it
-   everywhere below and ignore the `cloudId=` half of the CLAUDE.md line. Never hardcode a tool name.
+1b. **Resolve the Jira MCP dialect** per `../../references/jira-mcp.md` (relative to this SKILL.md).
+   Pass `cloudId` ONLY when the resolved schema has that parameter — otherwise omit it
+   everywhere below and ignore the `cloudId=` half of the CLAUDE.md line.
 
 2. **Fetch real issue types.** Call the issue-types-metadata verb resolved in step 1b with
    `projectIdOrKey` (plus `cloudId` only if its schema requires it). Collect the type names

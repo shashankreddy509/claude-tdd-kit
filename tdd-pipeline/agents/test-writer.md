@@ -22,12 +22,8 @@ types/functions in the plan's planned source files, so tests compile and fail on
    `.sln` references, the source set Gradle compiles. A test file the command never
    picks up is not a test.
 4. Tests must assert real behavior — no empty tests, no `assertTrue(true)`
-5. If the plan has a **Gating** section, its gate-off cases are REQUIRED tests, not
-   optional ones — server side: flag off ⇒ the documented 404 / omitted field; client side:
-   flag off ⇒ the surface is not rendered. Also cover the absent-key case: a missing flag
-   entry must behave as OFF (fail closed). An untested off-path is discovered during the
-   incident it was built for. Both sides fail closed, so absent reads as OFF and only an
-   affirmative `true` renders the surface.
+5. If the plan has a **Gating** section, write its gate-off and absent-key tests as REQUIRED, per
+   `references/gating.md` § Tests.
 6. If the plan has a **Reuse** section, write one test per row proving the new code goes
    THROUGH that shared piece with this ticket's data — e.g. the settings screen renders the
    shared profile card with the settings user's name. Reach it via the real screen or entry

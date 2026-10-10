@@ -72,15 +72,9 @@ The script prints, read-only and macOS/bash-3.2 safe (degrading gracefully when 
    verb, resolved as `/start-session` step 2 does, group by status. List key · summary · status. If no Jira
    line → skip this source (don't fall back to a todo file).
 
-5. **Stale feature-flag entries (ONLY when CLAUDE.md has a `Gating:` line naming a flag store).**
-   No line → skip this source silently. Present → read the flag store read-only, using whatever
-   helper the project already has (a Firestore doc, LaunchDarkly/Unleash, a config table, an env
-   file), and flag entries that look retired-but-present: per-fix keys whose ticket is Done and
-   whose fix has been in production ~2 weeks or more. Long-lived feature keys are never flagged.
-   Report as a prompt, not an action: this source NEVER writes or deletes a flag entry.
-   Retiring one is a code change, not a console click — with fail-closed semantics an absent key
-   reads as OFF, so removing the entry while the app still gates on it silently disables the fix.
-   The app-side branch goes in the same change (both sides of the gate move together).
+5. **Optional: stale feature-flag entries.** Only when CLAUDE.md has a `Gating:` line naming a flag
+   store; read it read-only and report retired-but-present entries as a prompt, never an action.
+   No line → skip silently.
 
 ## Output
 
@@ -94,48 +88,12 @@ standup — <repo> @ <branch>
 VERDICT: <one line — e.g. "PR #132 awaiting merge; deploy pending once merged" or "nothing pending">
 ```
 
-## Dashboard render + inbox drain (OPTIONAL — skip silently when absent)
+## Optional dashboard hook
 
-A visual standup board is an optional extra. Most repos have none: **if no dashboard tool
-resolves, skip this whole section with no message and print the text standup only.** A dead
-server or a missing tool NEVER blocks or fails the sweep.
-
-**Resolve the tool, in order — stop at the first hit:**
-
-1. A dashboard script the repo ships under `scripts/` → run it with the project's own interpreter
-   (for a Python tool, `.venv/bin/python` when a venv exists, else `python3`).
-2. A `Dashboard:` line in the repo's `CLAUDE.md` — also covers the case where the tool lives in a
-   SIBLING repo but drives a board for this one:
-   ```
-   Dashboard: tool=<abs path to the dashboard tool> port=<port> [env=K=V,K=V] [gh_repo=<owner/repo>]
-   ```
-   Use its `tool`, `port`, and any `env` prefix verbatim.
-3. Neither → **no dashboard. Skip.**
-
-Then do TWO things, both wrapped so failure is silent:
-
-1. **Drain first.** `<env> <TOOL> drain` — act on any queued clicks (action→work map:
-   `deploy_dev`/`deploy_prod`/`ship`/`pick_ticket`/`reconcile`/`refresh_standup`; a
-   `refresh_standup` just means re-run this sweep).
-2. **Render after.**
-   ```bash
-   <env> <TOOL> render standup '<json>'
-   ```
-   `<json>` = `{branch, dirty_clean, dirty_count, prs:[...], ticket_total, jira_key, label,
-   no_deploy?, deploy:{pending,tag,files,files_list}, groups:{"<status>":["KEY summary", …]}}`
-   (use generic `groups` keyed by real status names, or the fixed `tickets:{in_review,todo,backlog}`).
-   Set `no_deploy:true` for a ship-based project with no prod tag.
-
-**PRs must come from the RESOLVED repo, not the cwd.** When the `Dashboard:` line names a
-`gh_repo`, Source 2's `gh pr list` and the deploy gap MUST target it (`gh pr list -R <gh_repo>`),
-not whatever repo `gh` defaults to. This is the #1 reason a board "doesn't reflect" a real PR:
-the sweep queried the wrong repo. With no `gh_repo`, derive it from `git remote get-url origin`.
-
-**Where the tool drives a board for a repo it does not live in**, that project's own conventions
-govern what the sweep may do to its tickets — if its `CLAUDE.md` says comment-only, never move a
-ticket's Jira status from here.
-
-The page is live at `http://localhost:<port>`. ADDITIVE — still print the text standup too.
+If the repo has a dashboard tool (a script under `scripts/`, or a `Dashboard:` line in CLAUDE.md naming
+it), render the standup to it after printing the text one. No tool resolves → skip silently; a dead
+tool never blocks the sweep. PRs always come from the resolved repo (`gh pr list -R <owner/repo>`),
+not the cwd. The text standup is always printed.
 
 ## Guards
 - **Read-only.** Never act — no commit/push/merge/tag/transition. List, don't do.
