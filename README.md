@@ -233,7 +233,7 @@ Each plugin's own README has the full command list and the stage-by-stage flow.
 
 ## Mods
 
-Three optional Claude Code mods (hook plugins that draw inside the terminal or the desktop Code
+Four optional Claude Code mods (hook plugins that draw inside the terminal or the desktop Code
 tab) live under `mods/`. Each installs on its own and needs neither plugin above, except where noted.
 
 - **side-panel**: a right-side dashboard pane for the project the session is open in. Count
@@ -254,15 +254,22 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
 - **next-steps**: turns the numbered list under a bold **Questions** heading at the end of a
   reply into answer buttons (1-9 answer, 0 sends the picks as one reply). It does nothing for
   replies without that block, so it pairs with a reply format that ends in one.
+- **secret-guard**: checks each prompt before it is sent against the regexes in
+  `~/.claude/secret-patterns.json` (a JSON array of `{ "kind", "pattern", "flags" }`) and, on a
+  hit, asks Mask, Send anyway or Cancel; the dialog shows only the kinds, never the value. It
+  fails closed: with no pattern file it uses a built-in list of 14 common key formats, and a
+  pattern file that is present but broken holds every prompt until fixed.
+  `node mods/secret-guard/check-patterns.mjs` tests your file against fake samples.
 
 ```
 /plugin install side-panel@claude-tdd-kit
 /plugin install cache-keeper@claude-tdd-kit
 /plugin install next-steps@claude-tdd-kit
+/plugin install secret-guard@claude-tdd-kit
 ```
 
 Hide or show a mod for the current session with `/sidepanel` (opens or closes the pane),
-`/cachekeeper on|off` or `/nextsteps on|off`. To turn one off for good, use
+`/cachekeeper on|off`, `/nextsteps on|off` or `/secretguard on|off`. To turn one off for good, use
 `claude plugin disable <mod>@claude-tdd-kit` (and `enable` to bring it back).
 
 Each mod's logic has `*.test.ts` files; run them with `claude plugin test mods/<name>`. CI does
@@ -314,7 +321,7 @@ the kit, with no SSH key and no second clone:
 
 - `dev-day/`: the session-loop plugin
 - `tdd-pipeline/`: the build pipeline plugin
-- `mods/`: the three optional mods (side-panel, cache-keeper, next-steps)
+- `mods/`: the four optional mods (side-panel, cache-keeper, next-steps, secret-guard)
 
 This kit is the canonical install source.
 

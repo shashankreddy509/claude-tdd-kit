@@ -60,7 +60,7 @@ async function onTick($: EngineInterface) {
   const s = cacheState(last, now, (await read($, ttlMin)) * 60_000, await read($, warnedFor))
   if (s?.shouldWarn) {
     await update($, warnedFor, () => last)
-    $.ui.toast(`Cache goes cold in ${Math.ceil(s.msLeft / 60_000)}m. ctrl+x tab, then h handoff / s handoff+start`, { timeoutMs: 15_000 })
+    $.ui.toast(`Cache goes cold in ${Math.ceil(s.msLeft / 60_000)}m. ctrl+x tab, then h handoff / s handoff+start / c clear`, { timeoutMs: 15_000 })
   }
 }
 
@@ -153,7 +153,8 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="column">
-        <Box columnGap={1} alignItems="center">
+        {/* Wraps so the buttons drop to their own line in a narrow pane instead of being clipped. */}
+        <Box key="row" columnGap={1} alignItems="center" flexWrap="wrap">
           {s === null ? (
             <Text dimColor>○ no cache yet</Text>
           ) : (
@@ -171,9 +172,10 @@ export const register: Register = on => {
           {busy ? (
             <Text dimColor>handoff running…</Text>
           ) : (
-            <Box>
+            <Box key="actions" columnGap={1}>
               <Button key="handoff" variant="primary" label="handoff" hotkey="h" onPress={() => handoff($, 'handoff')} />
               <Button key="start" label="handoff+start" hotkey="s" onPress={() => handoff($, 'start')} />
+              <Button key="clear" label="clear" hotkey="c" onPress={() => $.command.run({ command: 'clear' })} />
             </Box>
           )}
         </Box>

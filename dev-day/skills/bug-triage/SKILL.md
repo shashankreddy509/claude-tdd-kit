@@ -1,10 +1,10 @@
 ---
 name: bug-triage
-description: Investigate a Jira bug from its key to a root-cause verdict — classify bug-vs-feature, fan out read-only Explore agents across the repo, adversarially confirm the cause, and write a tasks/<TICKET>-triage.md artifact a lean fix-planner can pick up. Orchestration only; read-only, never touches Jira, stops at verdict + fix-location (no fix, no plan). Use when given a Jira bug key to root-cause, or "triage PROJ-XXXX", "is this a real bug", "where's the root cause", "investigate this ticket". Triggers: triage ticket, root cause this bug, is this a real bug, investigate bug, where is the root cause, bug verdict, analyze bug.
+description: Investigate a Jira bug from its key (or pasted bug text when the project has no Jira) to a root-cause verdict — classify bug-vs-feature, fan out read-only Explore agents across the repo, adversarially confirm the cause, and write a tasks/<TICKET>-triage.md artifact a lean fix-planner can pick up. Orchestration only; read-only, never touches Jira, stops at verdict + fix-location (no fix, no plan). Use when given a Jira bug key to root-cause, or "triage PROJ-XXXX", "is this a real bug", "where's the root cause", "investigate this ticket". Triggers: triage ticket, root cause this bug, is this a real bug, investigate bug, where is the root cause, bug verdict, analyze bug.
 allowed-tools: Read, Grep, Glob, Bash, Task, ToolSearch, Skill, Write
 arguments:
   - name: ticket
-    description: Jira bug key (e.g. PROJ-42)
+    description: Jira bug key (e.g. PROJ-42), or the pasted bug text when the project has no Jira
     required: true
 ---
 
@@ -33,17 +33,19 @@ It is hard-scoped:
 
 **Discover the project's Jira config (cloudId + key) from the project `CLAUDE.md`** — scan it for a
 line of the form `Jira: cloudId=<uuid> key=<PROJECTKEY>` and use those values;
-never hardcode a cloudId. If not found, ask for the cloudId + key. Normalize the ticket to `<KEY>-NNNN`.
+never hardcode a cloudId. If the resolved MCP dialect (step 1) needs no cloudId, only the key is
+needed. Normalize the ticket to `<KEY>-NNNN`.
+
+**No `Jira:` line → pasted-text mode.** Say "no Jira configured; triaging the pasted bug text".
+Treat `{{args}}` as the bug report (if it is empty or only a key, ask the user to paste the steps,
+expected and actual). Skip step 1 and the issuetype gate in step 2; the user's text is the ticket.
+`<TICKET>` becomes a short kebab-case slug of the bug (e.g. `login-crash-on-rotate`), so the
+artifact is `tasks/<slug>-triage.md` and the hand-off is `/build <slug>`.
 
 ## Steps
 
 ### 1. Fetch the ticket (delegate the live read)
-**Resolve the Jira MCP dialect first.** Atlassian MCP servers differ per machine: one exposes
-camelCase names (`mcp__atlassian__getJiraIssue`) with `cloudId` REQUIRED; another exposes snake_case
-under a `jira` prefix and resolves the site internally, with no `cloudId` at all. If the
-`tdd-pipeline` plugin is installed, follow its `references/jira-mcp.md`. Otherwise probe inline: try
-the camelCase name via `ToolSearch`; if nothing resolves, search by keyword
-(`ToolSearch "+jira issue"`) and use what comes back. Never hardcode a tool name.
+**Resolve the Jira MCP dialect first** per `../../references/jira-mcp.md` (relative to this SKILL.md).
 
 Then read the ticket with the resolved verb:
 ```
@@ -71,9 +73,9 @@ at least two complementary angles so one blind spot doesn't sink the result:
   repro — exact key + file:line + every code site that produces it.
 - **Mechanism finder:** locate the branch/condition/default that DECIDES the observed (wrong)
   behavior vs the expected one — the gate, the hardcoded value, the missing check. By stack:
-  - **Web/backend:** the route handler, the data-store read/write, the feature-flag gate, the
-    domain/business logic.
-  - **Mobile:** the ViewModel/presenter branch, the flag gate, the repository.
+  - **Web/backend:** the route handler, the data-store read/write, the feature-flag gate (if the project
+    uses flags), the domain/business logic.
+  - **Mobile:** the ViewModel/presenter branch, the flag gate (if any), the repository.
   - **Other:** find the equivalent decision point for that stack.
 
 Each agent must return `file:path:line` + a short quoted snippet for every finding, and edit nothing.
@@ -97,12 +99,7 @@ Decide one of:
 - **`not-reproducible`** — the code path can't produce the reported behavior. Say why; recommend
   closing as not-repro/invalid.
 - **`pre-existing`** — the failure isn't from any recent change. If there's a build/test failure in
-  play, delegate the attribution to `prove-pre-existing` and report its verdict. If that skill isn't
-  available, do it inline: capture the exact error signature, `git stash push -- <your files>`,
-  re-run the SAME command on the clean base, compare, then **`git stash pop` and verify the tree
-  matches its pre-stash state**. The pop is mandatory and must happen even if the re-run errors —
-  a stashed tree that is never popped looks like the user's work vanished. On a pop conflict, STOP
-  and surface `git stash list` rather than discarding anything.
+  play, run the prove-pre-existing skill (`/dev-day:prove-pre-existing`) and report its verdict.
 - **`invalid`** — the expectation in the ticket is wrong (behavior is by design / matches spec).
 
 ### 7. Write the artifact
@@ -134,3 +131,11 @@ Report `TRIAGE SELF-CHECK: PASS` or `FAIL — <misses>`. On FAIL, surface it.
   verdict. A wrong file set shipped as confident is the failure mode this skill exists to prevent.
 - **Respect a named module scope** — if the user says the bug is in area X, don't report findings
   from area Y as the cause (note them as adjacent at most).
+
+## Gotchas
+
+- Never run a command that can echo a secret; a redaction filter that can fail is not a control. Read it into a shell variable and use boolean checks only (`[ -n "$K" ]`, `grep -q`, `case`); never `od`/`xxd`/`echo`/`printf`/`wc` the value or send it to a third-party echo service.
+- A credential returning 401: compare its SHAPE (length, separator, prefix) to the vendor's documented format BEFORE theorising about auth models or entitlements; read the vendor docs second, theorise last.
+- A 200 does not prove a credential authenticated until the same call is run with no auth header and with a garbage key; some public endpoints return 200 to anyone.
+- Before calling a number, rule or convention "unsourced" or "contradicted", grep `src/` and `tests/` for it and say what you searched; a relayed claim is not evidence until reproduced.
+- Before attributing a defect to the newest merge, state what that change can and cannot physically affect, then measure.

@@ -41,6 +41,13 @@ You are a performance engineer specializing in memory management. Read-only.
 - `lazy` delegates on large objects that are never released
 - ThreadLocals never cleared on a pooled thread
 
+### Swift / iOS
+- Retain cycles: closures capturing `self` strongly (use `[weak self]`), strong delegates (declare `weak`)
+
+### .NET
+- `IDisposable` instances not wrapped in `using`/disposed on every path
+- Event handlers subscribed (`+=`) and never unsubscribed
+
 ### Python
 - Files opened outside a `with` block, or a `close()` that an exception can skip
 - Module-level mutable state accumulating across requests/iterations

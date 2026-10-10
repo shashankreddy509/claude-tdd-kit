@@ -1,6 +1,6 @@
 # dev-day
 
-The complete developer day-loop for Claude Code + Jira. One plugin, seven commands, and your
+The complete developer day-loop for Claude Code + Jira. One plugin, twelve commands, and your
 session runs the way a disciplined senior engineer's day runs: boot with context, work gated,
 ship clean, capture what you learned.
 
@@ -15,10 +15,14 @@ in this same kit. dev-day runs the day; tdd-pipeline builds the tickets.
 | Anytime | `/dev-day:standup` | "Anything pending?" — branch + dirty files, open PRs, deploy gap, open Jira issues. Read-only |
 | New bug | `/dev-day:bug-triage <KEY>` | Root-cause verdict + fix location, adversarially confirmed. Read-only, writes one triage artifact |
 | Before estimating | `/dev-day:groom <KEY>` | Readiness + spec brief. No estimates, no Jira edits |
+| New idea | `/dev-day:shape-idea` | Pushback conversation that turns a raw idea into a paste-ready prompt (a `/groom-panel` prompt or a cloud-session prompt). Touches no code, no Jira |
+| Raw idea | `/dev-day:groom-panel` | BA + UI designer + developer + tester panel turns an idea into a groomed ticket set (and a mock for new screens); creates the Epic and tickets in Jira after your approval |
 | New work | `/dev-day:create-ticket` | Drafts a properly-formatted ticket, creates ONLY after you approve |
 | Build one | `/tdd-pipeline:build <KEY>` then `/tdd-pipeline:implement` | Hands the ticket to the tdd-pipeline plugin: plan → your approval → test-writer → implementer → test-runner → review → ship gate |
+| Build failed | `/dev-day:prove-pre-existing` | Stashes your edits, re-runs, and proves whether the failure is yours or was already broken. Read-only verdict |
 | Jira notes | `/dev-day:jira-comment` | Posts comments that survive the Atlassian MCP's markdown mangling |
 | Evening | `/dev-day:end-session` | Captures the session's corrections + lessons into `tasks/feedback.md` (via `merge-feedback`, never deletes prior points) and leaves a "left off here" note for tomorrow |
+| Mid-session | `/dev-day:merge-feedback` | Merges this session's preferences into `tasks/feedback.md` without deleting prior points (called by `end-session`; runs standalone too) |
 | When it gets big | `/dev-day:condense-feedback` | Shrinks a grown `tasks/feedback.md` ~75-85% without losing a single distinct lesson — merges points that mean the same thing, groups by theme, backs up first |
 
 ## Setup
@@ -56,8 +60,11 @@ rule and concrete constant, and writes a timestamped backup before touching anyt
 ## Files the plugin maintains in your repo
 
 - `tasks/feedback.md` — accumulated preferences/corrections (the memory)
-- `tasks/session-notes.md` — 2-line "left off" note between sessions
+- `tasks/session-notes.md` — 2-line "left off" note plus open points between sessions
 - `tasks/<KEY>-triage.md`, `tasks/<KEY>-grooming.md` — per-ticket artifacts
+- `tasks/groom/<slug>-grooming.md`, `docs/mocks/<epic-slug>.html` — `groom-panel`'s grooming package and mock
+- `docs/<slug>-prompt.md` — `shape-idea`'s paste-ready prompt
+- `tasks/feedback.md.bak-*` — `condense-feedback`'s timestamped backups
 - `tasks/plans/<KEY>_plan.md` — approved plans (written by `tdd-pipeline`)
 
 ## License

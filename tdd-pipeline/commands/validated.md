@@ -26,7 +26,7 @@ Done should mean *validated*, not merely *merged*. `merged` deliberately stops s
 
 Read `<KEY>`'s status with the resolved *get issue* tool (request the `status` field).
 
-- Status is a **verification column** ("Build Testing", "QA", "Testing", "Verify") → proceed.
+- Status is a **verification column** (the board's column between In Review and Done, e.g. QA, Testing, UAT, Staging; unsure which → ask the user) → proceed.
 - Status is already **Done** → say so and stop. Nothing to do.
 - Status is anything earlier (To Do, In Progress, In Review) → **stop**. The work hasn't
   been merged and parked yet; point the user at `/tdd-pipeline:merged` first. Closing a

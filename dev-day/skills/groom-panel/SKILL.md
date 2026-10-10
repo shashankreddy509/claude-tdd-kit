@@ -1,7 +1,7 @@
 ---
 name: groom-panel
 description: Groom a RAW IDEA into a build-ready ticket set by running a four-role panel — a business analyst who interrogates the requirements with the user and then convenes a UI designer, a developer and a tester in parallel on one brief. The BA synthesizes the four views into a groomed package with disagreements surfaced, not smoothed, puts each answerable hard objection back to the one specialist who can answer it over at most two resolution rounds, and carries whatever survives to the user as the decisions only they can make. Runs BEFORE any plan or code; writes ONE markdown artifact (plus one platform-styled mock HTML when a ticket adds a new screen, or a review of the user's existing mocks, approved by the user at a design gate), creates the Epic and — after an approval gate — its child tickets in Jira, but touches no code and no other repo state. Distinct from `/groom`, which analyzes ONE EXISTING Jira ticket for estimation readiness — this one turns "I want to build X" into the tickets themselves. Use on "/groom-panel <idea>", "groom this idea", "run a grooming session", "get the panel on this".
-allowed-tools: Read, Grep, Glob, Bash, Agent, AskUserQuestion, Write, ToolSearch, createJiraIssue, searchJiraIssuesUsingJql
+allowed-tools: Read, Grep, Glob, Bash, Agent, AskUserQuestion, Write, ToolSearch
 arguments:
   - name: idea
     description: The raw idea, feature, or product to groom (free text)
@@ -75,10 +75,13 @@ Rules that make this step useful rather than an interrogation:
 
 ### 1.5. BA creates the Epic
 
+No `Jira:` line in the project CLAUDE.md → skip this step and step 9, deliver the grooming
+artifact (and mock) only, and say no tickets were created.
+
 Once interrogation with the user converges (step 1 is settled, no more open questions), the BA
 proposes an Epic title + description. The MAIN THREAD — not the BA sub-agent, which holds no
 Jira tools — first resolves the Jira project and MCP dialect exactly as `/create-ticket` steps 1,
-1b and 2 do (the project CLAUDE.md `Jira:` line, else ask; never hardcode a tool name or site),
+1b and 2 do (the project CLAUDE.md `Jira:` line; never hardcode a tool name or site),
 then creates it via the create-issue verb (`issueTypeName: Epic`), and writes
 `Parent epic: <KEY>` into the artifact header once step 6 produces it.
 
@@ -252,9 +255,10 @@ Approving the ticket package in step 8 is NOT approving a design: a text layout 
 the user must see the look before anyone builds it.
 
 1. **Resolve the platform** of each NEW screen from the repo: `AndroidManifest.xml` / Gradle app
-   module → Android; an Xcode project with an iOS target → iOS; a macOS target → Mac; otherwise web.
-   A multiplatform repo or no code yet → ask the user which platforms. Never default a mobile or
-   desktop app to a web page.
+   module → Android; an Xcode project with an iOS target → iOS; a macOS target → Mac; web only when a web stack is detected (`package.json` with a web
+   framework, `index.html`, ...). Any other or unknown UI toolkit (.NET WPF/MAUI/WinUI, Flutter,
+   React Native, Electron, Linux desktop, ...), a multiplatform repo, or no code yet → ask the user
+   which platform style to mock. Never default a mobile or desktop app to a web page.
 2. **Ask whether mocks already exist** (`AskUserQuestion`: "I have mocks" + path / "make them").
    Accept PNG, JPG, PDF or HTML. A design-tool link needs an export to one of those unless a
    connector for that tool is available.
@@ -293,13 +297,14 @@ Offer the presented package to the user with `AskUserQuestion`: approve / revise
 
 ### 9. File the children
 
-For each `### ` unit in the artifact's `## Tickets` section, create a child issue
-(issue type: `Task` if the fetched types include it, else ask once (AskUserQuestion listing those
-types) and use the answer for every child; `subtask: false`, `parent: <Epic key>` — not a subtask; the MCP schema's
-"Parent for subtasks" description is narrower than its actual behaviour; parameter names come
-from the resolved schema) with a description
-assembled from that unit's What / Acceptance / Touches / Reuse / Concerns and any preserved unrecognized
-fields — do not drop them.
+For each `### ` unit in the artifact's `## Tickets` section, draft the child as `create-ticket` does
+(its draft step, then its self-check step, including the no-invention rule and test floor), using
+the unit's What / Acceptance / Touches / Reuse / Concerns and any preserved unrecognized fields as
+the context — do not drop them. Only the following differ from `create-ticket`: the type is picked
+once for the whole batch (`Task` if the fetched types include it, else ask once via AskUserQuestion
+and reuse the answer), the child is created with `subtask: false`, `parent: <Epic key>` — not a
+subtask; the MCP schema's "Parent for subtasks" description is narrower than its actual behaviour;
+parameter names come from the resolved schema — and approval is the step 8 gate, not a per-ticket one.
 
 Blocked units (flagged in their `### ` heading) get filed too, with the blocked status surfaced
 prominently in the title or the top of the description — never skipped, never filed as ordinary
@@ -325,24 +330,13 @@ step 1.5 resolution found) to the user at the end.
 
 ## Gotchas
 
-- Before running the panel to PROVE a change to this skill, get a real idea from the user — a
-  manufactured clash proves nothing, and "I don't have an idea to groom" is a legitimate answer that
-  means park the prover, not invent one.
 - A round that produces AGREEMENT deserves more suspicion than one that produces a retraction; the
   answering seat withdrawing its own earlier claim is the signal the round did real work.
 - Report the round count AND whether the cap was exercised. One round that closes everything proves
   the mechanism, never the limit — say which half went unwitnessed rather than reporting a flat PASS.
-- Check the brief's own facts before handing it to the specialists; a wrong premise in the brief
-  propagates to every seat at once, and they will each spend a tool call disproving it.
+- Check the brief's own facts and assumptions against the codebase before handing it to the specialists; a wrong premise (e.g. a "net-new" component that already exists) propagates to every seat at once, and they will each spend a tool call disproving it.
 - A clash only one seat can answer goes to that seat alone, not to the panel — but a clash NO seat
   can answer (a disagreement with the user's own ruling) is an escalation, not a round.
-- The role files' frontmatter can carry `description: >` (a folded YAML block scalar). A naive
-  parser that reads the raw line stores the literal two-character string `">"` as the value, not
-  the indented prose beneath it — and that literal `">"` is truthy, so a bare `if description:`
-  presence check passes while capturing nothing. This skill never parses the frontmatter at all
-  (step 0 reads the file BODY as the prompt, ignoring the frontmatter block entirely), so this
-  trap does not bite here — noted for anyone tempted to add frontmatter parsing later.
-- Check the brief's OWN assumptions against the codebase before handing it to the panel — one brief asserted a settings store was net-new when a settings module had existed for days with 18 tests, and two seats each spent a tool call disproving it. A wrong premise propagates to every seat at once.
-- A seat contradicting the USER's ruling is a signal to re-measure, not to relay. When the dev seat said a feature had no channel against an owner ruling that it did, both were partly right: the reference implementation used a PROMPT CONVENTION plus a file, not a hook. Find the third answer before escalating a false either/or.
-- To PROVE this skill reads the role FILES rather than its inlined fallbacks, plant a distinguishing marker in one role file's body (a nonsense token plus an instruction to lead the report with it), and verify before the run that the token appears in the file and NOWHERE in this SKILL.md. A run that merely succeeds proves nothing — the inlined prompts already produce good artifacts. Pair it with a second run from a directory that has no `docs/business/`, asserting the fallback still convenes the role and does not go hunting in another repo for a substitute file. Restore the edited file afterwards and confirm byte-identical.
-- A UI seat's written layout is not a design. One new dashboard page reached the build with only a text spec and no design sign-off; any NEW screen goes through step 7.5 before its ticket counts as groomed.
+- A seat contradicting the USER's ruling is a signal to re-measure, not to relay. When the dev seat says a feature has no channel but the user's ruling says it does, both may be partly right (e.g. the reference implementation used a PROMPT CONVENTION plus a file, not a hook). Find the third answer before escalating a false either/or.
+- A UI seat's written layout is not a design. A new page that reaches the build with only a text spec has no design sign-off; any NEW screen goes through step 7.5 before its ticket counts as groomed.
+- Never draw a mock without the user's "make them" answer from 7.5 step 2; a mock built unasked is unwanted work. Before step 6 says a mock is open, check `open`'s exit code: a `#hash` in the path makes `open` fail, and a pick made without seeing the page is not an approval.

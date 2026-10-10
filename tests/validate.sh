@@ -55,7 +55,7 @@ fi
 #    A trailing comma here means every install of the marketplace fails.
 # ---------------------------------------------------------------------------
 head_ "1. manifests parse"
-MANIFESTS=".claude-plugin/marketplace.json dev-day/.claude-plugin/plugin.json tdd-pipeline/.claude-plugin/plugin.json mods/side-panel/.claude-plugin/plugin.json mods/cache-keeper/.claude-plugin/plugin.json mods/next-steps/.claude-plugin/plugin.json"
+MANIFESTS=".claude-plugin/marketplace.json dev-day/.claude-plugin/plugin.json tdd-pipeline/.claude-plugin/plugin.json mods/side-panel/.claude-plugin/plugin.json mods/cache-keeper/.claude-plugin/plugin.json mods/next-steps/.claude-plugin/plugin.json mods/secret-guard/.claude-plugin/plugin.json"
 for m in $MANIFESTS; do
   if [ ! -f "$m" ]; then
     bad "$m (missing)"
@@ -203,6 +203,34 @@ if [ -n "$EXPECTED_TAG" ]; then
   else
     bad "release tag $EXPECTED_TAG but manifests say $DEV_V"
   fi
+fi
+
+# ---------------------------------------------------------------------------
+# 6. No private details in the shipped plugins.
+#    merge-feedback appends session lessons to skill files; a lesson written as a
+#    story carries names, home paths and private project details into a public kit.
+#    plugin.json and LICENSE are skipped: author and copyright are attribution.
+# ---------------------------------------------------------------------------
+head_ "6. no private details in dev-day / tdd-pipeline"
+LEAKS='/Users/|Shashank|BTC|Desk Hub|personal-assistant|owner ruling|tcl_|the owner'
+hits="$(grep -rnE "$LEAKS" dev-day tdd-pipeline --exclude=plugin.json --exclude=LICENSE 2>/dev/null)"
+if [ -z "$hits" ]; then
+  ok "no private strings ($LEAKS)"
+else
+  bad "private strings found:"
+  printf '%s\n' "$hits" | cut -c1-160 | sed 's/^/        /'
+fi
+
+# ---------------------------------------------------------------------------
+# 7. Shared references stay identical.
+#    Each plugin installs alone, so each ships its own copy; an edit to one copy
+#    must reach the other.
+# ---------------------------------------------------------------------------
+head_ "7. shared references identical"
+if cmp -s dev-day/references/jira-mcp.md tdd-pipeline/references/jira-mcp.md; then
+  ok "references/jira-mcp.md matches in both plugins"
+else
+  bad "references/jira-mcp.md differs (or is missing) between dev-day and tdd-pipeline"
 fi
 
 # ---------------------------------------------------------------------------

@@ -19,7 +19,7 @@ and a critical-fix loop-back that re-reviews any post-review edit.
       Stage 1    test-writer          (failing tests from the plan)
       Stage 1.5  verify-red           (new tests MUST fail; vacuous green = stop)
       Stage 2    implementer          (surgical Edit only, never rewrite files)
-      Stage 3    test retry loop      (coordinator-owned, ≤5 fresh runner spawns,
+      Stage 3    test retry loop      (coordinator-owned, ≤5 fix rounds (≤6 runs),
                                        prior diagnosis passed forward)
       Stage 4    code review          (full working-tree diff; security + quality
                                        always; money-logic + concurrency when the
@@ -27,11 +27,11 @@ and a critical-fix loop-back that re-reviews any post-review edit.
                                        verified; hard stop on Critical and
                                        Must-fix; any
                                        post-review edit re-enters Stage 4)
-      Stage 5    changelog            (commit message from the plan file)
+      Stage 5    finalize             (receipt complete, hand off to /ship)
 ```
 
-`ship` then carries that commit message through to a branch, a commit, a push and
-a PR, and moves the ticket to In Review. After you merge, `merged` closes the loop.
+`ship` then writes the commit message from the staged diff and carries it through to
+a branch, a commit, a push and a PR, and moves the ticket to In Review. After you merge, `merged` closes the loop.
 
 ```
 /tdd-pipeline:ship            → branch → commit → push → PR → ticket In Review
@@ -81,6 +81,11 @@ at the root or two levels down (Gradle, pytest, npm, go, cargo, Maven, `dotnet t
 a `Test:` line, never guess. A missing tool (`dotnet`, `xcodebuild`) or uninstalled
 dependencies (`Pods/`, `node_modules/`, gems, Carthage) stop the run before Stage 1 with
 the install command to run, instead of surfacing as a test failure.
+
+## Optional hooks
+- `$PLAN_GATE_CMD` — a command with `check <plan>` / `record <plan> <outcome>` that stores plan
+  approvals durably; `build` records and `implement` checks it. Unset → both skip silently.
+- Feature-flag gating — a `Gating:` line in CLAUDE.md turns on `references/gating.md`.
 
 ## Install
 

@@ -176,6 +176,8 @@ export const register: Register = (on, options) => {
         {text}
       </Text>
     )
+    // The terminal draws emoji at a different width than the layout counts, so they overwrite the next letters.
+    const icon = (glyph = '') => (e.surface === 'terminal' ? '' : `${glyph} `)
     const chip = (text: string, color: string) => (
       <Text backgroundColor={color} color="inverseText">{` ${text} `}</Text>
     )
@@ -253,26 +255,26 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         <Box columnGap={1}>
-          <Text bold>{`📊 ${name || 'Dashboard'}`}</Text>
+          <Text bold>{`${icon('📊')}${name || 'Dashboard'}`}</Text>
           {chip(isStale ? 'partial' : 'live', isStale ? 'warning' : 'success')}
         </Box>
         <Box flexWrap="wrap" columnGap={1}>
-          {[...list, { title: 'Left undone', count: open.length, rows: [] }].map(s => (
+          {[...list, ...(open.length ? [{ title: 'Left undone', count: open.length, rows: [] }] : [])].map(s => (
             <Box key={`tile-${s.title}`} width={tileWidth} flexDirection="column" borderStyle="round" borderColor={needsAction(s) ? 'error' : 'subtle'} paddingX={1}>
               <Text bold color={tileColor(s)} dimColor={!!s.note}>
-                {`${ICON[s.title] ?? ''} ${s.note ? '–' : s.count}`}
+                {`${icon(ICON[s.title])}${s.note ? '–' : s.count}`}
               </Text>
               {line(s.note ? `${s.title} · ${s.note}` : s.title, 'label', true)}
             </Box>
           ))}
         </Box>
-        {card('🤖 Agents', agentBody, 'Agents')}
-        {card('💬 Now', line(now || 'nothing yet', 'now', !now))}
+        {card(`${icon('🤖')}Agents`, agentBody, 'Agents')}
+        {card(`${icon('💬')}Now`, line(now || 'nothing yet', 'now', !now), 'Now')}
         {open.length > 0 && (
           <Box flexDirection="column" borderStyle="round" borderColor="error" paddingX={1}>
             <Box>
               <Box flexGrow={1}>
-                <Text bold color="error">{`⚠️ Left undone ${open.length}`}</Text>
+                <Text bold color="error">{`${icon('⚠️')}Left undone ${open.length}`}</Text>
               </Box>
               <Button plain dimColor key="clear" label="clear all" hotkey="x" onPress={() => update($, undone, () => [])} />
             </Box>
@@ -286,7 +288,7 @@ export const register: Register = (on, options) => {
         )}
         {list
           .filter(s => s.rows.length)
-          .map(s => card(`${ICON[s.title] ?? ''} ${s.title}`, s.rows.map((row, i) => line(row, `${s.title}${i}`)), s.title))}
+          .map(s => card(`${icon(ICON[s.title])}${s.title}`, s.rows.map((row, i) => line(row, `${s.title}${i}`)), s.title))}
       </Box>
     )
   })

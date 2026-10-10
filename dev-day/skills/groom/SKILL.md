@@ -24,13 +24,9 @@ implementation, never assigns a story-point number, never edits Jira.
 line of the form `Jira: cloudId=<uuid> key=<PROJECTKEY>` and use those values;
 never hardcode a cloudId. If not found, ask for the cloudId + key.
 
-**Then resolve the Jira MCP dialect.** Atlassian MCP servers differ per machine: one exposes
-camelCase names (`mcp__atlassian__getJiraIssue`) with `cloudId` REQUIRED; another exposes snake_case
-under a `jira` prefix and resolves the site internally, with no `cloudId` at all. If the
-`tdd-pipeline` plugin is installed, follow its `references/jira-mcp.md`. Otherwise probe inline: try
-the camelCase name via `ToolSearch`; if nothing resolves, search by keyword (`ToolSearch "+jira
-issue"`) and use what comes back. Pass `cloudId` ONLY when the resolved schema has it — otherwise
-omit it and ignore the `cloudId=` half of the line. Never hardcode a tool name.
+**Then resolve the Jira MCP dialect** per `../../references/jira-mcp.md` (relative to this SKILL.md).
+Pass `cloudId` ONLY when the resolved schema has it — otherwise omit it and ignore the `cloudId=`
+half of the line.
 
 ## Steps
 
@@ -53,11 +49,11 @@ omit it and ignore the `cloudId=` half of the line. Never hardcode a tool name.
 5. **Technical spec — codebase reality.** Anchor the ticket in the real code — where the feature
    lives today, what gates it, which modules a change would touch, the contracts involved:
    - **Backend / web:** identify the route handler(s), the data stores/collections touched, and any
-     feature-flag or config gate the behavior sits behind. If the repo has a knowledge graph
+     feature-flag or config gate the behavior sits behind (only if the project uses flags). If the repo has a knowledge graph
      (`graphify-out/GRAPH_REPORT.md`), read it and prefer `graphify query "<subject>"` /
      `graphify explain "<concept>"` over grep — it traverses cross-module edges grep can't see.
    - **Mobile / client:** map the screen → ViewModel/presenter → repository chain, plus any
-     feature-flag gate. Use an `Explore` agent (Task tool) for the cross-file map.
+     feature-flag gate (only if the project uses flags). Use an `Explore` agent (Task tool) for the cross-file map.
    - If the ticket is net-new with no existing code hook, say so plainly ("net-new; no existing code
      to anchor to") — do NOT fabricate a codebase reality that doesn't exist yet.
    - Enumerate likely **API contracts** (new/changed endpoints, request/response shapes) from the
