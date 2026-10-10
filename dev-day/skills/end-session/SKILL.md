@@ -21,7 +21,7 @@ Read the entire conversation from this session. Extract and synthesize everythin
    preserve prior facts, only correct one if this session proved it wrong (and say so). Save only
    durable, non-obvious facts — not what git/the repo records, and not behavioral preferences (those
    go to feedback via `merge-feedback`).
-3. **`tasks/session-notes.md`** — the 2-line "Left off" note (see below).
+3. **`tasks/session-notes.md`** — the 2-line "Left off" note plus `## Open points` (see below).
 4. **Optional task inbox** — see "Optional task-inbox hook" below; skipped silently when absent.
 
 ### session-notes.md detail
@@ -32,20 +32,27 @@ can resume cleanly (it reads this file):
 ```markdown
 - <the task that was mid-progress when the session ended>
 - <the next concrete step to take>
+
+## Open points
+- <each thing left undone this session, one line, with its next action>
 ```
 
 Synthesize from the actual work done this session. Unlike feedback.md (append/merge-only via
 `merge-feedback`), this file is living state — OVERWRITE it each session. If no substantive work
 happened, write a single line: `- no substantive work this session`. Task tracking itself stays in
-Jira — this is only the "where I stopped" pointer, not a todo list.
+Jira — this is only the "where I stopped" pointer, not a backlog.
+
+ALWAYS write `## Open points`: every item this session left undone, not proven, or parked, so the
+next `/start-session` shows them. Write `- none` when nothing is open. Never drop one to keep the
+note short; a point left out of this file is lost when the session ends.
 
 ### Optional task-inbox hook
 
 If `TASK_INBOX_URL` names a local task-inbox service, push this session's unfinished points
 (concrete, with a next action; no duplicates of open ones) there so they outlive the overwritten
 "Left off" note, and propose closing finished ones only on live-state evidence and the user's explicit
-picks. When it is unset or nothing answers, skip silently and write the points under `## Open points`
-in `tasks/session-notes.md` instead.
+picks. When it is unset or nothing answers, skip silently. Either way the points also go under
+`## Open points` in `tasks/session-notes.md`, since `/start-session` reads only that file.
 
 ## Compact-aware (the session may have been compacted)
 
@@ -94,7 +101,8 @@ after writing; do not assert from the fact that a write was attempted.
   `~/.claude/projects/<slug>/memory/`, and each new file has a matching one-line pointer in
   that vault's `MEMORY.md`. A file with no pointer is an orphan — it will not be recalled.
 - **Session-notes:** `tasks/session-notes.md` contains a non-empty "Left off" note dated to
-  THIS session. A note carried over unchanged from the previous session is a FAIL, not a pass.
+  THIS session, and an `## Open points` section (`- none` counts). A note carried over unchanged
+  from the previous session is a FAIL, not a pass.
 
 Report `END-SESSION SELF-CHECK: PASS` or `FAIL — <what did not land>`. A FAIL means write the
 missing artifact before finishing; it does not mean re-running the whole skill.
