@@ -1,10 +1,10 @@
 ---
 name: bug-triage
-description: Investigate a Jira bug from its key to a root-cause verdict — classify bug-vs-feature, fan out read-only Explore agents across the repo, adversarially confirm the cause, and write a tasks/<TICKET>-triage.md artifact a lean fix-planner can pick up. Orchestration only; read-only, never touches Jira, stops at verdict + fix-location (no fix, no plan). Use when given a Jira bug key to root-cause, or "triage PROJ-XXXX", "is this a real bug", "where's the root cause", "investigate this ticket". Triggers: triage ticket, root cause this bug, is this a real bug, investigate bug, where is the root cause, bug verdict, analyze bug.
+description: Investigate a Jira bug from its key (or pasted bug text when the project has no Jira) to a root-cause verdict — classify bug-vs-feature, fan out read-only Explore agents across the repo, adversarially confirm the cause, and write a tasks/<TICKET>-triage.md artifact a lean fix-planner can pick up. Orchestration only; read-only, never touches Jira, stops at verdict + fix-location (no fix, no plan). Use when given a Jira bug key to root-cause, or "triage PROJ-XXXX", "is this a real bug", "where's the root cause", "investigate this ticket". Triggers: triage ticket, root cause this bug, is this a real bug, investigate bug, where is the root cause, bug verdict, analyze bug.
 allowed-tools: Read, Grep, Glob, Bash, Task, ToolSearch, Skill, Write
 arguments:
   - name: ticket
-    description: Jira bug key (e.g. PROJ-42)
+    description: Jira bug key (e.g. PROJ-42), or the pasted bug text when the project has no Jira
     required: true
 ---
 
@@ -33,9 +33,14 @@ It is hard-scoped:
 
 **Discover the project's Jira config (cloudId + key) from the project `CLAUDE.md`** — scan it for a
 line of the form `Jira: cloudId=<uuid> key=<PROJECTKEY>` and use those values;
-never hardcode a cloudId. If not found, say "no Jira configured for this project" and stop —
-triage is keyed on the ticket's repro, so there is no local-only path. If the resolved MCP dialect
-(step 1) needs no cloudId, only the key is needed. Normalize the ticket to `<KEY>-NNNN`.
+never hardcode a cloudId. If the resolved MCP dialect (step 1) needs no cloudId, only the key is
+needed. Normalize the ticket to `<KEY>-NNNN`.
+
+**No `Jira:` line → pasted-text mode.** Say "no Jira configured; triaging the pasted bug text".
+Treat `{{args}}` as the bug report (if it is empty or only a key, ask the user to paste the steps,
+expected and actual). Skip step 1 and the issuetype gate in step 2; the user's text is the ticket.
+`<TICKET>` becomes a short kebab-case slug of the bug (e.g. `login-crash-on-rotate`), so the
+artifact is `tasks/<slug>-triage.md` and the hand-off is `/build <slug>`.
 
 ## Steps
 
