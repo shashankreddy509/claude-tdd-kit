@@ -44,7 +44,7 @@ Conditionally (spawn only when relevant — don't waste agents):
   bundle. HIGH-VALUE — money-logic bugs (unit/precision errors, wrong-side orders, sentinel-value
   comparisons, non-idempotent close) are a class generic security/quality reviewers miss entirely.
 - `concurrency-reviewer` — **if the diff touches concurrency-sensitive code** (step 1). Pass the bundle.
-- `memory-analyzer` — if the diff has object allocation / lifecycle / streams / retained refs.
+- `memory-analyzer` — if the diff opens/closes or acquires/releases resources, registers listeners/observers/subscriptions, starts timers, adds caches, threads or executors, or has delegates/closures capturing self or streams.
 - `kotlin-best-practices` — **only if the diff touches `.kt` files**; pass only the changed Kotlin files.
   No other stack (Swift/iOS, Go, TypeScript, …) has a language reviewer; `code-quality-reviewer` covers them.
   Say so under Passed Checks when the diff is in such a stack, so a clean report is not read as a language review.
@@ -55,7 +55,7 @@ polling agents to check whether another agent has finished — waiting is free,
 poller agents are pure waste and noise.
 
 ### 4. Adversarial verify pass (only on CRITICALs — keeps the gate trustworthy)
-Collect every finding the specialists marked CRITICAL. For EACH critical, spawn 1-2 `general-purpose`
+Collect every finding the specialists marked CRITICAL (other scales map to the report buckets: HIGH/MEDIUM/Warning and severity-less quality items → 🟡 Warning; LOW/Suggestion → 🟢 Suggestions; MUST-FIX → 🟠 Must-fix). For EACH critical, spawn 1-2 `general-purpose`
 agents (Task) prompted to REFUTE it: "Read the actual code at <file:line>. Try to prove this alleged
 critical bug is NOT real — is there a guard, an invariant, a caller contract, or an existing test
 that prevents it? Default to 'not a real bug' unless the code clearly supports it. Return real=true

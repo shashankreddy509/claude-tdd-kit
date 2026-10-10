@@ -57,7 +57,7 @@ another six, with different status ids behind identical names. **Discover; never
 
 Choose in this order:
 
-1. A **verification column** — `to.name` of "Build Testing", "QA", "Testing", or "Verify".
+1. A **verification column** — the board's column between In Review and Done (e.g. QA, Testing, UAT, Staging); unsure which → ask the user.
    Prefer this when it exists. A merged PR is not a validated one: the ticket parks here, the
    user validates on a real build, and `/tdd-pipeline:validated` closes it afterwards.
    **Do not move to Done in this case**, even though a Done transition is available.

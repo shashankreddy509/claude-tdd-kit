@@ -26,7 +26,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
    |---|---|
    | file missing | **STOP** — no verified run. Offer `/implement` first. |
    | `stage != "complete"` | **STOP** — name the stage it died at |
-   | `red.exit == 0` | **STOP** — tests never failed, so they prove nothing |
+   | `red.exit == 0`, or `red.exit` null with no `note` | **STOP** — tests never failed (or no reason recorded) |
    | `green.exit != 0` | **STOP** — tests are red |
    | `review.critical > 0` · `review.must_fix > 0` (missing = 0) · `review.unverified > 0` | **STOP** — list them |
    | `gating` present, `readback != "ok"` or `seeded` misses a `required` key | **STOP** — the kill-switch does not exist; this feature could not be turned off after release |
@@ -66,7 +66,7 @@ Fallback when the line is absent but the user names a key, dialect A only: `mcp_
 
    No plan file (chore/docs ship) → write the message inline in the same format; the Why comes from the user's stated reason.
 
-   Then commit. Conventional Commits, subject ≤50 chars, body explains the WHY. **Prefix the subject with the Jira key when one applies** so the GitHub-for-Jira app auto-links it: `<KEY>-12 feat(auth): add password reset`.
+   Then commit. Conventional Commits, subject ≤72 chars, body explains the WHY. **Prefix the subject with the Jira key when one applies** so the GitHub-for-Jira app auto-links it: `<KEY>-12 feat(auth): add password reset`.
 
    **No AI attribution in the commit message by default**: no `Co-Authored-By: Claude ...` trailer,
    no `🤖 Generated with Claude Code`, no `Claude-Session:` / `claude.ai/code` session link.
@@ -119,7 +119,6 @@ If the user later says "add X and commit it" while a PR is open, that means a NE
 - When the gate stops on a receipt field, resume the agent and ask whether the field is TRUE — never tell it which value to write. Instructing the value turns receipt regeneration into laundering. Instruct it to refuse and name the gap if some stage genuinely did not finish.
 - Verify a push landed by comparing `git rev-parse origin/<branch>` to local HEAD. `PIPESTATUS` can come back empty through a shell wrapper, so a push's exit code may be unreadable while the output text still looks successful.
 - Scan for AI attribution in the actual commit object (`git log -1 --format=%B`) and the live PR body fetched back from `gh`, not only in the source file you wrote — and run a positive control so an empty grep means absence, not a broken command.
-- A changelog agent's subject line can exceed the ≤50-char limit; measure it before committing (`head -1 | wc -c` counts the newline, so subtract 1).
 - Fixing a warning at the ship gate INVALIDATES the receipt's green — the suite that passed described a different tree. Re-run the full suite plus any cross-platform compile after the fixes and before committing, and read the counts from the runner's result report. A "cosmetic" warning fix can be functional (Kotlin coroutines: wrapping a call in `withContext(realDispatcher)` inside code under `runTest` parks the coroutine forever because virtual time cannot advance a real dispatcher).
 - When a warning cannot be fixed as scoped, say so and file it rather than shipping a fix that looks applied. Re-verify the revert too — a reverted fix leaves stale imports that only a compile catches.
 - Stage feature files by explicit path; `git add -A` sweeps generated caches and other tickets' plans/receipts into the commit. Verify with `git diff --cached --name-only` before writing the message, and re-check after any late fix.

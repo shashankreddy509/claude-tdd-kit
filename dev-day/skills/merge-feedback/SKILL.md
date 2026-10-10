@@ -1,7 +1,7 @@
 ---
 name: merge-feedback
 description: Synthesize this session's preferences/corrections into tasks/feedback.md and merge them into the existing file without ever deleting prior points. One job — the feedback artifact only. Called by end-session and by start-session's mid-session auto-capture; can also run standalone. Triggers: merge feedback, update feedback.md, capture preferences, record corrections.
-allowed-tools: Read, Bash, Edit
+allowed-tools: Read, Bash, Edit, Write
 ---
 
 # Merge Feedback

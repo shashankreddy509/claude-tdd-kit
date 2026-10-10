@@ -3,15 +3,15 @@
 # Report-only, read-only. The model formats these + adds the Jira/JQL source.
 # bash 3.2 / macOS compatible. No mapfile. Degrades gracefully; never crashes.
 #
-# app-code scope: the deploy gap lists only commits/files under the app-source
-# prefix(es). Default is a permissive set covering this project's conventions;
-# override per-project with --app-paths "a b c" or STANDUP_APP_PATHS="a b c".
+# app-code scope: the deploy gap lists only app-code commits/files. Default: every
+# changed file EXCEPT docs, tests and CI config; restrict to given prefixes with
+# --app-paths "a b c" or STANDUP_APP_PATHS="a b c".
 
 set -u
 
 # --- args / config -----------------------------------------------------------
-APP_PATHS_DEFAULT="app/ src/ lib/"
-APP_PATHS="${STANDUP_APP_PATHS:-$APP_PATHS_DEFAULT}"
+APP_PATHS="${STANDUP_APP_PATHS:-}"
+NON_APP='^(docs/|test/|tests/|__tests__/|\.github/|\.gitlab-ci\.yml$|\.circleci/)|\.md$|Tests/|_test\.|\.test\.|\.spec\.'
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -83,9 +83,10 @@ if ! command -v gh >/dev/null 2>&1; then
 elif ! gh auth status >/dev/null 2>&1; then
   echo "  NOTE: gh not authenticated — skipping open-PR sweep."
 else
-  PRS="$(gh pr list --state open --json number,title,headRefName \
-           -q '.[] | "  #\(.number) \(.title) [\(.headRefName)]"' 2>/dev/null)"
-  if [ -z "$PRS" ]; then
+  if ! PRS="$(gh pr list --state open --json number,title,headRefName \
+           -q '.[] | "  #\(.number) \(.title) [\(.headRefName)]"' 2>/dev/null)"; then
+    echo "  (PR list unavailable: gh failed or remote is not GitHub)"
+  elif [ -z "$PRS" ]; then
     echo "  (none open)"
   else
     printf '%s\n' "$PRS"
@@ -111,14 +112,18 @@ else
     # app-code file changes since the tag (content, not PR title)
     CHANGED_ALL="$(git diff --name-only "${LATEST_TAG}..${BASE}" 2>/dev/null)"
     APP_CHANGED=""
-    for p in $APP_PATHS; do
-      MATCH="$(printf '%s\n' "$CHANGED_ALL" | grep "^${p}" 2>/dev/null)"
-      [ -n "$MATCH" ] && APP_CHANGED="${APP_CHANGED}${MATCH}
+    if [ -n "$APP_PATHS" ]; then
+      for p in $APP_PATHS; do
+        MATCH="$(printf '%s\n' "$CHANGED_ALL" | grep "^${p}" 2>/dev/null)"
+        [ -n "$MATCH" ] && APP_CHANGED="${APP_CHANGED}${MATCH}
 "
-    done
+      done
+    else
+      APP_CHANGED="$(printf '%s\n' "$CHANGED_ALL" | grep -vE "$NON_APP")"
+    fi
     APP_CHANGED="$(printf '%s' "$APP_CHANGED" | grep '.' | sort -u)"
 
-    echo "  app_paths: ${APP_PATHS}"
+    echo "  app_paths: ${APP_PATHS:-(all except docs/tests/CI)}"
     if [ -z "$APP_CHANGED" ]; then
       TOTAL="$(printf '%s\n' "$CHANGED_ALL" | grep -c '.')"
       echo "  status: NO-OP (no app-code changes; ${TOTAL} non-app files changed)"
@@ -127,7 +132,7 @@ else
       echo "  app_files_changed:"
       printf '%s\n' "$APP_CHANGED" | sed 's/^/    /'
       echo "  app_commits:"
-      git log --oneline "${LATEST_TAG}..${BASE}" -- $APP_PATHS 2>/dev/null \
+      git log --oneline "${LATEST_TAG}..${BASE}" -- $APP_CHANGED 2>/dev/null \
         | sed 's/^/    /'
     fi
   fi

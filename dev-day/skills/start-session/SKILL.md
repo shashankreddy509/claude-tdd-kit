@@ -82,7 +82,7 @@ writes free.
 
 ## Session Startup Sequence
 
-1. Load prior feedback: read `tasks/feedback.md` if it exists. Silently internalize any rules — do not recite them back. Also read `tasks/session-notes.md` if it exists (the 2-line "Left off" note from the last `/end-session`) — surface it in the confirmation message so the user can resume where they stopped.
+1. Load prior feedback: read `tasks/feedback.md` if it exists. Silently internalize any rules — do not recite them back. Also read `tasks/session-notes.md` if it exists (the 2-line "Left off" note from the last `/end-session`) — surface it, plus any `## Open points` bullets beneath it, in the confirmation message so the user can resume where they stopped.
 2. Determine the project's Jira config: scan the loaded project CLAUDE.md (any of the project/root/.claude CLAUDE.md files in context) for a `Jira: cloudId=<uuid> key=<KEY>` line.
    - **If found** — pull pending work. Resolve the Jira MCP dialect exactly as `/create-ticket` step 1b does, for the JQL-search verb (ToolSearch keyword `+jira search`). Call it with `jql` = `project = <KEY> AND statusCategory != Done ORDER BY status ASC, created DESC` (keep this exact JQL — the side-panel mod matches it). Pass `cloudId`, `fields` key/summary/status/issuetype, a 50-result limit and markdown content only where its schema has those parameters.
      - Group the issues by status name (To Do / In Progress / Product Backlog / etc.) for the confirmation message; one line each: `KEY — summary (issuetype)`.
@@ -103,6 +103,8 @@ After internalizing everything above, respond with exactly this format (nothing 
 > Session initialized. Operating as senior collaborator. Feedback loaded. Plan-gate active — code-changing tasks get analysis + plan for your approval before any edit; read-only and non-code work runs immediately.
 >
 > **Left off last session:** [the 2-line note from `tasks/session-notes.md`; omit this line entirely if the file is absent or says "no substantive work"]
+>
+> **Open points:** [the `## Open points` bullets from that file; omit this line when the section is absent]
 >
 > **Pending tasks (Jira · <KEY>):**
 > [Jira issues grouped by status — `KEY — summary (type)` per line; "None" if all done; or "None (no Jira configured for this project)" when no Jira line is present]

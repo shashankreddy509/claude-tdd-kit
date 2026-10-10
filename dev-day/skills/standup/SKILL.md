@@ -58,10 +58,11 @@ The script prints, read-only and macOS/bash-3.2 safe (degrading gracefully when 
    ahead/behind vs upstream. From the list, call out which files are intentional WIP vs unstaged
    feature work.
 2. **Open PRs** — `gh pr list --state open` (number · title · head branch). Notes if gh is
-   missing/unauth instead of crashing.
+   missing/unauth, or "PR list unavailable" if gh fails or the remote is not GitHub, instead of
+   crashing; "(none open)" only on a successful empty list.
 3. **Deploy gap (merged ≠ deployed)** — latest `v*` tag (or `git describe`) vs `origin/<default>`,
-   classified by CONTENT not PR title: it lists only app-code files/commits under the app-source
-   prefix(es). Default prefixes are permissive (`app/ src/ lib/`); override per-project with
+   classified by CONTENT not PR title: it lists only app-code files/commits. By default every
+   changed file counts except docs, tests and CI config; restrict to given prefixes per-project with
    `--app-paths` / `STANDUP_APP_PATHS`. `status: PENDING` → "deploy pending (vX.Y.(Z+1))";
    `status: NO-OP` (only docs/tooling changed) → "nothing to deploy"; no tag → nothing to report.
 

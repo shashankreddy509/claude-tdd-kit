@@ -64,7 +64,7 @@ existing file at that path before overwriting it. Match the shape of the kind:
 ```
 /groom-panel <Title>: <one-line what>
 
-Run this from <repo path> (tickets go to Jira project <KEY>). Read <files> first.
+Run this from <repo path> (tickets go to Jira project <KEY>; no Jira configured → say the panel delivers the artifact only). Read <files> first.
 
 ## Why
 ## What already exists (reuse, do not rebuild)

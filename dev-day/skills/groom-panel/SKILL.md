@@ -1,7 +1,7 @@
 ---
 name: groom-panel
 description: Groom a RAW IDEA into a build-ready ticket set by running a four-role panel — a business analyst who interrogates the requirements with the user and then convenes a UI designer, a developer and a tester in parallel on one brief. The BA synthesizes the four views into a groomed package with disagreements surfaced, not smoothed, puts each answerable hard objection back to the one specialist who can answer it over at most two resolution rounds, and carries whatever survives to the user as the decisions only they can make. Runs BEFORE any plan or code; writes ONE markdown artifact (plus one platform-styled mock HTML when a ticket adds a new screen, or a review of the user's existing mocks, approved by the user at a design gate), creates the Epic and — after an approval gate — its child tickets in Jira, but touches no code and no other repo state. Distinct from `/groom`, which analyzes ONE EXISTING Jira ticket for estimation readiness — this one turns "I want to build X" into the tickets themselves. Use on "/groom-panel <idea>", "groom this idea", "run a grooming session", "get the panel on this".
-allowed-tools: Read, Grep, Glob, Bash, Agent, AskUserQuestion, Write, ToolSearch, createJiraIssue, searchJiraIssuesUsingJql
+allowed-tools: Read, Grep, Glob, Bash, Agent, AskUserQuestion, Write, ToolSearch
 arguments:
   - name: idea
     description: The raw idea, feature, or product to groom (free text)
@@ -75,10 +75,13 @@ Rules that make this step useful rather than an interrogation:
 
 ### 1.5. BA creates the Epic
 
+No `Jira:` line in the project CLAUDE.md → skip this step and step 9, deliver the grooming
+artifact (and mock) only, and say no tickets were created.
+
 Once interrogation with the user converges (step 1 is settled, no more open questions), the BA
 proposes an Epic title + description. The MAIN THREAD — not the BA sub-agent, which holds no
 Jira tools — first resolves the Jira project and MCP dialect exactly as `/create-ticket` steps 1,
-1b and 2 do (the project CLAUDE.md `Jira:` line, else ask; never hardcode a tool name or site),
+1b and 2 do (the project CLAUDE.md `Jira:` line; never hardcode a tool name or site),
 then creates it via the create-issue verb (`issueTypeName: Epic`), and writes
 `Parent epic: <KEY>` into the artifact header once step 6 produces it.
 
@@ -252,9 +255,10 @@ Approving the ticket package in step 8 is NOT approving a design: a text layout 
 the user must see the look before anyone builds it.
 
 1. **Resolve the platform** of each NEW screen from the repo: `AndroidManifest.xml` / Gradle app
-   module → Android; an Xcode project with an iOS target → iOS; a macOS target → Mac; otherwise web.
-   A multiplatform repo or no code yet → ask the user which platforms. Never default a mobile or
-   desktop app to a web page.
+   module → Android; an Xcode project with an iOS target → iOS; a macOS target → Mac; web only when a web stack is detected (`package.json` with a web
+   framework, `index.html`, ...). Any other or unknown UI toolkit (.NET WPF/MAUI/WinUI, Flutter,
+   React Native, Electron, Linux desktop, ...), a multiplatform repo, or no code yet → ask the user
+   which platform style to mock. Never default a mobile or desktop app to a web page.
 2. **Ask whether mocks already exist** (`AskUserQuestion`: "I have mocks" + path / "make them").
    Accept PNG, JPG, PDF or HTML. A design-tool link needs an export to one of those unless a
    connector for that tool is available.

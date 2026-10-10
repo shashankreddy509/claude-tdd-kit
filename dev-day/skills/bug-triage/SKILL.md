@@ -33,7 +33,9 @@ It is hard-scoped:
 
 **Discover the project's Jira config (cloudId + key) from the project `CLAUDE.md`** — scan it for a
 line of the form `Jira: cloudId=<uuid> key=<PROJECTKEY>` and use those values;
-never hardcode a cloudId. If not found, ask for the cloudId + key. Normalize the ticket to `<KEY>-NNNN`.
+never hardcode a cloudId. If not found, say "no Jira configured for this project" and stop —
+triage is keyed on the ticket's repro, so there is no local-only path. If the resolved MCP dialect
+(step 1) needs no cloudId, only the key is needed. Normalize the ticket to `<KEY>-NNNN`.
 
 ## Steps
 

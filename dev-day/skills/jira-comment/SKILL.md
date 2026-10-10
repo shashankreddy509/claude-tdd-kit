@@ -17,7 +17,8 @@ it formats and posts text that already exists.
 - **The Jira cloudId** — discover at runtime from the project `CLAUDE.md`'s
   `Jira: cloudId=<uuid> key=<KEY>` line. NEVER hardcode a cloudId: it is per-site, and a
   wrong one posts to someone else's Jira. A repo whose `CLAUDE.md` has no `Jira:` line has
-  no Jira configured — ask the user for the cloudId rather than guessing.
+  no Jira configured — say "no Jira configured for this project" and stop; never guess a
+  cloudId. If the resolved MCP dialect needs no cloudId, only the ticket key is needed.
 - The comment body. If the user just authored it in the conversation, use that verbatim as the source.
 - Any CC mentions — preserve EXACTLY as given (e.g. `User:<accountId>`). These are live
   account-id references; do not reword, reformat, or drop them.
