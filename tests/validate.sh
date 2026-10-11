@@ -254,6 +254,18 @@ has dev-day/skills/end-session/SKILL.md 'No substantive work[^.]*Open points' "e
 lacks dev-day/skills/end-session/SKILL.md 'OVERWRITE it' "end-session never overwrites session-notes"
 
 # ---------------------------------------------------------------------------
+# 9. /ship catches an edit made after the last verified run.
+#    HEAD == receipt.sha with a dirty tree is also what a post-review edit looks
+#    like; only the receipt's tree fingerprint tells the two apart.
+# ---------------------------------------------------------------------------
+head_ "9. receipt tree fingerprint"
+has tdd-pipeline/references/tree-fingerprint.md 'git write-tree' "tree-fingerprint reference holds the command"
+has tdd-pipeline/agents/build-coordinator.md '"tree":' "build-coordinator receipt stamps tree"
+has tdd-pipeline/agents/build-coordinator.md 'references/tree-fingerprint\.md' "build-coordinator points at the fingerprint reference"
+has tdd-pipeline/commands/ship.md 'references/tree-fingerprint\.md' "ship points at the fingerprint reference"
+has tdd-pipeline/commands/ship.md 'differs from `receipt\.tree`.{0,160}\*\*STOP\*\*' "ship STOPs on a tree mismatch"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

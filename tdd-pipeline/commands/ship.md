@@ -20,7 +20,7 @@ Derive the browse URL from the resolved site, not a literal host.
 
 ## Steps
 
-0. **Read the pipeline receipt — gate the ship on it.** Find the ticket key (branch slug, the user's argument, or the Jira issue for this work) and read `tasks/receipts/<TICKET>.json`. The pipeline writes it; keys are `ticket`, `plan`, `sha` (HEAD at the last stage written — staleness detection), `red`/`green` (`cmd` + the REAL process `exit` + `at`), `review` (`critical`, `must_fix`, `warnings`, `unverified`, `warning_list` of `file:line what` strings), an optional `gating` block (`required`, `seeded`, `readback`), and `stage` (`red` | `green` | `reviewed` | `complete`). A receipt is a record, not a permission slip — never hand-write or edit one to get past this gate.
+0. **Read the pipeline receipt — gate the ship on it.** Find the ticket key (branch slug, the user's argument, or the Jira issue for this work) and read `tasks/receipts/<TICKET>.json`. The pipeline writes it; keys are `ticket`, `plan`, `sha` (HEAD at the last stage written — staleness detection), `tree` (working-tree fingerprint at that stage), `red`/`green` (`cmd` + the REAL process `exit` + `at`), `review` (`critical`, `must_fix`, `warnings`, `unverified`, `warning_list` of `file:line what` strings), an optional `gating` block (`required`, `seeded`, `readback`), and `stage` (`red` | `green` | `reviewed` | `complete`). A receipt is a record, not a permission slip — never hand-write or edit one to get past this gate.
 
    | Receipt state | Do |
    |---|---|
@@ -33,8 +33,10 @@ Derive the browse URL from the resolved site, not a literal host.
    | `review.warnings > 0` | Print each warning (file:line + what it is) from `review.warning_list`, THEN **AskUserQuestion**: ship anyway / fix first. Never summarise as a bare count — an unread warning is the same as no warning. |
    | clean | proceed |
 
-   **Staleness.** Compare `receipt.sha` to `git rev-parse HEAD`, and check `git status --short` for uncommitted changes to source files. The receipt describes the tree the pipeline verified; if code moved since, it describes nothing. Two legitimate cases:
-   - HEAD == `receipt.sha`, source dirty → this is the normal case (the pipeline runs before the commit; step 5 commits exactly those edits). Proceed.
+   **Staleness.** Compare `receipt.sha` to `git rev-parse HEAD`, and recompute the working-tree fingerprint with the command in `references/tree-fingerprint.md`. The receipt describes the tree the pipeline verified; if code moved since, it describes nothing. The cases:
+   - HEAD == `receipt.sha`, fingerprint == `receipt.tree` → the normal case (the pipeline runs before the commit; step 5 commits exactly those edits). Proceed.
+   - HEAD == `receipt.sha`, fingerprint differs from `receipt.tree` → source was edited after the last verified run, often a fix made after review that nobody reviewed. **STOP** and re-run the pipeline on the current tree.
+   - No `tree` key (receipt from an older pipeline) → say so, apply the HEAD check alone, and note in the report that post-run edits were not checked.
    - HEAD != `receipt.sha` → commits landed after the last verified run. **STOP** unless every commit since `receipt.sha` is non-source (docs, notes). Re-run the pipeline rather than reasoning about whether the drift was harmless.
 
    A STOP here is a real stop: report why and what to re-run, do not push. **Never write or edit a receipt to get past this gate** — if the gate is wrong, fix the gate. The user may override explicitly ("ship without the receipt"); record that they did in the report.

@@ -85,6 +85,7 @@ that file and refuses to open a PR when it is missing, stale, or red.
   "ticket": "PROJ-12",
   "plan": "tasks/plans/PROJ-12_plan.md",
   "sha": "<git rev-parse HEAD at the LAST stage written>",
+  "tree": "<working-tree fingerprint at the LAST stage written>",
   "red":    { "cmd": "pytest tests/test_proj12.py -q", "exit": 1, "note": "<required only when exit is null>", "at": "<UTC ISO-8601>" },
   "green":  { "cmd": "pytest -q", "exit": 0, "attempts": 2, "at": "<UTC ISO-8601>" },
   "review": { "critical": 0, "must_fix": 0, "warnings": 2, "unverified": 0, "at": "<UTC ISO-8601>",
@@ -96,6 +97,8 @@ that file and refuses to open a PR when it is missing, stale, or red.
 
 - `sha` — staleness detection: HEAD moving after the receipt means code changed after the
   last verified run.
+- `tree` — the uncommitted edits the run verified, from the command in
+  `references/tree-fingerprint.md`. HEAD does not move on an edit made after review; this does.
 - `exit` — the real process exit code. `red.exit` must be non-zero, or null with a required `note` saying why no genuine red run was possible; `green.exit` must be 0.
 - `review.unverified` — Criticals the verify pass reached no verdict on. Still hard-stop:
   "nobody checked" is not evidence of safety. Only an ACTIVELY REFUTED critical becomes a warning.
@@ -120,7 +123,7 @@ Rules for writing it:
 - `mkdir -p tasks/receipts` first.
 - Write the REAL exit code of the command you ran (`echo $?` right after it), never your
   reading of the output. A test suite that prints "2 failed" and exits 1 is `"exit": 1`.
-- Re-stamp `sha` (`git rev-parse HEAD`) and `stage` on every update.
+- Re-stamp `sha` (`git rev-parse HEAD`), `tree` and `stage` on every update.
 - Timestamps: `date -u +%Y-%m-%dT%H:%M:%SZ`.
 - Never write a stage's entry before that stage has run. Never write `"stage":
   "complete"` on a pipeline that stopped early — a receipt describing a run that did not
@@ -267,7 +270,7 @@ would describe a diff that is not what gets committed — and if the receipt gat
 the message describes work that never ships. `/ship` spawns `changelog` against the
 STAGED diff instead.
 
-Finalize the receipt: re-stamp `sha` and set `"stage": "complete"`. This is the only
+Finalize the receipt: re-stamp `sha` and `tree` and set `"stage": "complete"`. This is the only
 point at which `complete` may be written.
 
 Output final message:
