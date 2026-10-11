@@ -266,6 +266,16 @@ has tdd-pipeline/commands/ship.md 'references/tree-fingerprint\.md' "ship points
 has tdd-pipeline/commands/ship.md 'differs from `receipt\.tree`.{0,160}\*\*STOP\*\*' "ship STOPs on a tree mismatch"
 
 # ---------------------------------------------------------------------------
+# 10. A test the runner never ran is not a pass.
+#     xcodebuild only compiles files a target lists; a new test file outside it
+#     prints TEST SUCCEEDED with zero tests run.
+# ---------------------------------------------------------------------------
+head_ "10. new tests actually run"
+has tdd-pipeline/agents/build-coordinator.md 'ran ZERO tests.{0,200}\*\*STOP\*\*' "verify-red STOPs when the filtered run ran no tests"
+has tdd-pipeline/agents/test-runner.md 'Executed N tests' "test-runner names the xcodebuild count line"
+has tdd-pipeline/agents/test-writer.md 'PBXFileSystemSynchronizedRootGroup' "test-writer tells a classic xcodeproj from synced folders"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

@@ -25,7 +25,9 @@ spawn and you do NOT fix code: the coordinator hands your diagnosis to the imple
 1. Run `TEST_CMD` once with its output saved to a file, and capture the real exit code
    (`<TEST_CMD> > "${TMPDIR:-/tmp}/test-out.txt" 2>&1; echo "exit=$?"`). Read the
    runner's summary line (passed/failed counts) from that file. An exit code alone is
-   not a result, and an empty output file means nothing ran.
+   not a result, and an empty output file means nothing ran. xcodebuild's count is
+   `Executed N tests, with M failures`, and Swift Testing's is `Test run with N tests`;
+   `** TEST SUCCEEDED **` alone is not a count.
 2. Exit 0 AND the summary shows tests ran → output "✅ All tests passing" plus the
    summary line, and stop.
 3. Otherwise read the failure output, the failing tests, and the implementation under

@@ -20,7 +20,11 @@ types/functions in the plan's planned source files, so tests compile and fail on
 3. Write each test file listed in the plan, where the coordinator's `TEST_CMD` will
    actually run it: inside the test target its Xcode scheme builds, the test project its
    `.sln` references, the source set Gradle compiles. A test file the command never
-   picks up is not a test.
+   picks up is not a test. Classic Xcode project (`project.pbxproj` without
+   `PBXFileSystemSynchronizedRootGroup`, and no `project.yml`/`Project.swift`/`Package.swift`
+   generating it): a new `.swift` file joins no target on its own, so add the new test
+   cases to an existing test file the target already lists (the one closest to the code
+   under test), never a new file, and name that file in your final message.
 4. Tests must assert real behavior — no empty tests, no `assertTrue(true)`
 5. If the plan has a **Gating** section, write its gate-off and absent-key tests as REQUIRED, per
    `references/gating.md` § Tests.

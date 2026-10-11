@@ -145,6 +145,10 @@ implementation exists. Target just the new tests where the runner supports it: t
 - New tests FAIL → correct red state. Write the receipt with `red` filled in and
   `"stage": "red"`. Output: "🔴 Red state confirmed. Starting implementation..." and
   proceed to Stage 2.
+- The run ran ZERO tests (xcodebuild `Executed 0 tests`, an empty test count, or none of
+  the new test names in the output), whatever the exit code → **STOP**: "❌ Pipeline
+  stopped at Stage 1.5: the new tests never ran — they are not in any test target the
+  command builds (or the filter matches nothing)." Never read this as a pass.
 - New tests PASS with no implementation → STOP and output:
   "❌ Pipeline stopped at Stage 1.5: new tests pass without any
   implementation — they assert existing behavior and prove nothing.
