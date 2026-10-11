@@ -1,15 +1,15 @@
-Build the Ship band: a one-line row above the prompt that shows, while you work, what `/ship` would refuse right now. Local build, no Jira (mods are not ticketed). Source repo: this repo (public). Put it in the side-panel mod (mods/side-panel), not a new plugin, so the receipt reader can later feed the workflow card too. Branch off main as feat/ship-band; open a PR, the owner merges.
+Build the Ship band: a one-line row above the prompt that shows, while you work, what `/ship` would refuse right now. Local build, no Jira (mods are not ticketed). Source repo: this repo (public). Put it in the side-panel mod (mods/side-panel), not a new plugin, so the receipt reader can later feed the workflow card too. Other sessions share this checkout, so work in a worktree: `git worktree add ../claude-tdd-kit-ship-band -b feat/ship-band origin/release/1.14.0` (release/1.14.0 holds the `receipt.tree` gate the band mirrors). Open a draft PR against main; it ships after v1.14.0 is tagged, the owner merges.
 
 Origin: a public PDF "Claude Code mods worth building" idea #07 + the end card of a public reel.
 
-Read first: tdd-pipeline/commands/ship.md step 0 (the receipt gate table + Staleness), tdd-pipeline/agents/build-coordinator.md receipt section (~72-101, 331), mods/side-panel/hooks/register.tsx + panel.ts + look.ts and their tests, mods/side-panel/types/index.d.ts, and the API types at mods/side-panel/.claude-plugin/types/claude-code/index.d.ts (grep for the AbovePrompt band and the `fs` API). Load the `plugin-authoring` skill before writing hooks. The Next Steps mod (mods/next-steps) already draws an AbovePrompt band: read how it does it.
+Read first: tdd-pipeline/commands/ship.md step 0 (the receipt gate table + Staleness), tdd-pipeline/agents/build-coordinator.md receipt section (the "## The Receipt" section and Stage 5), mods/side-panel/hooks/register.tsx + panel.ts + look.ts and their tests, mods/side-panel/types/index.d.ts, and the API types at mods/side-panel/.claude-plugin/types/claude-code/index.d.ts (grep for the AbovePrompt band and the `fs` API). Load the `plugin-authoring` skill before writing hooks. The Next Steps mod (mods/next-steps) already draws an AbovePrompt band: read how it does it.
 
 ## What the band shows
 One line, only when the session's repo has a pipeline receipt for the current work:
 `ST-248 ship · ✓ tests red→green · ✓ review · ⚠ 2 warnings · ✗ receipt stale (2 commits since)`
 - Each item is one row of the ship.md step 0 table, in the same order, with the same rule: missing file, `stage != complete` (name the stage), `red.exit == 0`, `green.exit != 0`, `review.critical/must_fix/unverified > 0` (missing = 0), `gating` readback / seeded-vs-required, `review.warnings > 0` (count only on the band; /ship still prints them).
-- Staleness exactly as ship.md: `receipt.sha` vs HEAD. Dirty tree with HEAD == sha is the normal case and is NOT flagged.
-- All clear: `ST-248 ✓ ready to /ship`.
+- Staleness exactly as ship.md: `receipt.sha` vs HEAD. With HEAD == sha, ship.md also compares `receipt.tree` to a fingerprint that needs git (`references/tree-fingerprint.md`). If the probe finds no way to run git, never show that check as ✓; show a muted `· edits checked at /ship` item instead. A receipt without `tree` shows nothing extra.
+- All clear: `ST-248 ✓ ready to /ship` (keeping the muted edits item when the tree check could not run).
 - No receipt in the repo: draw nothing. No ticket work in progress is a valid state.
 
 ## Decided
