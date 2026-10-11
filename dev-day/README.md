@@ -60,7 +60,7 @@ rule and concrete constant, and writes a timestamped backup before touching anyt
 ## Files the plugin maintains in your repo
 
 - `tasks/feedback.md` — accumulated preferences/corrections (the memory)
-- `tasks/session-notes.md` — 2-line "left off" note plus open points between sessions
+- `tasks/session-notes.md` — one 2-line "left off" block per session plus shared open points; merged, never overwritten, so parallel sessions keep their notes
 - `tasks/<KEY>-triage.md`, `tasks/<KEY>-grooming.md` — per-ticket artifacts
 - `tasks/groom/<slug>-grooming.md`, `docs/mocks/<epic-slug>.html` — `groom-panel`'s grooming package and mock
 - `docs/<slug>-prompt.md` — `shape-idea`'s paste-ready prompt

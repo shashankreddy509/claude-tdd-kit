@@ -21,37 +21,46 @@ Read the entire conversation from this session. Extract and synthesize everythin
    preserve prior facts, only correct one if this session proved it wrong (and say so). Save only
    durable, non-obvious facts — not what git/the repo records, and not behavioral preferences (those
    go to feedback via `merge-feedback`).
-3. **`tasks/session-notes.md`** — the 2-line "Left off" note plus `## Open points` (see below).
+3. **`tasks/session-notes.md`** — this session's 2-line "Left off" block plus `## Open points` (see below).
 4. **Optional task inbox** — see "Optional task-inbox hook" below; skipped silently when absent.
 
 ### session-notes.md detail
 
-The "Left off" note is exactly two lines describing where work stopped, so the next `/start-session`
-can resume cleanly (it reads this file):
+Several sessions can share one checkout, so the file holds one "Left off" block per session plus
+one shared Open points list. `/start-session` reads all of it:
 
 ```markdown
+## Left off
+### <YYYY-MM-DD> · <branch> · <topic, a few words>
 - <the task that was mid-progress when the session ended>
 - <the next concrete step to take>
+### <an older block from another session, kept as is>
 
 ## Open points
-- <each thing left undone this session, one line, with its next action>
+- <each thing left undone, one line, with its next action>
 ```
 
-Synthesize from the actual work done this session. Unlike feedback.md (append/merge-only via
-`merge-feedback`), this file is living state — OVERWRITE it each session. If no substantive work
-happened, the "Left off" note is the single line `- no substantive work this session`, and
-`## Open points` still follows, carrying the previous note's points forward. Task tracking itself
-stays in Jira — this is only the "where I stopped" pointer, not a backlog.
+Synthesize from the actual work done this session. Task tracking itself stays in Jira — this is
+only the "where I stopped" pointer, not a backlog. Merge into the file, never replace it:
 
-ALWAYS write `## Open points`: every item this session left undone, not proven, or parked, so the
-next `/start-session` shows them. Write `- none` when nothing is open. Never drop one to keep the
-note short; a point left out of this file is lost when the session ends.
+- Re-read the file right before writing, never from what was loaded at session start: another
+  session may have written since.
+- Replace only this session's own block (the heading it wrote earlier this session), else add a
+  new block at the top of `## Left off`. Never edit another session's block; drop only blocks
+  dated more than 7 days ago.
+- Merge `## Open points`: keep every existing point, add this session's undone, unproven or parked
+  items, and remove a point only when this session verified against live state that it is closed.
+  Write `- none` only when the merged list is empty. A point left out of this file is lost.
+- No substantive work this session: add no block, and leave `## Left off` and `## Open points` as
+  they are.
+- An old-format file (bare 2-line note, no `## Left off` heading): turn those two lines into one
+  block dated by the file's last-modified time, then merge as above.
 
 ### Optional task-inbox hook
 
 If `TASK_INBOX_URL` names a local task-inbox service, push this session's unfinished points
-(concrete, with a next action; no duplicates of open ones) there so they outlive the overwritten
-"Left off" note, and propose closing finished ones only on live-state evidence and the user's explicit
+(concrete, with a next action; no duplicates of open ones) there so they outlive the session-notes
+file, and propose closing finished ones only on live-state evidence and the user's explicit
 picks. When it is unset or nothing answers, skip silently. Either way the points also go under
 `## Open points` in `tasks/session-notes.md`, since `/start-session` reads only that file.
 
@@ -101,9 +110,10 @@ after writing; do not assert from the fact that a write was attempted.
 - **Memory vault:** every memory file written this session resolves on disk under
   `~/.claude/projects/<slug>/memory/`, and each new file has a matching one-line pointer in
   that vault's `MEMORY.md`. A file with no pointer is an orphan — it will not be recalled.
-- **Session-notes:** `tasks/session-notes.md` contains a non-empty "Left off" note dated to
-  THIS session, and an `## Open points` section (`- none` counts). A note carried over unchanged
-  from the previous session is a FAIL, not a pass.
+- **Session-notes:** `tasks/session-notes.md` has a `## Left off` block dated to THIS session
+  (unless no substantive work happened), every other session's block from the pre-write re-read
+  that is under 7 days old, and an `## Open points` section (`- none` counts). A lost block or a
+  dropped open point is a FAIL.
 
 Report `END-SESSION SELF-CHECK: PASS` or `FAIL — <what did not land>`. A FAIL means write the
 missing artifact before finishing; it does not mean re-running the whole skill.

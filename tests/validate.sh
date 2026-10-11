@@ -237,14 +237,21 @@ fi
 # 8. Open points survive end-session -> start-session.
 #    start-session prints "exactly this format", so a template without the Open
 #    points slot drops them silently (dev-day 1.13.0 did). end-session must write
-#    the section even on a no-work session.
+#    the section even on a no-work session. Parallel sessions share the file, so
+#    end-session must merge into it, never overwrite (two notes were lost 10-09).
 # ---------------------------------------------------------------------------
 head_ "8. open points carry over"
 has() {  # file, sentence regex (newlines joined), label
-  if tr '\n' ' ' < "$1" | grep -qE "$2"; then ok "$3"; else bad "$3 ($1)"; fi
+  if { tr '\n' ' ' < "$1"; } 2>/dev/null | grep -qE "$2"; then ok "$3"; else bad "$3 ($1)"; fi
+}
+lacks() {  # file, regex, label
+  if grep -qE "$2" "$1"; then bad "$3 ($1)"; else ok "$3"; fi
 }
 has dev-day/skills/start-session/SKILL.md '\*\*Open points:\*\*' "start-session template shows Open points"
-has dev-day/skills/end-session/SKILL.md 'no substantive work this session[^.]*Open points' "end-session no-work note keeps Open points"
+has dev-day/skills/start-session/SKILL.md '`## Left off` block.{0,80}newest first' "start-session shows every session's Left off block"
+has dev-day/skills/end-session/SKILL.md 'Re-read the file right before writing' "end-session re-reads session-notes before writing"
+has dev-day/skills/end-session/SKILL.md 'No substantive work[^.]*Open points' "end-session no-work session keeps Open points"
+lacks dev-day/skills/end-session/SKILL.md 'OVERWRITE it' "end-session never overwrites session-notes"
 
 # ---------------------------------------------------------------------------
 head_ "result"
