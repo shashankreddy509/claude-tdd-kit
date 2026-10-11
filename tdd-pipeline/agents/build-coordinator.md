@@ -141,7 +141,8 @@ Output: "📝 Tests written. Verifying red state..."
 Run the NEW tests once yourself via Bash with `TEST_CMD` and confirm they FAIL before any
 implementation exists. Target just the new tests where the runner supports it: the
 `Test-filter:` line if CLAUDE.md has one, else the runner's own filter (a pytest path,
-`--tests` for Gradle, `--filter` for dotnet, `-only-testing:` for xcodebuild).
+`--tests` for Gradle, `--filter` for dotnet, `-only-testing:` for xcodebuild, `--filter` for
+`swift test`).
 - New tests FAIL → correct red state. Write the receipt with `red` filled in and
   `"stage": "red"`. Output: "🔴 Red state confirmed. Starting implementation..." and
   proceed to Stage 2.

@@ -74,6 +74,12 @@ prose on any layout dispute, including the plan's own wording.
 - Strict equality (`===`); no `any` in TypeScript unless the codebase already accepts it
 - Match the project's module style (ESM/CJS) exactly
 
+### iOS / Swift
+- No force unwrap `!` or `try!` without a justifying comment
+- `[weak self]` in escaping closures that `self` stores; delegates declared `weak`
+- UI state changes on `@MainActor`
+- Extend the project's existing UIKit / SwiftUI / TCA structure; add no new dependency manager
+
 ### All stacks
 - The architecture that exists wins — extend the project's existing layering,
   naming, and error-handling patterns; never introduce a new framework or

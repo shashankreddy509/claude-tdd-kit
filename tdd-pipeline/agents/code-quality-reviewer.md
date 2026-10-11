@@ -27,6 +27,8 @@ on main thread; empty catch blocks; magic numbers/strings; unused symbols.
 module-level mutable state; shadowed builtins; magic numbers/strings; dead code.
 **JS/TS:** floating promises; `==` instead of `===`; `any` creep; callback/promise
 mixing; magic numbers/strings; unused exports.
+**Swift:** force unwrap `!` / `try!` without justification; `DispatchQueue.main.sync`;
+empty `catch`; fire-and-forget `Task {}` with no cancellation; magic numbers/strings.
 **Other languages:** apply the same intent — swallowed errors, magic values,
 dead code, unjustified unsafe operations — using that language's idioms.
 

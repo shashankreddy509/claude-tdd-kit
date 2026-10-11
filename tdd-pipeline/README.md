@@ -1,7 +1,7 @@
 # tdd-pipeline
 
 Gated TDD build pipeline for Claude Code, packaged as a plugin. Works on any
-stack — Android/Kotlin, Python, JS/TS, Go, Rust, JVM, .NET, PHP, Ruby, or
+stack — Android/Kotlin, iOS/Swift, Python, JS/TS, Go, Rust, JVM, .NET, PHP, Ruby, or
 generic — via stack-detected test commands and per-stack rule sections.
 Surgical edits over file rewrites, a coordinator-owned retry loop, a verify-red
 stage that rejects tests passing without implementation, full-diff review scope,

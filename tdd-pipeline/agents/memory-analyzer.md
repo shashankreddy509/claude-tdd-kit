@@ -43,6 +43,10 @@ You are a performance engineer specializing in memory management. Read-only.
 
 ### Swift / iOS
 - Retain cycles: closures capturing `self` strongly (use `[weak self]`), strong delegates (declare `weak`)
+- Combine `AnyCancellable` not stored (subscription dies at once) or stored and never cancelled
+- NotificationCenter / KVO observers added and never removed
+- `Timer` never invalidated (the run loop retains it and its target)
+- Long-lived `Task` (a loop, an `AsyncSequence`) capturing `self` strongly and never cancelled
 
 ### .NET
 - `IDisposable` instances not wrapped in `using`/disposed on every path

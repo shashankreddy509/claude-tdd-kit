@@ -274,6 +274,11 @@ head_ "10. new tests actually run"
 has tdd-pipeline/agents/build-coordinator.md 'ran ZERO tests.{0,200}\*\*STOP\*\*' "verify-red STOPs when the filtered run ran no tests"
 has tdd-pipeline/agents/test-runner.md 'Executed N tests' "test-runner names the xcodebuild count line"
 has tdd-pipeline/agents/test-writer.md 'PBXFileSystemSynchronizedRootGroup' "test-writer tells a classic xcodeproj from synced folders"
+for f in test-writer implementer; do
+  has "tdd-pipeline/agents/$f.md" '### iOS / Swift' "$f has a Swift section"
+done
+has tdd-pipeline/agents/code-quality-reviewer.md '\*\*Swift:\*\*' "code-quality-reviewer has a Swift section"
+has tdd-pipeline/agents/memory-analyzer.md 'AnyCancellable' "memory-analyzer covers Combine subscriptions"
 
 # ---------------------------------------------------------------------------
 head_ "result"

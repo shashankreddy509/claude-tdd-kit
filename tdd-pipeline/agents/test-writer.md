@@ -57,6 +57,14 @@ conventions — never introduce a new test framework into a project.
 - Async: always `await`; no floating promises in tests
 - Timers/network: fake timers and request mocks — never real waits or live calls
 
+### iOS / Swift
+- Use the suite's framework: XCTest, or Swift Testing (`import Testing`, `@Test`, `#expect`)
+  where the suite already uses it; reach internals with `@testable import <Module>`
+- View-model and UI-state tests run on `@MainActor`
+- Async code: `async throws` tests; wait with `XCTestExpectation` / `await fulfillment(of:)`,
+  never `sleep`
+- Inject clocks, network and storage through the protocols the code already takes
+
 ### Other stacks
 - Copy the conventions of the nearest existing test file; if none exist, use
   the language's dominant standard tool (go test, cargo test, JUnit5, xUnit, etc.)
