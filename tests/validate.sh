@@ -234,6 +234,19 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 8. Open points survive end-session -> start-session.
+#    start-session prints "exactly this format", so a template without the Open
+#    points slot drops them silently (dev-day 1.13.0 did). end-session must write
+#    the section even on a no-work session.
+# ---------------------------------------------------------------------------
+head_ "8. open points carry over"
+has() {  # file, sentence regex (newlines joined), label
+  if tr '\n' ' ' < "$1" | grep -qE "$2"; then ok "$3"; else bad "$3 ($1)"; fi
+}
+has dev-day/skills/start-session/SKILL.md '\*\*Open points:\*\*' "start-session template shows Open points"
+has dev-day/skills/end-session/SKILL.md 'no substantive work this session[^.]*Open points' "end-session no-work note keeps Open points"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

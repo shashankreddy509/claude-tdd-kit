@@ -39,8 +39,9 @@ can resume cleanly (it reads this file):
 
 Synthesize from the actual work done this session. Unlike feedback.md (append/merge-only via
 `merge-feedback`), this file is living state — OVERWRITE it each session. If no substantive work
-happened, write a single line: `- no substantive work this session`. Task tracking itself stays in
-Jira — this is only the "where I stopped" pointer, not a backlog.
+happened, the "Left off" note is the single line `- no substantive work this session`, and
+`## Open points` still follows, carrying the previous note's points forward. Task tracking itself
+stays in Jira — this is only the "where I stopped" pointer, not a backlog.
 
 ALWAYS write `## Open points`: every item this session left undone, not proven, or parked, so the
 next `/start-session` shows them. Write `- none` when nothing is open. Never drop one to keep the
