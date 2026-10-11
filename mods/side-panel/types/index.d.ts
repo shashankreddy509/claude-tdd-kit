@@ -11,6 +11,10 @@ export type Undone = { text: string }
 export type JiraIssue = { key: string; summary: string; status: string }
 // 'waiting' until a project-wide Jira search runs this session; 'unavailable' when it failed.
 export type JiraState = 'waiting' | 'unavailable' | JiraIssue[]
+// One Ship band item: a ship.md step 0 row's verdict; `muted` is a check the band cannot run (left to /ship).
+export type ShipItem = { level: 'ok' | 'warn' | 'stop' | 'muted'; text: string }
+// The receipt the band shows (key = its file name), or null when the repo has none.
+export type Ship = { key: string; items: ShipItem[] }
 
 declare module 'claude-code' {
   interface PluginState {
@@ -23,6 +27,7 @@ declare module 'claude-code' {
       topic: string
       project: string
       jira: JiraState
+      ship: Ship | null
     }
   }
 }
