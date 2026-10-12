@@ -154,8 +154,9 @@ implementation exists. Target just the new tests where the runner supports it: t
   "❌ Pipeline stopped at Stage 1.5: new tests pass without any
   implementation — they assert existing behavior and prove nothing.
   Revise the plan's test cases."
-- Compile error naming ONLY symbols the plan says will be created → valid red on a compiled
-  stack; record that error as the red evidence (`exit` = the build's non-zero code).
+- Compile or import error naming ONLY symbols or modules the plan says will be created
+  (test-writer missed a stub) → valid red; record that error as the red evidence (`exit` =
+  the run's non-zero code).
 - Tests ERROR for any other reason (import/config/collection/build/restore error) →
   report the exact error and STOP; do not let the implementer start against
   broken tests.

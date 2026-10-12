@@ -281,6 +281,16 @@ has tdd-pipeline/agents/code-quality-reviewer.md '\*\*Swift:\*\*' "code-quality-
 has tdd-pipeline/agents/memory-analyzer.md 'AnyCancellable' "memory-analyzer covers Combine subscriptions"
 
 # ---------------------------------------------------------------------------
+# 11. Every stack, not only compiled ones.
+#     A Python/JS test importing a not-yet-written module errors before any
+#     assertion; the test command must come from the project owning the plan's
+#     files; Gradle prints no count on success, so exit 0 proves nothing ran.
+# ---------------------------------------------------------------------------
+head_ "11. stack-generic pipeline"
+lacks tdd-pipeline/agents/test-writer.md 'On compiled stacks' "test-writer stubs on every stack"
+has tdd-pipeline/agents/build-coordinator.md 'Compile or import error naming ONLY' "verify-red takes a missing-module import error as red"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
