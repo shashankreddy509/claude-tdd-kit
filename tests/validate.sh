@@ -272,7 +272,7 @@ has tdd-pipeline/commands/ship.md 'differs from `receipt\.tree`.{0,160}\*\*STOP\
 # ---------------------------------------------------------------------------
 head_ "10. new tests actually run"
 has tdd-pipeline/agents/build-coordinator.md 'ran ZERO tests.{0,200}\*\*STOP\*\*' "verify-red STOPs when the filtered run ran no tests"
-has tdd-pipeline/agents/test-runner.md 'Executed N tests' "test-runner names the xcodebuild count line"
+has tdd-pipeline/references/test-counts.md 'Executed N tests' "test-counts names the xcodebuild count line"
 has tdd-pipeline/agents/test-writer.md 'PBXFileSystemSynchronizedRootGroup' "test-writer tells a classic xcodeproj from synced folders"
 for f in test-writer implementer; do
   has "tdd-pipeline/agents/$f.md" '### iOS / Swift' "$f has a Swift section"
@@ -292,6 +292,11 @@ has tdd-pipeline/agents/build-coordinator.md 'Compile or import error naming ONL
 has tdd-pipeline/agents/build-coordinator.md 'closest parent' "test command comes from the project owning the plan's files"
 has tdd-pipeline/agents/build-coordinator.md 'cd <dir> &&' "test command runs in the owning project's folder"
 has tdd-pipeline/agents/build-coordinator.md 'two different projects.{0,40}\*\*STOP\*\*' "a two-stack change STOPs for a chained Test: line"
+has tdd-pipeline/references/test-counts.md 'TEST-\*\.xml' "test-counts reads Gradle's XML results"
+has tdd-pipeline/references/test-counts.md 'no test files' "test-counts reads Go's zero-test line"
+for f in agents/test-runner.md agents/build-coordinator.md; do
+  has "tdd-pipeline/$f" 'references/test-counts\.md' "$f points at the count reference"
+done
 
 # ---------------------------------------------------------------------------
 head_ "result"
