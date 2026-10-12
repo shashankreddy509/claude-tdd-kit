@@ -98,6 +98,7 @@ test('todos: this project, open only, newest first, capped', () => {
 test('topic is the first non-empty line, squashed', () => {
   expect(topicOf('\n\n  fix   the band  \nmore')).toBe('fix the band')
   expect(topicOf('')).toBe('')
-  for (const answer of ['1 Now', '1 yes 2 no 3 Different', '1 yes 3 PROJ-91', 'yes to all']) expect(topicOf(answer)).toBe('')
+  for (const answer of ['1 Now', '1 yes 2 no 3 Different', '1 yes 3 PROJ-91', 'yes to all', '<ci-monitor-event>"Auto-fix" was enabled</ci-monitor-event>']) expect(topicOf(answer)).toBe('')
+  expect(topicOf('<b> bold the header')).toBe('<b> bold the header')
   expect(topicOf('1 more thing: fix the band')).toBe('1 more thing: fix the band')
 })

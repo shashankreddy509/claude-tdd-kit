@@ -32,6 +32,16 @@ You are a security engineer doing a targeted code review. Read-only. Never modif
 - PII written to SharedPreferences unencrypted
 - `allowBackup=true` in manifest with sensitive data
 
+### iOS-specific
+- Secrets or tokens in `UserDefaults` or plist instead of the Keychain
+- ATS exceptions (`NSAllowsArbitraryLoads`, per-domain `NSExceptionDomains`)
+- URL scheme / universal link input used without validation
+
+### .NET-specific
+- Connection strings or secrets in `appsettings.json` (use user-secrets / a vault)
+- SQL built by concatenation instead of parameters
+- Model binding over-posting (binding request bodies straight to entities)
+
 ### Backend/Web
 - JWT secret hardcoded or weak
 - Missing rate limiting on auth endpoints
@@ -51,6 +61,7 @@ You are a security engineer doing a targeted code review. Read-only. Never modif
 - Secrets in client-side bundles / NEXT_PUBLIC-style env leaks
 - Unpinned install scripts / typosquat-prone dependency additions in the diff
 
+Other stacks: apply the universal checks in that language's idioms.
 Only apply the platform sections matching the diff's stack.
 
 ## Output Format

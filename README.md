@@ -43,7 +43,7 @@ the files where they live.
 
 ### `kotlin-best-practices` reviewer ([agent](./tdd-pipeline/agents/kotlin-best-practices.md))
 
-The review coordinator starts this reviewer only when the diff touches `.kt` files, and passes
+The review coordinator starts this reviewer only when the diff touches `.kt` / `.kts` files, and passes
 it only the changed Kotlin files. It is read-only. It checks:
 
 - **Null safety:** `!!` without a justification, unhandled Java platform types, unsafe `as`
@@ -86,12 +86,12 @@ for example on rotation, backgrounding or repeated navigation.
   resolved once for any stack. A `Test:` line in `CLAUDE.md` wins, then the CI config's test
   step, then build files, where `gradlew` gives `./gradlew test` and a `build.gradle(.kts)`
   without a wrapper gives `gradle test`. If nothing matches, it stops and never guesses.
-- **Test-writer rules for Android:** the suite's existing framework (JUnit4 + MockK by default), `kotlinx-coroutines-test` for suspend
-  functions, a `MainDispatcherRule`, Turbine for ViewModel `StateFlow` emissions, and
-  `advanceUntilIdle()` instead of `Thread.sleep()`.
-- **Implementer rules for Android:** MVVM (ViewModel → Repository → DataSource), the project's DI framework (Hilt by default),
-  `StateFlow` exposed without leaking `MutableStateFlow`, no business logic in Composables, no
-  unjustified `!!`.
+- **Test-writer rules for Kotlin and Android:** the suite's existing framework (JUnit4 + MockK by default), `kotlinx-coroutines-test` for suspend
+  functions and `advanceUntilIdle()` instead of `Thread.sleep()`; on Android, a swapped main
+  dispatcher and Turbine for ViewModel `StateFlow` emissions when the suite uses it.
+- **Implementer rules for Kotlin and Android:** `StateFlow` exposed without leaking
+  `MutableStateFlow` and no unjustified `!!`; on Android, the existing layering (typically MVVM),
+  the project's own DI framework with none added unasked, and no business logic in Composables.
 - **Gradle pitfalls written into the commands:** `/build` checks that a verification task
   exists before it goes into the plan. An Android-library-based KMP module runs
   `:shared:testDebugUnitTest`, not `:shared:jvmTest`. `/ship` counts test results from one
@@ -107,8 +107,9 @@ for example on rotation, backgrounding or repeated navigation.
   no permission check, a WebView with JavaScript enabled on untrusted URLs, unencrypted PII in
   SharedPreferences, and `allowBackup=true` when the app holds sensitive data.
 
-Other stacks work too: Python, JS/TS, Go, Rust, JVM, .NET, PHP and Ruby each have their own
-detected test command and rule sections.
+Other stacks work too: Python, JS/TS, Go, Rust, JVM, .NET, PHP and Ruby all get a detected test
+command. Python, JS/TS, Swift, .NET and Go also have their own rule sections; Rust, JVM, PHP and
+Ruby follow the conventions of the nearest existing tests.
 
 ---
 
@@ -233,7 +234,7 @@ Each plugin's own README has the full command list and the stage-by-stage flow.
 
 ## Mods
 
-Three optional Claude Code mods (hook plugins that draw inside the terminal or the desktop Code
+Four optional Claude Code mods (hook plugins that draw inside the terminal or the desktop Code
 tab) live under `mods/`. Each installs on its own and needs neither plugin above, except where noted.
 
 - **side-panel**: a right-side dashboard pane for the project the session is open in. Count
@@ -254,15 +255,22 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
 - **next-steps**: turns the numbered list under a bold **Questions** heading at the end of a
   reply into answer buttons (1-9 answer, 0 sends the picks as one reply). It does nothing for
   replies without that block, so it pairs with a reply format that ends in one.
+- **secret-guard**: checks each prompt before it is sent against the regexes in
+  `~/.claude/secret-patterns.json` (a JSON array of `{ "kind", "pattern", "flags" }`) and, on a
+  hit, asks Mask, Send anyway or Cancel; the dialog shows only the kinds, never the value. It
+  fails closed: with no pattern file it uses a built-in list of 14 common key formats, and a
+  pattern file that is present but broken holds every prompt until fixed.
+  `node mods/secret-guard/check-patterns.mjs` tests your file against fake samples.
 
 ```
 /plugin install side-panel@claude-tdd-kit
 /plugin install cache-keeper@claude-tdd-kit
 /plugin install next-steps@claude-tdd-kit
+/plugin install secret-guard@claude-tdd-kit
 ```
 
 Hide or show a mod for the current session with `/sidepanel` (opens or closes the pane),
-`/cachekeeper on|off` or `/nextsteps on|off`. To turn one off for good, use
+`/cachekeeper on|off`, `/nextsteps on|off` or `/secretguard on|off`. To turn one off for good, use
 `claude plugin disable <mod>@claude-tdd-kit` (and `enable` to bring it back).
 
 Each mod's logic has `*.test.ts` files; run them with `claude plugin test mods/<name>`. CI does
@@ -314,7 +322,7 @@ the kit, with no SSH key and no second clone:
 
 - `dev-day/`: the session-loop plugin
 - `tdd-pipeline/`: the build pipeline plugin
-- `mods/`: the three optional mods (side-panel, cache-keeper, next-steps)
+- `mods/`: the four optional mods (side-panel, cache-keeper, next-steps, secret-guard)
 
 This kit is the canonical install source.
 

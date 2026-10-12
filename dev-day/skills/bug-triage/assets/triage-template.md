@@ -45,7 +45,7 @@ The decision chain, origin → decision point → user-visible effect. Each line
 **Why it produces the bug:** <prose: how the chain yields Actual instead of Expected>.
 
 **Fix lever (for the planner, not applied here):** <the existing helper/flag/method the fix should
-use — e.g. "gate behind the existing feature flag", "read through the shared config accessor rather
+use — e.g. "read through the shared config accessor rather
 than the raw settings object", or "n/a">.
 
 ## Affected files (fix scope)
@@ -62,7 +62,7 @@ Findings the search surfaced that are NOT this bug's cause (so the planner doesn
 
 - **Root cause:** <one line>
 - **Minimal change:** <the smallest edit that fixes it at the shared point, not per-caller>
-- **Flag gate:** <new/existing feature flag in the project's own flag store, seeded OFF first with a
+- **Flag gate:** <only if the project gates changes behind feature flags, otherwise omit this line: new/existing feature flag in the project's own flag store, seeded OFF first with a
   byte-identical OFF fallback, or "n/a — pure correctness fix">
 - **One test:** <the single check to leave behind — test name + what it asserts>
 - **Callers to check:** <if the fix touches a shared helper, who else calls it>

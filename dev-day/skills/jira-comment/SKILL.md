@@ -17,7 +17,8 @@ it formats and posts text that already exists.
 - **The Jira cloudId** — discover at runtime from the project `CLAUDE.md`'s
   `Jira: cloudId=<uuid> key=<KEY>` line. NEVER hardcode a cloudId: it is per-site, and a
   wrong one posts to someone else's Jira. A repo whose `CLAUDE.md` has no `Jira:` line has
-  no Jira configured — ask the user for the cloudId rather than guessing.
+  no Jira configured — say "no Jira configured for this project" and stop; never guess a
+  cloudId. If the resolved MCP dialect needs no cloudId, only the ticket key is needed.
 - The comment body. If the user just authored it in the conversation, use that verbatim as the source.
 - Any CC mentions — preserve EXACTLY as given (e.g. `User:<accountId>`). These are live
   account-id references; do not reword, reformat, or drop them.
@@ -42,15 +43,9 @@ Keep the prose, the meaning, and the CC line. Only strip the markup that won't s
 
 ## Steps
 
-0. **Resolve the Jira MCP dialect first.** Atlassian MCP servers differ per machine: one exposes
-   camelCase names (`mcp__atlassian__addCommentToJiraIssue`) with `cloudId` as a REQUIRED parameter;
-   another exposes snake_case under a `jira` prefix and resolves the site internally, with no
-   `cloudId` at all. If the `tdd-pipeline` plugin is installed, its `references/jira-mcp.md` has the
-   full probe procedure — follow it. Otherwise probe inline: try
-   `ToolSearch "select:mcp__atlassian__addCommentToJiraIssue"`; if that resolves nothing, search by
-   keyword (`ToolSearch "+jira comment"`) and use whatever add-comment verb comes back. Pass
-   `cloudId` ONLY if the resolved schema has that parameter — otherwise omit it and ignore the
-   `cloudId=` half of the CLAUDE.md line. Never hardcode a tool name.
+0. **Resolve the Jira MCP dialect first** per `../../references/jira-mcp.md` (relative to this
+   SKILL.md); the verb needed is add-comment. Pass `cloudId` ONLY if the resolved schema has that
+   parameter — otherwise omit it and ignore the `cloudId=` half of the CLAUDE.md line.
 
 1. Load the add-comment tool resolved in step 0.
 2. Transform the source text per the render-safe rules above. Append the CC mentions verbatim on a
@@ -71,7 +66,7 @@ Keep the prose, the meaning, and the CC line. Only strip the markup that won't s
 - **Confirm the ticket is right before posting** — a Jira comment is outward-facing and notifies
   watchers/CCs. This is the outward-facing action; invoking the skill IS authorization to post THIS
   comment to THIS ticket.
-- Personal Atlassian MCP has no edit-comment tool — this skill POSTS a new comment only. To fix a
+- If the resolved MCP has no edit-comment tool — this skill POSTS a new comment only. To fix a
   posted comment, post a corrected follow-up or edit in the Jira web editor.
 - Do not invent or restructure the user's content. If the source has bold that carried real meaning,
   convert it to a label line, don't delete the emphasis silently.

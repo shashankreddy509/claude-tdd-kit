@@ -75,9 +75,9 @@ export function todoSection(payload: { todos?: Todo[] } | null, project: string)
   return section('Todos', open.map(t => t.text ?? ''))
 }
 
-// A reply made only of numbered answers ("1 yes 2 no", "1 Now", "1 yes 3 PROJ-91") or "yes to all" is not a
-// topic: '' keeps the previous one on the card.
-const ANSWER = /^(?:(?:\d+\s+[\w-]+\s*)+|yes to all)$/i
+// A reply made only of numbered answers ("1 yes 2 no", "1 Now", "1 yes 3 PROJ-91"), "yes to all", or an
+// app-injected event (`<ci-monitor-event>…`) is not a topic: '' keeps the previous one on the card.
+const ANSWER = /^(?:(?:\d+\s+[\w-]+\s*)+|yes to all|<[a-z]+(?:-[a-z]+)+>.*)$/i
 export function topicOf(prompt: string): string {
   const first = prompt.split('\n').map(l => l.trim()).find(Boolean)?.replace(/\s+/g, ' ') ?? ''
   return ANSWER.test(first) ? '' : first

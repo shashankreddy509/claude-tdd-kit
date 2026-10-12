@@ -68,6 +68,19 @@ Tests:
 - HomeViewModelTest: covers refresh trigger, loading state transitions,
   error state on failed refresh
 
+A second stack, same structure:
+
+fix(orders): stop double-charging on a retried checkout
+
+What Changed:
+- orders/service.py: check the idempotency key before charging
+
+Why:
+A client timeout retried checkout and created a second charge.
+
+Tests:
+- tests/test_orders.py: a retry with the same key charges once
+
 ## Rules
 - Never write to any file — print the commit message to output only
 - Do not add anything beyond the format above

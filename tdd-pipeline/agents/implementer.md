@@ -53,16 +53,18 @@ prose on any layout dispute, including the plan's own wording.
   silently pick one.
 - If the plan names a mock path that does not exist on disk, say so explicitly in your final
   message rather than proceeding as if there were no mock. A dangling path means the design
-  pack was never copied into the repo — the owner needs to know.
+  pack was never copied into the repo — the user needs to know.
 
 ## Stack Rules — apply ONLY the section matching the project
 
-### Android / Kotlin
-- MVVM: ViewModel → Repository → DataSource
-- Expose StateFlow from ViewModel, never MutableStateFlow publicly
-- Use the project's existing DI framework (Hilt when none exists yet)
-- No business logic in Composables
+### Kotlin
+- Expose StateFlow, never MutableStateFlow publicly
 - No `!!` operators without explicit justification in comment
+
+### Android (with the Kotlin section)
+- Extend the existing layering (typically MVVM: ViewModel → Repository → DataSource)
+- Use the project's existing DI framework; add none unasked
+- No business logic in Composables
 
 ### Python
 - No mutable default arguments; no bare `except:` — catch specific exceptions
@@ -73,6 +75,25 @@ prose on any layout dispute, including the plan's own wording.
 - No floating promises — every promise awaited or explicitly handled
 - Strict equality (`===`); no `any` in TypeScript unless the codebase already accepts it
 - Match the project's module style (ESM/CJS) exactly
+
+### iOS / Swift
+- No force unwrap `!` or `try!` without a justifying comment
+- `[weak self]` in escaping closures that `self` stores; delegates declared `weak`
+- UI state changes on `@MainActor`
+- Extend the project's existing UIKit / SwiftUI / TCA structure; add no new dependency manager
+
+### .NET / C#
+- Extend the existing layering and register new services in the existing DI container
+- `async` all the way: no `.Result` / `.Wait()`, no `async void` outside event handlers;
+  pass `CancellationToken` through
+- Honour the project's nullable setting; no `!` null-forgiving without a justifying comment
+- Dispose `IDisposable` / `IAsyncDisposable` with `using`
+
+### Go
+- Return errors, never panic on an expected failure; wrap with `fmt.Errorf("...: %w", err)`
+- Small interfaces declared where they are consumed; return concrete types
+- `context.Context` as the first parameter; every goroutine has an exit path
+- Standard library first; add no module for what a few lines do
 
 ### All stacks
 - The architecture that exists wins — extend the project's existing layering,

@@ -23,14 +23,6 @@ Feature request: $ARGUMENTS
     iterate (step 3), and on approval (step 4) write it as the plan file.
 - If no triage file, this is the normal feature/plan path — continue to step 1.
 
-### 0.5. Automation admissibility check (OPTIONAL — requires an automation-approval gate)
-- Is this request a DURABLE AUTOMATION — a cron/scheduled job, a hook, a mirror/sync, a recurring
-  report, or a new always-on surface? If no, continue to step 1.
-- If yes AND your setup has an automation-approval gate, confirm it approved this process before
-  planning; a rejected verdict → STOP and report it, since planning a build the gate rejected
-  defeats the gate.
-- No such gate installed → continue to step 1. This check must never block a build.
-
 ### 1. Explore (read-only)
 - Enter plan mode.
 - Read the codebase relevant to the request. You MAY spawn read-only `Explore`
@@ -50,29 +42,9 @@ Feature request: $ARGUMENTS
   make one live smoke call (auth check + a real sample response) before presenting the plan.
   If a live call isn't possible, list the dependency as UNPROVEN under Risks / Assumptions.
 
-### 1.5 Gating check (only when the project is live)
-Read the project CLAUDE.md for a `Gating:` line naming the project's feature-flag store —
-a Firestore doc, LaunchDarkly/Unleash, a `feature_flags` table, an env default, or anything
-else it already uses. Absent or `off` → skip this step entirely and every gating step below;
-a pre-v1 project has no users to protect. Present.
-
-Active → decide which side this ticket needs:
-- server work feeding a client surface → **both sides**
-- server-only → **server flag**
-- client reads the data store directly, no server → **client flag only**
-- refactor/tooling/docs, nothing user-facing → **neither**
-
-A flag can have two sides: the **server flag** (off ⇒ the server stops sending the data) and
-the **client flag** (off ⇒ the app stops rendering the surface). Either alone starves the
-feature, and both **fail closed: absent means OFF**, so a surface renders only on an
-affirmative `true` and a kill writes `false` rather than deleting the key. Name keys
-`feat_<name>` (long-lived) or `fix_<TICKET>_<slug>` (short-lived rollback lever), identical on
-both sides. Seed the keys at `false` and read them back AFTER verify-red and BEFORE
-implementation.
-
-Whatever it needs goes in the plan (step 2): the exact keys, the screen the catalog check
-wraps, and a gate-off test case per side. Fold the "does this need gating" call into the
-step-3 AskUserQuestion when it's genuinely ambiguous — don't guess silently.
+### 1.5 Gating check (optional)
+Only if the project CLAUDE.md has a `Gating:` line (not `off`): follow `references/gating.md`
+to decide the sides and fill the plan's `## Gating` section. Otherwise skip this step.
 
 ### 2. Present the plan INLINE
 Show the full plan directly in chat using this format:
@@ -105,13 +77,7 @@ Resolve it from the ticket's mock reference or the project's design directory. N
 - `path/to/existing` — [what changes and why]
 ## Test Cases to Write
 - [Test]: [scenarios]
-## Gating  (omit this section entirely when the project has no `Gating: active` line)
-- Name: `feat_<name>` for a feature (long-lived) · `fix_<TICKET>_<slug>` for a bug-fix
-  rollback lever (retired ~2 weeks after it ships stable). Same name on both sides.
-- Server flag: `<key in the project's flag store>` — off ⇒ [what the server stops sending]
-- Client flag: `<key in the project's flag store>` — off ⇒ [which screen/component/endpoint
-  stops rendering or responding]
-- Gate-off tests: [server-off case] · [client-off case] · [absent key ⇒ OFF]
+## Gating  (only when the project has a `Gating:` line — format in `references/gating.md`)
 ## Risks / Assumptions
 - [anything that could go wrong or needs confirmation]
 
@@ -138,9 +104,8 @@ session, not a typing exchange.
 - Ensure `tasks/plans/` exists (create it if missing).
 - Write the full approved plan to `tasks/plans/<TICKET>_plan.md`. This file is the
   permanent per-feature record.
-- Record the approval: if `$PLAN_GATE_CMD` is set, run
-  `eval "$PLAN_GATE_CMD" record tasks/plans/<TICKET>_plan.md approve`; unset → skip
-  silently. This record lets `/implement` tell 'approved' from 'a plan file exists'.
+- Optional hook: if `$PLAN_GATE_CMD` is set, run `eval "$PLAN_GATE_CMD" record tasks/plans/<TICKET>_plan.md approve`
+  (lets `/implement` tell 'approved' from 'a plan file exists'); unset → skip silently.
 
 ### 5. Auto-hand off to implementation (only if "Approve — run pipeline" was chosen)
 - Immediately run this plugin's `implement` command against the file you just
@@ -158,7 +123,7 @@ session, not a typing exchange.
 - Never write the plan file before the user approves it.
 
 ## Gotchas
-- Step 5 hands off to `implement` (the build-coordinator AGENT pipeline) — the ONLY execution model. The former `inline-build` skill was REMOVED 2026-08-23 (owner ruling): never reimplement the pipeline inline in the main thread; it silently skips the independent-reviewer property the agent pipeline exists to provide.
+- Step 5 hands off to `implement` (the build-coordinator AGENT pipeline) — the ONLY execution model. Never reimplement the pipeline inline in the main thread; it silently skips the independent-reviewer property the agent pipeline exists to provide.
 - The feature request may name a ticket from ANOTHER repo/project. Before planning, confirm the ticket key's project matches the open repo — a number outside the project's known range is the tell. Planning against the wrong repo wastes a full exploration pass.
 - Spike any load-bearing visibility/API assumption with a throwaway compile BEFORE handing off to `implement`. A route read from a library's sources can still be rejected by the compiler (e.g. Kotlin: `@PublishedApi internal` is callable only inside the declaring module), and finding out mid-pipeline wastes the whole run.
 - Confirm a named verification command EXISTS before writing it into the plan's Prover. A plausible-looking task name can be wrong for the module (e.g. Kotlin Multiplatform: an Android-library-based KMP module runs `:shared:testDebugUnitTest`, not `:shared:jvmTest`), and the pipeline then has to correct the plan mid-run.

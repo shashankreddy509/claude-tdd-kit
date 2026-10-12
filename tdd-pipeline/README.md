@@ -1,8 +1,9 @@
 # tdd-pipeline
 
 Gated TDD build pipeline for Claude Code, packaged as a plugin. Works on any
-stack — Android/Kotlin, Python, JS/TS, Go, Rust, JVM, .NET, PHP, Ruby, or
-generic — via stack-detected test commands and per-stack rule sections.
+stack — Android/Kotlin, iOS/Swift, Python, JS/TS, Go, Rust, JVM, .NET, PHP, Ruby, or
+generic — via stack-detected test commands. Kotlin, Android, Swift, Python, JS/TS, .NET
+and Go also get their own rule sections; other stacks follow their nearest existing tests.
 Surgical edits over file rewrites, a coordinator-owned retry loop, a verify-red
 stage that rejects tests passing without implementation, full-diff review scope,
 and a critical-fix loop-back that re-reviews any post-review edit.
@@ -19,7 +20,7 @@ and a critical-fix loop-back that re-reviews any post-review edit.
       Stage 1    test-writer          (failing tests from the plan)
       Stage 1.5  verify-red           (new tests MUST fail; vacuous green = stop)
       Stage 2    implementer          (surgical Edit only, never rewrite files)
-      Stage 3    test retry loop      (coordinator-owned, ≤5 fresh runner spawns,
+      Stage 3    test retry loop      (coordinator-owned, ≤5 fix rounds (≤6 runs),
                                        prior diagnosis passed forward)
       Stage 4    code review          (full working-tree diff; security + quality
                                        always; money-logic + concurrency when the
@@ -27,11 +28,11 @@ and a critical-fix loop-back that re-reviews any post-review edit.
                                        verified; hard stop on Critical and
                                        Must-fix; any
                                        post-review edit re-enters Stage 4)
-      Stage 5    changelog            (commit message from the plan file)
+      Stage 5    finalize             (receipt complete, hand off to /ship)
 ```
 
-`ship` then carries that commit message through to a branch, a commit, a push and
-a PR, and moves the ticket to In Review. After you merge, `merged` closes the loop.
+`ship` then writes the commit message from the staged diff and carries it through to
+a branch, a commit, a push and a PR, and moves the ticket to In Review. After you merge, `merged` closes the loop.
 
 ```
 /tdd-pipeline:ship            → branch → commit → push → PR → ticket In Review
@@ -77,10 +78,17 @@ is written, and every stage runs that exact command. First hit wins: a `Test: <c
 line in CLAUDE.md (plus an optional `Test-filter:`), then the test step of the CI config
 (GitHub Actions, Azure Pipelines, GitLab, Bitrise, Fastfile, Jenkinsfile), then build files
 at the root or two levels down (Gradle, pytest, npm, go, cargo, Maven, `dotnet test <sln>`,
-`swift test`, `xcodebuild test`, phpunit, rspec, `make test`). No match = stop and ask for
+`swift test`, `xcodebuild test`, phpunit, rspec, `make test`); among those, the project whose
+folder holds the plan's files wins and runs as `cd <dir> && <cmd>` (a change spanning two
+projects stops and asks for one chained `Test:` line). No match = stop and ask for
 a `Test:` line, never guess. A missing tool (`dotnet`, `xcodebuild`) or uninstalled
-dependencies (`Pods/`, `node_modules/`, gems, Carthage) stop the run before Stage 1 with
+dependencies (`Pods/`, `node_modules/`, gems, Carthage, a Python venv, `vendor/`) stop the run before Stage 1 with
 the install command to run, instead of surfacing as a test failure.
+
+## Optional hooks
+- `$PLAN_GATE_CMD` — a command with `check <plan>` / `record <plan> <outcome>` that stores plan
+  approvals durably; `build` records and `implement` checks it. Unset → both skip silently.
+- Feature-flag gating — a `Gating:` line in CLAUDE.md turns on `references/gating.md`.
 
 ## Install
 

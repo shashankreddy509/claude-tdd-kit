@@ -5,9 +5,10 @@ import type { Undone } from '../types'
 export const MAX_UNDONE = 9
 export const KEYS = 'abcdefghi'
 
-// Skip markers: JS (.skip, xit), pytest, JUnit 4/5, Go t.Skip, Rust #[ignore], Swift XCTSkip / .disabled(.
+// Skip markers: JS (.skip, xit), pytest, JUnit 4/5, Go t.Skip, Rust #[ignore], Swift XCTSkip / .disabled(,
+// .NET Skip = "..." / [Ignore], PHPUnit markTestSkipped, RSpec xit 'x' do.
 const TODO_RE =
-  /\b(TODO|FIXME)\b|\.skip\(|\bx(it|describe)\(|@pytest\.mark\.skip|@Ignore\b|@Disabled\b|\bt\.Skip(?:f|Now)?\(|#\[ignore\]|\bXCTSkip\b|\.disabled\(/
+  /\b(TODO|FIXME)\b|\.skip\(|\bx(it|describe)\(|@pytest\.mark\.skip|@Ignore\b|@Disabled\b|\bt\.Skip(?:f|Now)?\(|#\[ignore\]|\bXCTSkip\b|\.disabled\(|\bSkip\s*=\s*"|\[Ignore\b|markTestSkipped\(|\bx(it|describe|context)\s+['"]/
 
 const squash = (s: string) => s.trim().replace(/^[-*>\d.)\s]+/, '').replace(/\s+/g, ' ')
 const base = (path: string) => path.split('/').pop() ?? path

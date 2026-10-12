@@ -23,7 +23,7 @@ a money bug often lives in how the change INTERACTS with existing code, not the 
 
 ### Money precision & units
 - Float used for prices/amounts/quantities/balances (should be integer minor-units or Decimal) —
-  `0.1 + 0.2 != 0.3` applies to a $19.99 cart exactly as it does to a BTC price.
+  `0.1 + 0.2 != 0.3` applies to a $19.99 cart exactly as it does to a crypto price.
 - Unit confusion: cents vs dollars, minor vs major currency units, contract-size vs quantity,
   points-vs-price, percent vs basis points (a 10% discount applied as ×10).
 - Integer truncation on money math (e.g. `qty // 2` or cents division silently dropping a unit).

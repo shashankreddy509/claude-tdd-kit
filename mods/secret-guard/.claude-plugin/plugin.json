@@ -1,0 +1,1 @@
+{ "name": "secret-guard", "version": "0.1.0", "description": "Catch secrets in a prompt before it is sent: mask, send anyway or cancel", "types": "./types/index.d.ts" }

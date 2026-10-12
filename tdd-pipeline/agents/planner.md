@@ -25,53 +25,15 @@ only on approval, persist it to `tasks/plans/<TICKET>_plan.md`.
    the ticket's `Mock:` line; a `design/exports/` dir in the repo; the design-pack line in
    CLAUDE.md. Put the resolved path in the plan's `## Design Reference` section. If the
    ticket touches UI and NO mock exists anywhere, say so in that section explicitly —
-   "no mock found, UI built from spec prose" is a real finding the owner needs to see.
+   "no mock found, UI built from spec prose" is a real finding the user needs to see.
 5. List every new third-party API the plan depends on under Risks / Assumptions as
    UNPROVEN — you cannot call it; `/build` smoke-tests it before the plan is presented.
 6. Return the plan draft as text (do NOT write it to disk)
 
 ## Plan Draft Format
-# Feature: [name]
-
-## Summary
-[2-3 sentence description of what this feature does]
-
-## Approach
-[Architecture decision — why this approach over alternatives]
-
-## Reuse (existing code to call)
-- `Symbol` @ `path:line` — call with [this ticket's data/labels] instead of building [X];
-  [any parameter it needs added]
-- Nothing fits: "none found — searched: [terms/paths]", so a skipped search is visible.
-
-## Success Criteria
-- [observable condition that makes this done — a state someone else could check, not "it works"]
-- Prover: [the exact check that proves it landed — a field read back, a hash compared, an exit
-  code, a row count. A `200`, a green suite, and "it looked right" are not provers. If nothing in
-  this environment can prove it, name the tool that WOULD and state the result will be ASSERTED,
-  not verified.]
-
-## Out of Scope
-- [explicitly NOT built here — the adjacent thing a reader would assume is included]
-
-## Design Reference
-[UI tickets: the mockup path(s) the implementer must build to, e.g.
-`design/exports/03-editor.png` (+ `design/exports/light/03-editor.png`).
-The mock is the visual contract — it wins over prose on any layout dispute.
-Non-UI tickets: "n/a — no UI change".
-UI ticket with no mock available: "NONE FOUND — UI from spec prose only", and flag it.]
-
-## Files to Create
-- `path/to/file` — [purpose]
-
-## Files to Modify
-- `path/to/existing` — [what changes and why]
-
-## Test Cases to Write
-- [Test]: [what scenarios to cover]
-
-## Risks / Assumptions
-- [anything that could go wrong or needs confirmation]
+Return findings grouped to match the plan template's headings (Summary, Approach, Reuse,
+Success Criteria, files, tests); the caller formats them into the one canonical template in
+`commands/build.md` step 2. Skip gating unless the caller says the project is gated.
 
 ## Rules
 - Never write any file (no Write tool — you cannot)

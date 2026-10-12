@@ -22,7 +22,7 @@ test('desktop bar and dot: stretchable bar, no text, a pulse only while working'
   expect(dotSvg(false)).not.toContain('class="working')
 })
 
-test('agents card: one line when idle, on every surface', async $ => {
+test('idle pane: one agents line, no zero tile, emoji only off the terminal', async $ => {
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'side-panel', surface, ...PANE })
     // Idle: one dim line, no bar on either surface.
@@ -30,6 +30,10 @@ test('agents card: one line when idle, on every surface', async $ => {
     expect(await ui.find({ type: 'Text', text: /━/ })).toBeUndefined()
     expect((await ui.find({ type: 'Text', text: ' live ' }))?.props.backgroundColor).toBe('success')
     expect(await ui.find({ type: 'Text', text: 'none running' })).toBeDefined() // rows stay text on every surface
+    // Emoji only off the terminal, which draws them too wide; a zero Left-undone tile is not drawn.
+    expect(await ui.find({ type: 'Text', text: surface === 'terminal' ? /^Dashboard$/ : /^📊 Dashboard$/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: surface === 'terminal' ? /^Agents$/ : /^🤖 Agents$/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /Left undone/ })).toBeUndefined()
     await ui.unmount()
   }
 })
