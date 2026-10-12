@@ -29,7 +29,10 @@ Before doing anything:
    b. The test step of the repo's CI config: `.github/workflows/*.yml`,
       `azure-pipelines.yml`, `.gitlab-ci.yml`, `bitrise.yml`, `fastlane/Fastfile`,
       `Jenkinsfile`. Keep the test command, drop CI-only wrappers (caching, uploads).
-   c. Build files, searching the repo root AND two levels down:
+   c. Build files, searching the repo root AND two levels down. Collect every hit, then keep
+      the project owning the plan's files: the hit whose folder is the closest parent of the
+      files the plan creates or modifies. Not the repo root → `TEST_CMD` = `cd <dir> && <cmd>`,
+      and the tool and dependency checks below run in `<dir>` too. Within one folder:
       - `gradlew` → `./gradlew test`; `build.gradle(.kts)` without wrapper → `gradle test`
       - pytest project (`pytest.ini`, `conftest.py`, `tox.ini`, `setup.cfg` with `[tool:pytest]`,
         or `pyproject.toml` with `[tool.pytest` or a pytest dependency) → `pytest` prefixed
