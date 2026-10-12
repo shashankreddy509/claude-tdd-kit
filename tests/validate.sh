@@ -297,6 +297,16 @@ has tdd-pipeline/references/test-counts.md 'no test files' "test-counts reads Go
 for f in agents/test-runner.md agents/build-coordinator.md; do
   has "tdd-pipeline/$f" 'references/test-counts\.md' "$f points at the count reference"
 done
+NON_APP="$(sed -n "s/^NON_APP='\(.*\)'$/\1/p" dev-day/skills/standup/scripts/standup.sh)"
+miss=""
+for p in app/src/test/A.kt app/src/androidTest/B.kt pkg/tests/x.py test_x.py bitrise.yml fastlane/Fastfile Jenkinsfile; do
+  printf '%s\n' "$p" | grep -qE "$NON_APP" || miss="$miss $p"
+done
+for p in app/src/main/A.kt src/latest/x.py contest_x.py; do
+  printf '%s\n' "$p" | grep -qE "$NON_APP" && miss="$miss !$p"
+done
+if [ -n "$NON_APP" ] && [ -z "$miss" ]; then ok "standup NON_APP sorts test/CI paths from app code"
+else bad "standup NON_APP misses:$miss"; fi
 
 # ---------------------------------------------------------------------------
 head_ "result"

@@ -11,7 +11,7 @@ set -u
 
 # --- args / config -----------------------------------------------------------
 APP_PATHS="${STANDUP_APP_PATHS:-}"
-NON_APP='^(docs/|test/|tests/|__tests__/|\.github/|\.gitlab-ci\.yml$|\.circleci/)|\.md$|Tests/|_test\.|\.test\.|\.spec\.'
+NON_APP='(^|/)(docs|tests?|__tests__|androidTest|fastlane|\.github|\.circleci)/|(^|/)(\.gitlab-ci\.yml|bitrise\.yml|azure-pipelines\.yml|Jenkinsfile)$|\.md$|Tests/|(^|/)test_[^/]*\.py$|_test\.|\.test\.|\.spec\.'
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
