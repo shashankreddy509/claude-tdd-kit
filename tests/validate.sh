@@ -321,6 +321,12 @@ for f in test-writer implementer; do
 done
 lacks tdd-pipeline/agents/implementer.md 'Hilt' "implementer adds no DI framework unasked"
 lacks README.md 'Hilt by default' "README names no default DI framework"
+for f in test-writer implementer; do
+  for h in '### \.NET / C#' '### Go'; do
+    has "tdd-pipeline/agents/$f.md" "$h" "$f has a $h section"
+  done
+done
+has tdd-pipeline/agents/code-quality-reviewer.md '\*\*C#:\*\*.{0,250}\*\*Go:\*\*' "code-quality-reviewer has C# and Go entries"
 
 # ---------------------------------------------------------------------------
 head_ "result"

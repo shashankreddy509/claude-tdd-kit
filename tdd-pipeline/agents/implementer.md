@@ -82,6 +82,19 @@ prose on any layout dispute, including the plan's own wording.
 - UI state changes on `@MainActor`
 - Extend the project's existing UIKit / SwiftUI / TCA structure; add no new dependency manager
 
+### .NET / C#
+- Extend the existing layering and register new services in the existing DI container
+- `async` all the way: no `.Result` / `.Wait()`, no `async void` outside event handlers;
+  pass `CancellationToken` through
+- Honour the project's nullable setting; no `!` null-forgiving without a justifying comment
+- Dispose `IDisposable` / `IAsyncDisposable` with `using`
+
+### Go
+- Return errors, never panic on an expected failure; wrap with `fmt.Errorf("...: %w", err)`
+- Small interfaces declared where they are consumed; return concrete types
+- `context.Context` as the first parameter; every goroutine has an exit path
+- Standard library first; add no module for what a few lines do
+
 ### All stacks
 - The architecture that exists wins — extend the project's existing layering,
   naming, and error-handling patterns; never introduce a new framework or

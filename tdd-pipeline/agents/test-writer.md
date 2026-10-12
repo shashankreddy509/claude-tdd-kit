@@ -69,9 +69,21 @@ conventions — never introduce a new test framework into a project.
   never `sleep`
 - Inject clocks, network and storage through the protocols the code already takes
 
+### .NET / C#
+- Use the suite's framework (xUnit, NUnit or MSTest) and the mocking library it already references
+  (Moq, NSubstitute); none referenced → hand-written fakes
+- Async code: `async Task` tests that `await`; never `.Result`, `.Wait()` or `Thread.Sleep`
+- Time: inject the project's clock (`TimeProvider` or its own interface); no `DateTime.Now` assertions
+
+### Go
+- Standard `testing` package, table-driven with `t.Run` subtests; testify only if the module uses it
+- Tests in `<file>_test.go` beside the code, same package (`_test` package for black-box tests)
+- Fakes through small interfaces; no mocking framework unless `go.mod` already has one
+- Concurrency: sync with channels / `sync.WaitGroup`, never `time.Sleep`; keep tests `-race` clean
+
 ### Other stacks
 - Copy the conventions of the nearest existing test file; if none exist, use
-  the language's dominant standard tool (go test, cargo test, JUnit5, xUnit, etc.)
+  the language's dominant standard tool (cargo test, JUnit5, PHPUnit, RSpec, etc.)
 
 ## Rules
 - Write tests only — no implementation code
