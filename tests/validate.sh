@@ -289,6 +289,7 @@ has tdd-pipeline/agents/memory-analyzer.md 'AnyCancellable' "memory-analyzer cov
 head_ "11. stack-generic pipeline"
 lacks tdd-pipeline/agents/test-writer.md 'On compiled stacks' "test-writer stubs on every stack"
 has tdd-pipeline/agents/build-coordinator.md 'Compile or import error naming ONLY' "verify-red takes a missing-module import error as red"
+has tdd-pipeline/agents/build-coordinator.md '\*\*STOP\*\* \(except a run that +stopped on the compile or import error' "the zero-tests STOP yields to a missing-module red"
 has tdd-pipeline/agents/build-coordinator.md 'closest parent' "test command comes from the project owning the plan's files"
 has tdd-pipeline/agents/build-coordinator.md 'cd <dir> &&' "test command runs in the owning project's folder"
 has tdd-pipeline/agents/build-coordinator.md 'two different projects.{0,40}\*\*STOP\*\*' "a two-stack change STOPs for a chained Test: line"

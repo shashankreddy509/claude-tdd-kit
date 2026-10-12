@@ -155,7 +155,8 @@ implementation exists. Target just the new tests where the runner supports it: t
   `"stage": "red"`. Output: "🔴 Red state confirmed. Starting implementation..." and
   proceed to Stage 2.
 - The run ran ZERO tests (a zero or missing count per `references/test-counts.md`, or none
-  of the new test names in the output), whatever the exit code → **STOP**: "❌ Pipeline
+  of the new test names in the output), whatever the exit code → **STOP** (except a run that
+  stopped on the compile or import error below: a missing new module loads no tests): "❌ Pipeline
   stopped at Stage 1.5: the new tests never ran — they are not in any test target the
   command builds (or the filter matches nothing)." Never read this as a pass.
 - New tests PASS with no implementation → STOP and output:
