@@ -248,8 +248,8 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
   the session cost and elapsed time; finished agents fold into one "Finished" line. Cost is an
   estimate (the session's $ split by tokens), and context % shows only when the agent runs the
   session's model. The pane docks in the fullscreen layout from 144 columns.
-  A Ship band above the prompt shows what `/ship` would refuse right now, read from the repo's
-  newest pipeline receipt (or the one the branch names); a repo with no receipt shows nothing.
+  A Ship band above the prompt shows what `/ship` would refuse right now, read from the pipeline
+  receipt whose ticket key the branch names; any other branch shows nothing.
 - **cache-keeper**: a band above the prompt with the prompt-cache countdown, the cost of a cold
   rewrite, 5h / weekly usage, what is eating the context (with a trim hint), and three buttons, each
   running one command: end (`dev-day:end-session`), clear, and start (`dev-day:start-session`), so

@@ -90,7 +90,7 @@ async function refresh($: EngineInterface, urls: Urls) {
   ])
 }
 
-const repoOf = ($: EngineInterface): Repo => ({ read: p => $.fs.read(p), list: d => $.fs.list(d), run: argv => $.process.run(argv) })
+const repoOf = ($: EngineInterface): Repo => ({ read: p => $.fs.read(p), run: argv => $.process.run(argv) })
 
 // Never rejects: callers fire and forget.
 async function refreshShip($: EngineInterface) {

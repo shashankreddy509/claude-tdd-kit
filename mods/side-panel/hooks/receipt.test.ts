@@ -76,15 +76,8 @@ const FILES: Record<string, string> = {
   'tasks/receipts/ST-248.json': JSON.stringify({ ...CLEAN, review: { warnings: 1 } }),
   'tasks/receipts/ST-300.json': JSON.stringify(CLEAN),
 }
-const LIST = [
-  { name: 'ST-248.json', kind: 'file', size: 1, mtimeMs: 1, isLink: false },
-  { name: 'ST-300.json', kind: 'file', size: 1, mtimeMs: 9, isLink: false },
-  { name: 'notes.txt', kind: 'file', size: 1, mtimeMs: 99, isLink: false },
-]
-const missing = () => Promise.reject(new Error('ENOENT'))
-const fake = (files = FILES, list = LIST): Repo => ({
-  read: p => (p in files ? Promise.resolve(files[p] as string) : missing()),
-  list: d => (d === 'tasks/receipts' && list.length ? Promise.resolve(list as never) : missing()),
+const fake = (files = FILES): Repo => ({
+  read: p => (p in files ? Promise.resolve(files[p] as string) : Promise.reject(new Error('ENOENT'))),
   run: () => Promise.resolve({ exitCode: 0, stdout: '3\n', stderr: '' } as never),
 })
 
@@ -92,19 +85,26 @@ test('HEAD and branch from a worktree .git file via commondir and packed-refs', 
   expect(await readHead(fake())).toEqual({ head: SHA, branch: 'feature/ST-248-band' })
 })
 
-test('pick: the branch key wins over the newer file; no branch key takes the newest json', async () => {
+test('pick: only a receipt whose key the branch names, any case', async () => {
   expect((await pickReceipt(fake(), 'feature/ST-248-band'))?.key).toBe('ST-248')
-  expect((await pickReceipt(fake(), 'main'))?.key).toBe('ST-300')
+  expect((await pickReceipt(fake(), 'fix/st-300'))?.key).toBe('ST-300')
+  expect(await pickReceipt(fake(), 'feature/ST-999-gone')).toBe(undefined)
 })
 
-test('no receipts dir: nothing to show', async () => {
-  expect(await shipState(fake(FILES, []))).toBe(null)
+// Receipts present, but main, a detached HEAD or a branch with no key shows nothing.
+test('no branch key: nothing to show', async () => {
+  const head = (text: string) => fake({ ...FILES, '/repo/.git/worktrees/wt/HEAD': text })
+  expect(await shipState(head('ref: refs/heads/main'))).toBe(null)
+  expect(await shipState(head(SHA))).toBe(null)
+  expect(await shipState(head('ref: refs/heads/feat/ship-band'))).toBe(null)
 })
 
 test('stale receipt counts commits since through git', async () => {
-  expect(await shipState(fake({ ...FILES, '/repo/.git/worktrees/wt/HEAD': 'b'.repeat(40) }))).toEqual({ key: 'ST-300', items: [
+  const moved = fake({ ...FILES, '/repo/.git/worktrees/wt/refs/heads/feature/ST-248-band': 'b'.repeat(40) })
+  expect(await shipState(moved)).toEqual({ key: 'ST-248', items: [
     { level: 'ok', text: 'tests red→green' },
     { level: 'ok', text: 'review' },
+    { level: 'warn', text: '1 warning' },
     { level: 'stop', text: 'receipt stale (3 commits since)' },
   ] })
 })
@@ -115,7 +115,6 @@ test('band: its row over the plugins beneath, which still draw', async ($, on) =
   // The engine hands the event an absolute path: a relative one resolved against the working directory.
   const file = (path: string) => Object.keys(FILES).find(k => path === k || path.endsWith(`/${k}`))
   on('fs.read', (_$, e) => { const k = file(e.path); return (k ? { value: FILES[k] } : { deny: 'ENOENT' }) as never })
-  on('fs.list', () => ({ value: LIST }) as never)
   on('session.cwd', () => ({ value: '/repo' }) as never)
   on('turn.complete', () => ({ text: '' }))
   on('ui.render', ($, e) => h($.ui.resolve(e).Text, { key: 'below' }, 'beneath') as never)

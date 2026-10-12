@@ -1,4 +1,4 @@
-import type { FsEntry, ProcessRunResult } from 'claude-code'
+import type { ProcessRunResult } from 'claude-code'
 
 import type { Ship, ShipItem } from '../types'
 
@@ -14,7 +14,7 @@ export type Receipt = {
 }
 
 const DIR = 'tasks/receipts'
-const KEY = /[A-Z][A-Z0-9]+-\d+/g
+const KEY = /[A-Z][A-Z0-9]+-\d+/gi
 const SHA = /^[0-9a-f]{7,64}$/
 export const READY = 'ready to /ship'
 
@@ -59,7 +59,6 @@ export function items(r: Receipt | undefined, head: string | undefined, since?: 
 // The repo as the band reads it. register.tsx wires these to $.fs and $.process: a mod's $ never crosses an import.
 export type Repo = {
   read: (path: string) => Promise<string>
-  list: (dir: string) => Promise<FsEntry[]>
   run: (argv: string[]) => Promise<ProcessRunResult>
 }
 
@@ -80,14 +79,14 @@ export async function readHead(repo: Repo): Promise<{ head?: string; branch?: st
   return { head: (await readText(repo, `${gitdir}/${ref}`)) ?? (await readText(repo, `${common}/${ref}`)) ?? (await packed()), branch }
 }
 
-// The receipt whose key the branch names, else the newest one; undefined when the repo has none.
+// Only a receipt whose ticket key the branch names: none on main, a detached HEAD or a branch without a key,
+// so a shipped ticket's old receipt never shows as stale forever.
 export async function pickReceipt(repo: Repo, branch = ''): Promise<{ key: string; text: string } | undefined> {
-  const files = (await repo.list(DIR).catch(() => [])).filter(f => f.kind === 'file' && f.name.endsWith('.json'))
-  const names = new Set(files.map(f => f.name))
-  const key = (branch.match(KEY) ?? []).find(k => names.has(`${k}.json`))
-  const name = key ? `${key}.json` : [...files].sort((a, b) => b.mtimeMs - a.mtimeMs)[0]?.name
-  if (!name) return undefined
-  return { key: name.slice(0, -'.json'.length), text: await repo.read(`${DIR}/${name}`).catch(() => '') }
+  for (const key of (branch.match(KEY) ?? []).map(k => k.toUpperCase())) {
+    const text = await repo.read(`${DIR}/${key}.json`).catch(() => undefined)
+    if (text !== undefined) return { key, text }
+  }
+  return undefined
 }
 
 // Read-only count of commits after the receipt's sha; undefined on any failure (no git, desktop, bad sha).
