@@ -11,6 +11,6 @@ found, or a count of zero, means nothing ran: never a pass.
 | pytest | final line `N passed, M failed` (`no tests ran` = zero) |
 | jest / vitest | `Tests: N passed, M failed, T total` |
 | dotnet test | `Passed!` / `Failed!` line with `Total: N` |
-| Gradle | prints no count on success: read `tests=` and `failures=` from `build/test-results/**/TEST-*.xml` under the folder `TEST_CMD` ran in. No XML written = zero |
+| Gradle | prints no count on success: read `tests=` and `failures=` from `build/test-results/**/TEST-*.xml` under the folder `TEST_CMD` ran in, from ONE variant's folder (Android writes `testDebugUnitTest/` and `testReleaseUnitTest/`; summing both doubles the count). No XML written = zero |
 | go test | one `ok` / `FAIL` line per package; `[no test files]` or `testing: warning: no tests to run` = zero for that package. Every package zero = nothing ran. For a number, re-run with `-v` and count `--- PASS` / `--- FAIL` |
 | Other | the runner's own summary line; none printed = state that and treat as zero |

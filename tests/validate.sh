@@ -294,6 +294,7 @@ has tdd-pipeline/agents/build-coordinator.md 'cd <dir> &&' "test command runs in
 has tdd-pipeline/agents/build-coordinator.md 'two different projects.{0,40}\*\*STOP\*\*' "a two-stack change STOPs for a chained Test: line"
 has tdd-pipeline/references/test-counts.md 'TEST-\*\.xml' "test-counts reads Gradle's XML results"
 has tdd-pipeline/references/test-counts.md 'no test files' "test-counts reads Go's zero-test line"
+has tdd-pipeline/references/test-counts.md 'ONE variant' "test-counts reads one Android variant, not both"
 for f in agents/test-runner.md agents/build-coordinator.md; do
   has "tdd-pipeline/$f" 'references/test-counts\.md' "$f points at the count reference"
 done
