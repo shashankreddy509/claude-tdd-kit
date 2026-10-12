@@ -124,7 +124,7 @@ for ref in $REFS; do
   # Only consider names that look like this kit's agents, so ordinary backticked
   # prose (`main`, `git`, `false`) is not treated as an agent reference.
   case "$ref" in
-    *-reviewer|*-coordinator|*-analyzer|test-writer|test-runner|implementer|planner|changelog|kotlin-best-practices)
+    *-reviewer|*-coordinator|*-analyzer|test-writer|test-runner|implementer|planner|changelog|*-best-practices)
       if [ -f "$AGENT_DIR/$ref.md" ]; then
         ok "$ref"
       else
@@ -327,6 +327,10 @@ for f in test-writer implementer; do
   done
 done
 has tdd-pipeline/agents/code-quality-reviewer.md '\*\*C#:\*\*.{0,250}\*\*Go:\*\*' "code-quality-reviewer has C# and Go entries"
+for f in tdd-pipeline/agents/code-review-coordinator.md tdd-pipeline/agents/kotlin-best-practices.md README.md; do
+  has "$f" '`\.kt` / `\.kts` files' "$f starts the Kotlin reviewer on .kts too"
+done
+has tdd-pipeline/agents/code-review-coordinator.md 'desktop / CLI / library' "review platform buckets go past mobile and web"
 
 # ---------------------------------------------------------------------------
 head_ "result"

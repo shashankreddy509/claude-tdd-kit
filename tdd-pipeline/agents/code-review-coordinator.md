@@ -20,7 +20,7 @@ periodic whole-codebase audit (not part of this kit), not this gate. Be thorough
 
 ### 1. Read + classify the diff
 Read the provided diff / file list. Identify: language(s), platform (Android / iOS / web /
-backend), and which modules changed. Note whether the diff touches any of:
+backend / desktop / CLI / library, or other), and which modules changed. Note whether the diff touches any of:
 - **money/trading/payment code** (order, position, trade, price, PnL, balance, billing, invoice, refund, currency)
   → money review needed.
 - **concurrency-sensitive code** (thread, async, coroutine, lock, cache, background worker, a
@@ -45,7 +45,7 @@ Conditionally (spawn only when relevant — don't waste agents):
   comparisons, non-idempotent close) are a class generic security/quality reviewers miss entirely.
 - `concurrency-reviewer` — **if the diff touches concurrency-sensitive code** (step 1). Pass the bundle.
 - `memory-analyzer` — if the diff opens/closes or acquires/releases resources, registers listeners/observers/subscriptions, starts timers, adds caches, threads or executors, or has delegates/closures capturing self or streams.
-- `kotlin-best-practices` — **only if the diff touches `.kt` files**; pass only the changed Kotlin files.
+- `kotlin-best-practices` — **only if the diff touches `.kt` / `.kts` files**; pass only the changed Kotlin files.
   No other stack (Swift/iOS, Go, TypeScript, …) has a language reviewer; `code-quality-reviewer` covers them.
   Say so under Passed Checks when the diff is in such a stack, so a clean report is not read as a language review.
 

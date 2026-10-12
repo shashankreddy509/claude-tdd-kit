@@ -43,7 +43,7 @@ the files where they live.
 
 ### `kotlin-best-practices` reviewer ([agent](./tdd-pipeline/agents/kotlin-best-practices.md))
 
-The review coordinator starts this reviewer only when the diff touches `.kt` files, and passes
+The review coordinator starts this reviewer only when the diff touches `.kt` / `.kts` files, and passes
 it only the changed Kotlin files. It is read-only. It checks:
 
 - **Null safety:** `!!` without a justification, unhandled Java platform types, unsafe `as`

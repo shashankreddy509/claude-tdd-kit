@@ -1,6 +1,6 @@
 ---
 name: "kotlin-best-practices"
-description: "Kotlin language best practices reviewer. Spawned by code-review-coordinator when the diff touches `.kt` files. Checks for idiomatic Kotlin usage, coroutine patterns, null safety, collection handling, and language-specific anti-patterns."
+description: "Kotlin language best practices reviewer. Spawned by code-review-coordinator when the diff touches `.kt` / `.kts` files. Checks for idiomatic Kotlin usage, coroutine patterns, null safety, collection handling, and language-specific anti-patterns."
 tools: Read, Grep, Glob
 model: sonnet
 ---
