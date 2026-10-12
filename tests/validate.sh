@@ -291,6 +291,7 @@ lacks tdd-pipeline/agents/test-writer.md 'On compiled stacks' "test-writer stubs
 has tdd-pipeline/agents/build-coordinator.md 'Compile or import error naming ONLY' "verify-red takes a missing-module import error as red"
 has tdd-pipeline/agents/build-coordinator.md 'closest parent' "test command comes from the project owning the plan's files"
 has tdd-pipeline/agents/build-coordinator.md 'cd <dir> &&' "test command runs in the owning project's folder"
+has tdd-pipeline/agents/build-coordinator.md 'two different projects.{0,40}\*\*STOP\*\*' "a two-stack change STOPs for a chained Test: line"
 
 # ---------------------------------------------------------------------------
 head_ "result"

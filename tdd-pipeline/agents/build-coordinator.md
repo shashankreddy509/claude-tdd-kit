@@ -32,7 +32,10 @@ Before doing anything:
    c. Build files, searching the repo root AND two levels down. Collect every hit, then keep
       the project owning the plan's files: the hit whose folder is the closest parent of the
       files the plan creates or modifies. Not the repo root → `TEST_CMD` = `cd <dir> && <cmd>`,
-      and the tool and dependency checks below run in `<dir>` too. Within one folder:
+      and the tool and dependency checks below run in `<dir>` too. The plan's files sit
+      under two different projects → **STOP**: "❌ This change spans `<dirA>` and `<dirB>`.
+      Add one line that gates both, e.g. `Test: (cd <dirA> && <cmdA>) && (cd <dirB> && <cmdB>)`,
+      to CLAUDE.md and re-run." Within one folder:
       - `gradlew` → `./gradlew test`; `build.gradle(.kts)` without wrapper → `gradle test`
       - pytest project (`pytest.ini`, `conftest.py`, `tox.ini`, `setup.cfg` with `[tool:pytest]`,
         or `pyproject.toml` with `[tool.pytest` or a pytest dependency) → `pytest` prefixed
