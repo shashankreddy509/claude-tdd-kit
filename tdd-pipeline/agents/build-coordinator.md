@@ -67,12 +67,14 @@ Before doing anything:
    for `./gradlew`). Missing → STOP: "❌ `<tool>` is not installed here." A missing SDK
    must never reach Stage 3 disguised as a test failure.
    Then check dependencies are installed, for package managers `TEST_CMD` does not run
-   itself (Gradle, Maven, cargo, go, SPM and `dotnet test` restore on their own):
+   itself (Gradle, Maven, cargo, go, SPM, `uv run` and `dotnet test` restore on their own):
    - `Podfile` without `Pods/Manifest.lock` → `bundle exec pod install` if the Gemfile
      names cocoapods, else `pod install`
    - `Cartfile` without `Carthage/Build/` → `carthage bootstrap`
    - `package.json` without `node_modules/` → `npm ci` (`pnpm`/`yarn install` per lockfile)
    - `Gemfile` where `bundle check` fails → `bundle install`
+   - `poetry.lock` where `poetry env info -p` prints nothing → `poetry install`
+   - `composer.json` without `vendor/` → `composer install`
    Missing → STOP: "❌ Dependencies not installed. Run `<install command>` and re-run."
    Never run the install yourself: it is network-bound and often needs private-registry
    auth the user has to set up.
@@ -148,7 +150,7 @@ Run the NEW tests once yourself via Bash with `TEST_CMD` and confirm they FAIL b
 implementation exists. Target just the new tests where the runner supports it: the
 `Test-filter:` line if CLAUDE.md has one, else the runner's own filter (a pytest path,
 `--tests` for Gradle, `--filter` for dotnet, `-only-testing:` for xcodebuild, `--filter` for
-`swift test`).
+`swift test`, `-t` for jest/vitest, `-run` for `go test`, a test-name argument for `cargo test`).
 - New tests FAIL → correct red state. Write the receipt with `red` filled in and
   `"stage": "red"`. Output: "🔴 Red state confirmed. Starting implementation..." and
   proceed to Stage 2.

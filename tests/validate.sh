@@ -331,6 +331,8 @@ for f in tdd-pipeline/agents/code-review-coordinator.md tdd-pipeline/agents/kotl
   has "$f" '`\.kt` / `\.kts` files' "$f starts the Kotlin reviewer on .kts too"
 done
 has tdd-pipeline/agents/code-review-coordinator.md 'desktop / CLI / library' "review platform buckets go past mobile and web"
+has tdd-pipeline/agents/build-coordinator.md '`-run` for `go test`' "verify-red knows the go test filter"
+has tdd-pipeline/agents/build-coordinator.md '`poetry install`.{0,250}`composer install`' "dependency check covers a Python venv and composer vendor/"
 
 # ---------------------------------------------------------------------------
 head_ "result"

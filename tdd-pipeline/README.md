@@ -81,7 +81,7 @@ at the root or two levels down (Gradle, pytest, npm, go, cargo, Maven, `dotnet t
 folder holds the plan's files wins and runs as `cd <dir> && <cmd>` (a change spanning two
 projects stops and asks for one chained `Test:` line). No match = stop and ask for
 a `Test:` line, never guess. A missing tool (`dotnet`, `xcodebuild`) or uninstalled
-dependencies (`Pods/`, `node_modules/`, gems, Carthage) stop the run before Stage 1 with
+dependencies (`Pods/`, `node_modules/`, gems, Carthage, a Python venv, `vendor/`) stop the run before Stage 1 with
 the install command to run, instead of surfacing as a test failure.
 
 ## Optional hooks
