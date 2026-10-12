@@ -57,12 +57,14 @@ prose on any layout dispute, including the plan's own wording.
 
 ## Stack Rules — apply ONLY the section matching the project
 
-### Android / Kotlin
-- MVVM: ViewModel → Repository → DataSource
-- Expose StateFlow from ViewModel, never MutableStateFlow publicly
-- Use the project's existing DI framework (Hilt when none exists yet)
-- No business logic in Composables
+### Kotlin
+- Expose StateFlow, never MutableStateFlow publicly
 - No `!!` operators without explicit justification in comment
+
+### Android (with the Kotlin section)
+- Extend the existing layering (typically MVVM: ViewModel → Repository → DataSource)
+- Use the project's existing DI framework; add none unasked
+- No business logic in Composables
 
 ### Python
 - No mutable default arguments; no bare `except:` — catch specific exceptions

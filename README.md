@@ -86,12 +86,12 @@ for example on rotation, backgrounding or repeated navigation.
   resolved once for any stack. A `Test:` line in `CLAUDE.md` wins, then the CI config's test
   step, then build files, where `gradlew` gives `./gradlew test` and a `build.gradle(.kts)`
   without a wrapper gives `gradle test`. If nothing matches, it stops and never guesses.
-- **Test-writer rules for Android:** the suite's existing framework (JUnit4 + MockK by default), `kotlinx-coroutines-test` for suspend
-  functions, a `MainDispatcherRule`, Turbine for ViewModel `StateFlow` emissions, and
-  `advanceUntilIdle()` instead of `Thread.sleep()`.
-- **Implementer rules for Android:** MVVM (ViewModel → Repository → DataSource), the project's DI framework (Hilt by default),
-  `StateFlow` exposed without leaking `MutableStateFlow`, no business logic in Composables, no
-  unjustified `!!`.
+- **Test-writer rules for Kotlin and Android:** the suite's existing framework (JUnit4 + MockK by default), `kotlinx-coroutines-test` for suspend
+  functions and `advanceUntilIdle()` instead of `Thread.sleep()`; on Android, a swapped main
+  dispatcher and Turbine for ViewModel `StateFlow` emissions when the suite uses it.
+- **Implementer rules for Kotlin and Android:** `StateFlow` exposed without leaking
+  `MutableStateFlow` and no unjustified `!!`; on Android, the existing layering (typically MVVM),
+  the project's own DI framework with none added unasked, and no business logic in Composables.
 - **Gradle pitfalls written into the commands:** `/build` checks that a verification task
   exists before it goes into the plan. An Android-library-based KMP module runs
   `:shared:testDebugUnitTest`, not `:shared:jvmTest`. `/ship` counts test results from one

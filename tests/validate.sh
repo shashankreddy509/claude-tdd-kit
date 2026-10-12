@@ -310,6 +310,19 @@ if [ -n "$NON_APP" ] && [ -z "$miss" ]; then ok "standup NON_APP sorts test/CI p
 else bad "standup NON_APP misses:$miss"; fi
 
 # ---------------------------------------------------------------------------
+# 12. No stack is the default.
+#     Rules written for one stack read as the kit's rules for every stack: a
+#     merged Android/Kotlin section, a DI framework added unasked, a README
+#     claiming rule sections that do not exist.
+# ---------------------------------------------------------------------------
+head_ "12. no default stack"
+for f in test-writer implementer; do
+  has "tdd-pipeline/agents/$f.md" '### Kotlin .{0,250}### Android ' "$f splits Kotlin from Android"
+done
+lacks tdd-pipeline/agents/implementer.md 'Hilt' "implementer adds no DI framework unasked"
+lacks README.md 'Hilt by default' "README names no default DI framework"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

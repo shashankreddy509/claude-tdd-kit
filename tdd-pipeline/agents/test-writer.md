@@ -40,12 +40,15 @@ Detect the stack from the repo (build files, existing tests) and follow the
 matching section. In every stack, MIRROR the existing suite's framework and
 conventions — never introduce a new test framework into a project.
 
-### Android / Kotlin
+### Kotlin
 - Use the suite's existing test framework (JUnit4 + MockK when none exists yet)
-- Use kotlinx-coroutines-test for suspend functions
-- Use `@get:Rule val mainDispatcherRule = MainDispatcherRule()`
-- ViewModels: test StateFlow emissions with Turbine
+- Use kotlinx-coroutines-test (`runTest`) for suspend functions
 - Never use `Thread.sleep()` — use `advanceUntilIdle()`
+
+### Android (with the Kotlin section)
+- ViewModel tests swap the main dispatcher: the suite's `MainDispatcherRule`, else
+  `Dispatchers.setMain` with a test dispatcher
+- ViewModels: test StateFlow emissions with Turbine if the suite uses it, else collect into a list
 
 ### Python
 - Use the project's existing runner (default pytest); plain functions + fixtures unless the suite uses classes
