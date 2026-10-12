@@ -334,6 +334,8 @@ has tdd-pipeline/agents/code-review-coordinator.md 'desktop / CLI / library' "re
 has tdd-pipeline/agents/build-coordinator.md '`-run` for `go test`' "verify-red knows the go test filter"
 has tdd-pipeline/agents/build-coordinator.md '`poetry install`.{0,250}`composer install`' "dependency check covers a Python venv and composer vendor/"
 has tdd-pipeline/agents/changelog.md 'test_orders\.py' "changelog shows a second, non-Kotlin example"
+lacks README.md 'each have their own' "README claims rule sections only for stacks that have them"
+lacks tdd-pipeline/README.md 'via stack-detected test commands and per-stack rule sections' "tdd-pipeline README claims rule sections only for stacks that have them"
 
 # ---------------------------------------------------------------------------
 head_ "result"

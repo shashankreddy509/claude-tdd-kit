@@ -107,8 +107,9 @@ for example on rotation, backgrounding or repeated navigation.
   no permission check, a WebView with JavaScript enabled on untrusted URLs, unencrypted PII in
   SharedPreferences, and `allowBackup=true` when the app holds sensitive data.
 
-Other stacks work too: Python, JS/TS, Go, Rust, JVM, .NET, PHP and Ruby each have their own
-detected test command and rule sections.
+Other stacks work too: Python, JS/TS, Go, Rust, JVM, .NET, PHP and Ruby all get a detected test
+command. Python, JS/TS, Swift, .NET and Go also have their own rule sections; Rust, JVM, PHP and
+Ruby follow the conventions of the nearest existing tests.
 
 ---
 
