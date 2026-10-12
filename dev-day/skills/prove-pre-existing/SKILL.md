@@ -22,6 +22,12 @@ Output is a verdict with evidence.
     **bottom-up** — the real `Caused by` / `e:` lines.
   - **iOS / xcodebuild**: the log runs to thousands of lines; search it for `error:` and the
     failing test's `XCTAssert…failed` line, and treat `** TEST FAILED **` as the summary only.
+  - **JS / jest / vitest**: read the `●` block for the failing test and its `Expected` / `Received`
+    lines, not the totals at the end.
+  - **Go**: the `--- FAIL:` line and the `file_test.go:N:` message under it; a build failure prints
+    `[build failed]` with the compiler error above it.
+  - **.NET**: `Failed <Test>` with its `Error Message` and stack trace; a build failure is
+    `error CS####`, not a test failure.
   - **Other stacks**: find the real failing line, not the summary. Most runners print the useful
     signature furthest from the invocation.
 

@@ -273,7 +273,8 @@ the user must see the look before anyone builds it.
    in the ticket's scope; invent no commands, routes or buttons. Render in the platform from 1, at
    device size: Android → phone frame ~412x915 with Material 3 components; iOS → iPhone frame
    ~390x844 with iOS (HIG) components; Mac → a window with title bar and sidebar; web → page.
-   Multiplatform → the platforms side by side.
+   Multiplatform → the platforms side by side; any other toolkit the user named in 1 → that
+   toolkit's native window or screen chrome and components at its typical size.
 5. Screenshot each direction or reviewed screen (a headless browser, viewport at the device size
    from 4) and look at it before showing the user; fix overflow or a broken script first. A page
    that renders blank is not a mock.

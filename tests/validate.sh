@@ -336,6 +336,10 @@ has tdd-pipeline/agents/build-coordinator.md '`poetry install`.{0,250}`composer 
 has tdd-pipeline/agents/changelog.md 'test_orders\.py' "changelog shows a second, non-Kotlin example"
 lacks README.md 'each have their own' "README claims rule sections only for stacks that have them"
 lacks tdd-pipeline/README.md 'via stack-detected test commands and per-stack rule sections' "tdd-pipeline README claims rule sections only for stacks that have them"
+has dev-day/skills/groom/SKILL.md '\*\*Other:\*\*' "groom maps stacks beyond web and mobile"
+lacks dev-day/skills/groom/SKILL.md 'screen → ViewModel/presenter → repository chain' "groom names no single client architecture"
+has dev-day/skills/groom-panel/SKILL.md 'any other toolkit' "groom-panel renders the toolkit the user named"
+has dev-day/skills/prove-pre-existing/SKILL.md '`--- FAIL:`' "prove-pre-existing reads Go traces"
 
 # ---------------------------------------------------------------------------
 head_ "result"

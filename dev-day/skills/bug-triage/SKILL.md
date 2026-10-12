@@ -75,7 +75,7 @@ at least two complementary angles so one blind spot doesn't sink the result:
   behavior vs the expected one — the gate, the hardcoded value, the missing check. By stack:
   - **Web/backend:** the route handler, the data-store read/write, the feature-flag gate (if the project
     uses flags), the domain/business logic.
-  - **Mobile:** the ViewModel/presenter branch, the flag gate (if any), the repository.
+  - **Mobile:** the ViewModel/presenter/controller branch (or the project's equivalent), the flag gate (if any), the repository.
   - **Other:** find the equivalent decision point for that stack.
 
 Each agent must return `file:path:line` + a short quoted snippet for every finding, and edit nothing.

@@ -52,8 +52,11 @@ half of the line.
      feature-flag or config gate the behavior sits behind (only if the project uses flags). If the repo has a knowledge graph
      (`graphify-out/GRAPH_REPORT.md`), read it and prefer `graphify query "<subject>"` /
      `graphify explain "<concept>"` over grep — it traverses cross-module edges grep can't see.
-   - **Mobile / client:** map the screen → ViewModel/presenter → repository chain, plus any
-     feature-flag gate (only if the project uses flags). Use an `Explore` agent (Task tool) for the cross-file map.
+   - **Mobile / client:** map the screen → state holder (ViewModel/presenter/controller, or the
+     project's equivalent) → data layer chain, plus any feature-flag gate (only if the project
+     uses flags). Use an `Explore` agent (Task tool) for the cross-file map.
+   - **Other:** (CLI, library, desktop, pipeline) find the equivalent entry point → decision point
+     → data chain for that stack.
    - If the ticket is net-new with no existing code hook, say so plainly ("net-new; no existing code
      to anchor to") — do NOT fabricate a codebase reality that doesn't exist yet.
    - Enumerate likely **API contracts** (new/changed endpoints, request/response shapes) from the
