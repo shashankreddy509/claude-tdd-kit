@@ -1,7 +1,6 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
 
-import type { Pending } from '../types'
 import { cacheState, eatingText, filled, kTokens, warmthSvg } from './cache'
 
 // Assumes a 60-minute prompt-cache TTL; yours may differ (e.g. 5 min), so set it with `/cachekeeper ttl <min>`.
@@ -14,7 +13,6 @@ const model = atom({ plugin: 'cache-keeper', key: 'model' } as const, null)
 const ttlMin = atom({ plugin: 'cache-keeper', key: 'ttlMin' } as const, DEFAULT_TTL_MIN)
 const tick = atom({ plugin: 'cache-keeper', key: 'tick' } as const, 0)
 const warnedFor = atom({ plugin: 'cache-keeper', key: 'warnedFor' } as const, null)
-const pending = atom({ plugin: 'cache-keeper', key: 'pending' } as const, null)
 const eating = atom({ plugin: 'cache-keeper', key: 'eating' } as const, '')
 // `/cachekeeper off` hides the band for this session; `/cachekeeper on` shows it again.
 const hidden = atom({ plugin: 'cache-keeper', key: 'hidden' } as const, false)
@@ -40,19 +38,6 @@ async function learnRate($: EngineInterface, m: string | undefined, usd: number 
   await $.store.set('rates', { ...(await rates($)), [baseModel(m)]: usd / tokens })
 }
 
-async function handoff($: EngineInterface, mode: Exclude<Pending, null>) {
-  if ((await read($, pending)) !== null) return
-  await update($, pending, () => mode)
-  await $.command.run({ command: 'dev-day:end-session' })
-}
-
-async function finishHandoff($: EngineInterface) {
-  const mode = await read($, pending)
-  await update($, pending, () => null)
-  await $.command.run({ command: 'clear' })
-  if (mode === 'start') await $.command.run({ command: 'dev-day:start-session' })
-}
-
 async function onTick($: EngineInterface) {
   const now = await $.clock.now()
   await update($, tick, () => now)
@@ -60,7 +45,7 @@ async function onTick($: EngineInterface) {
   const s = cacheState(last, now, (await read($, ttlMin)) * 60_000, await read($, warnedFor))
   if (s?.shouldWarn) {
     await update($, warnedFor, () => last)
-    $.ui.toast(`Cache goes cold in ${Math.ceil(s.msLeft / 60_000)}m. ctrl+x tab, then h handoff / s handoff+start / c clear`, { timeoutMs: 15_000 })
+    $.ui.toast(`Cache goes cold in ${Math.ceil(s.msLeft / 60_000)}m. ctrl+x tab, then e end / c clear / s start`, { timeoutMs: 15_000 })
   }
 }
 
@@ -101,15 +86,6 @@ export const register: Register = on => {
       await onTick($)
     }
     void measureEating($).catch(() => undefined)
-    if ((await read($, pending)) !== null) {
-      if (e.reason === 'answer') {
-        // /clear cannot run inside a hook the turn is waiting on.
-        $.clock.after(0, () => void finishHandoff($))
-      } else {
-        await update($, pending, () => null)
-        $.ui.toast('Handoff stopped: end-session did not finish')
-      }
-    }
     return next(e)
   })
 
@@ -140,7 +116,6 @@ export const register: Register = on => {
     const { context, rateLimits, cost } = await $.session.usage()
     const m = await read($, model)
     const rate = m ? (await rates($))[baseModel(m)] : undefined
-    const busy = (await read($, pending)) !== null
     const eats = await read($, eating)
 
     const left = s && (s.msLeft >= 120_000 ? `${Math.floor(s.msLeft / 60_000)}m` : `${Math.ceil(s.msLeft / 1000)}s`)
@@ -169,15 +144,12 @@ export const register: Register = on => {
             </Box>
           )}
           <Text dimColor>{parts.map(p => `| ${p}`).join(' ')}</Text>
-          {busy ? (
-            <Text dimColor>handoff running…</Text>
-          ) : (
-            <Box key="actions" columnGap={1}>
-              <Button key="handoff" variant="primary" label="handoff" hotkey="h" onPress={() => handoff($, 'handoff')} />
-              <Button key="start" label="handoff+start" hotkey="s" onPress={() => handoff($, 'start')} />
-              <Button key="clear" label="clear" hotkey="c" onPress={() => $.command.run({ command: 'clear' })} />
-            </Box>
-          )}
+          {/* One command per button: end-session leaves room to check todos before clear. */}
+          <Box key="actions" columnGap={1}>
+            <Button key="end" variant="primary" label="end" hotkey="e" onPress={() => $.command.run({ command: 'dev-day:end-session' })} />
+            <Button key="clear" label="clear" hotkey="c" onPress={() => $.command.run({ command: 'clear' })} />
+            <Button key="start" label="start" hotkey="s" onPress={() => $.command.run({ command: 'dev-day:start-session' })} />
+          </Box>
         </Box>
         {eats ? <Text dimColor wrap="truncate-end">{`eating: ${eats}`}</Text> : null}
         {below}

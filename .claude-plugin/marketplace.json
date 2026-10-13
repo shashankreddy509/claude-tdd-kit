@@ -22,7 +22,7 @@
     {
       "name": "cache-keeper",
       "source": "./mods/cache-keeper",
-      "description": "Mod: prompt-cache countdown, cold-rewrite cost, context eaters and one-key handoff above the prompt"
+      "description": "Mod: prompt-cache countdown, cold-rewrite cost, context eaters and end / clear / start buttons above the prompt"
     },
     {
       "name": "next-steps",

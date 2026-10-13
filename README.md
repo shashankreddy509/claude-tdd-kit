@@ -249,9 +249,10 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
   estimate (the session's $ split by tokens), and context % shows only when the agent runs the
   session's model. The pane docks in the fullscreen layout from 144 columns.
 - **cache-keeper**: a band above the prompt with the prompt-cache countdown, the cost of a cold
-  rewrite, 5h / weekly usage, what is eating the context (with a trim hint), and handoff buttons.
-  It assumes a 60-minute cache TTL; set yours with `/cachekeeper ttl <minutes>`. The handoff
-  buttons run `dev-day:end-session`, so they need dev-day installed.
+  rewrite, 5h / weekly usage, what is eating the context (with a trim hint), and three buttons, each
+  running one command: end (`dev-day:end-session`), clear, and start (`dev-day:start-session`), so
+  you can check the session's todos before clearing. It assumes a 60-minute cache TTL; set yours
+  with `/cachekeeper ttl <minutes>`. end and start need dev-day installed.
 - **next-steps**: turns the numbered list under a bold **Questions** heading at the end of a
   reply into answer buttons (1-9 answer, 0 sends the picks as one reply). It does nothing for
   replies without that block, so it pairs with a reply format that ends in one.
