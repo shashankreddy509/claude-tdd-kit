@@ -19,7 +19,7 @@ approve/revise/discard/unanswered for this exact file version): `approve` → pr
 Before spawning the build-coordinator, derive the Jira ticket key from the resolved
 plan file (e.g. `<KEY>` from `tasks/plans/<KEY>_plan.md`).
 - If a key is present, resolve the Jira MCP dialect FIRST — see
-  `references/jira-mcp.md`. It returns the tool names to use and whether `cloudId` is a
+  `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md`. It returns the tool names to use and whether `cloudId` is a
   parameter on this machine. No Atlassian MCP resolved → log the skip line from that file
   and proceed to the build; the pipeline does not depend on Jira.
 - Look up the ticket's available transitions with the resolved *list transitions* tool.
