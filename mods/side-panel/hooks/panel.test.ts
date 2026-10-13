@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { JIRA_ROWS, ROWS, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
+import { JIRA_ROWS, ROWS, docksPane, headerText, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
 
 // Payload shapes sampled from real cards/todos servers on 2026-10-07.
 const CARDS = {
@@ -101,4 +101,15 @@ test('topic is the first non-empty line, squashed', () => {
   for (const answer of ['1 Now', '1 yes 2 no 3 Different', '1 yes 3 PROJ-91', 'yes to all', '<ci-monitor-event>"Auto-fix" was enabled</ci-monitor-event>']) expect(topicOf(answer)).toBe('')
   expect(topicOf('<b> bold the header')).toBe('<b> bold the header')
   expect(topicOf('1 more thing: fix the band')).toBe('1 more thing: fix the band')
+})
+
+test('header: terminal puts the branch on its own row, desktop runs one row; no branch row off a branch', () => {
+  expect(headerText('opus-5-5', 'release/1.14.0', true, 71 * 60_000 + 59_000, false)).toEqual(['opus-5-5 · 71m', '⎇ release/1.14.0 ⑂ wt'])
+  expect(headerText('opus-5-5', 'main', false, 0, true)).toEqual(['opus-5-5 · main · 0m'])
+  expect(headerText('opus-5-5', undefined, false, -5, false)).toEqual(['opus-5-5 · 0m'])
+})
+
+test('dock rule: fullscreen from 110 columns; the main screen or an unsaid surface never docks', () => {
+  expect([docksPane({ columns: 110, isFullscreen: true }), docksPane({ columns: 109, isFullscreen: true })]).toEqual([true, false])
+  expect([docksPane({ columns: 200, isFullscreen: false }), docksPane({ columns: 200 }), docksPane(undefined)]).toEqual([false, false, false])
 })

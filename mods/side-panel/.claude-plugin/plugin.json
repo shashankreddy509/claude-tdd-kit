@@ -1,7 +1,7 @@
 {
   "name": "side-panel",
-  "version": "0.3.0",
-  "description": "Right-side dashboard pane for the open project: needs-you, Jira, todos, agents, current topic, left-undone items",
+  "version": "0.4.0",
+  "description": "Right-side dashboard pane for the open project: model, branch and session timer, prompt-cache countdown, needs-you, Jira, todos, agents as a TDD stage rail and spawn tree, current topic, left-undone items",
   "types": "./types/index.d.ts",
   "userConfig": {
     "needs_url": {

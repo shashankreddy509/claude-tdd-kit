@@ -1,14 +1,16 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, RenderChildren } from 'claude-code'
+import type { AgentSpawnInput, AgentSpawnResult, EngineInterface, Register, RenderChildren, SessionUsage } from 'claude-code'
 
-import type { Agent, JiraState, Section, ShipItem, Undone } from '../types'
-import type { Span } from './agents'
-import { CARDS, MAIN, WORKING, addStep, agentBoard, metaLine, statsLine, tokensText, track, usdText } from './agents'
-import { avatarEmoji, avatarSvg } from './avatar'
-import { BAR, PARTS, barSvg, dotSvg, segments } from './look'
-import type { Repo } from './receipt'
-import { READY, shipState } from './receipt'
-import { isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
+import type { JiraState, Section, ShipItem, Undone } from '../types'
+import { MAIN, addStep, agentBoard, baseModel, modelText, nowText, seen } from './agents'
+import { agentsView } from './agents-view'
+import { cacheState, cacheStats, eatingText } from './cache'
+import type { CacheView } from './cache-view'
+import { cacheView } from './cache-view'
+import { chip, line } from './look'
+import type { HeadInfo, Repo } from './receipt'
+import { READY, readHead, shipState } from './receipt'
+import { docksPane, headerText, isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
 import { KEYS, addUndone, doItNow, fileTodos } from './undone'
 
 // Right-side dock (fullscreen terminal, wide enough): a read-only dashboard of what needs the owner,
@@ -17,27 +19,34 @@ import { KEYS, addUndone, doItNow, fileTodos } from './undone'
 const PANE = 'side-panel'
 const REFRESH_MS = 60_000
 const AGENTS_MS = 3_000
+// Cache (moved in from cache-keeper 0.2.0). Assumes a 60-minute prompt-cache TTL; set yours with `/cachekeeper ttl`.
+const DEFAULT_TTL_MIN = 60
+const TICK_MS = 15_000
 const sections = atom({ plugin: 'side-panel', key: 'sections' } as const, [])
-const agents = atom({ plugin: 'side-panel', key: 'agents' } as const, {
-  counts: { working: 0, waiting: 0, done: 0, stuck: 0 },
-  totals: { usd: 0, tokens: 0, time: '0:00' },
-  rows: [],
-  finished: [],
-})
+const agents = atom({ plugin: 'side-panel', key: 'agents' } as const, [])
+// Every agent.spawn this session (the 3s poll misses short agents), and the tool each agent last called.
+const spawns = atom({ plugin: 'side-panel', key: 'spawns' } as const, {})
+const doing = atom({ plugin: 'side-panel', key: 'doing' } as const, {})
 // Tokens per loop from every turn.step ('' = main); the poller turns them into each agent's share.
 const usage = atom({ plugin: 'side-panel', key: 'usage' } as const, {})
-const showFinished = atom({ plugin: 'side-panel', key: 'showFinished' } as const, false)
 const undone = atom({ plugin: 'side-panel', key: 'undone' } as const, [])
 const topic = atom({ plugin: 'side-panel', key: 'topic' } as const, '')
 const project = atom({ plugin: 'side-panel', key: 'project' } as const, '')
+const head = atom({ plugin: 'side-panel', key: 'head' } as const, { worktree: false })
 // Caught from start-session's own Jira search (no URL or login of ours); refreshed by any later project-wide search.
 const jira = atom({ plugin: 'side-panel', key: 'jira' } as const, 'waiting' as JiraState)
 // Ship band: what /ship would refuse right now, from the repo's pipeline receipt (null = no receipt).
 const ship = atom({ plugin: 'side-panel', key: 'ship' } as const, null)
+const lastAt = atom({ plugin: 'side-panel', key: 'lastAt' } as const, null)
+const lastModel = atom({ plugin: 'side-panel', key: 'lastModel' } as const, null)
+const ttlMin = atom({ plugin: 'side-panel', key: 'ttlMin' } as const, DEFAULT_TTL_MIN)
+const tick = atom({ plugin: 'side-panel', key: 'tick' } as const, 0)
+const warnedFor = atom({ plugin: 'side-panel', key: 'warnedFor' } as const, null)
+const eating = atom({ plugin: 'side-panel', key: 'eating' } as const, '')
+// `/cachekeeper off` hides the cache (card and band) for this session; `/cachekeeper on` shows it again.
+const hidden = atom({ plugin: 'side-panel', key: 'hidden' } as const, false)
 const SHIP_TOOLS = new Set(['Write', 'Edit', 'Bash'])
 const SHIP_LOOK: Record<ShipItem['level'], [string, string]> = { ok: ['✓ ', 'success'], warn: ['⚠ ', 'warning'], stop: ['✗ ', 'error'], muted: ['', 'subtle'] }
-// When this mod first and last saw each agent live (ms); resets on reload, so elapsed restarts then.
-const spans: Record<string, Span> = {}
 // A tile's count is dim when its source is off, error-colored when undone items wait, the accent otherwise.
 const needsAction = (s: Section) => s.title === 'Left undone' && s.count > 0
 function tileColor(s: Section) {
@@ -82,7 +91,7 @@ async function refresh($: EngineInterface, urls: Urls) {
     read($, jira),
   ])
   await update($, project, () => name)
-  void refreshShip($)
+  void refreshRepo($)
   await update($, sections, () => [
     ...(urls.needs ? [needsSection(cards, key)] : []),
     ...(key ? [jiraSection(tickets, key)] : []),
@@ -90,22 +99,75 @@ async function refresh($: EngineInterface, urls: Urls) {
   ])
 }
 
+// The cache buttons' runner: one command each.
+const runner = ($: EngineInterface) => (command: string) => void $.command.run({ command })
+
 const repoOf = ($: EngineInterface): Repo => ({ read: p => $.fs.read(p), run: argv => $.process.run(argv) })
 
-// Never rejects: callers fire and forget.
-async function refreshShip($: EngineInterface) {
-  const next = await shipState(repoOf($)).catch(() => null)
+// The header's branch and the Ship band's receipt, from one read of HEAD. Never rejects: callers fire and forget.
+async function refreshRepo($: EngineInterface) {
+  const repo = repoOf($)
+  const at = await readHead(repo).catch((): HeadInfo => ({ worktree: false }))
+  const h = { ...(at.branch ? { branch: at.branch } : {}), worktree: at.worktree }
+  if (JSON.stringify(h) !== JSON.stringify(await read($, head))) await update($, head, () => h).catch(() => undefined)
+  const next = await shipState(repo, at).catch(() => null)
   if (JSON.stringify(next) !== JSON.stringify(await read($, ship))) await update($, ship, () => next).catch(() => undefined)
 }
 
 async function refreshAgents($: EngineInterface) {
   const list = await $.agent.list()
   const now = await $.clock.now()
-  track(spans, list, now)
+  const all = seen(await read($, spawns), list, now)
+  await update($, spawns, () => all)
   const session = await $.session.usage()
-  const next = agentBoard(list, spans, await read($, usage), { usd: session.cost?.usd ?? 0, window: session.context.window })
-  const prev = await read($, agents)
-  if (JSON.stringify(next) !== JSON.stringify(prev)) await update($, agents, () => next)
+  const next = agentBoard(all, list, await read($, usage), await read($, doing), session.cost?.usd ?? 0, now)
+  if (JSON.stringify(next) !== JSON.stringify(await read($, agents))) await update($, agents, () => next)
+}
+
+async function noteSpawn($: EngineInterface, e: AgentSpawnInput, r: AgentSpawnResult) {
+  const id = r.agentId
+  if (!id) return
+  const s = { id, type: e.subagentType, description: e.description, model: r.model, from: await $.clock.now(), ...(e.parentAgentId ? { parent: e.parentAgentId } : {}) }
+  await update($, spawns, all => ({ ...all, [id]: s }))
+  await refreshAgents($)
+}
+
+// Local estimate only (`summary` sends no requests); refreshed once per main-loop turn, not per draw.
+async function measureEating($: EngineInterface) {
+  const { context } = await $.session.usage({ breakdown: 'summary' })
+  if (context.breakdown) await update($, eating, () => eatingText(context.breakdown!.categories))
+}
+
+async function rates($: EngineInterface) {
+  return ((await $.store.get('rates')) ?? {}) as Record<string, number>
+}
+
+// The runtime prices a cache rewrite only on a resume and a model switch: keep its $/token per model.
+// ponytail: one $/token per model, learned at whatever context size the runtime priced; long-context tiers blur.
+async function learnRate($: EngineInterface, m: string | undefined, usd: number | undefined, tokens: number | undefined) {
+  if (!m || !usd || !tokens) return
+  await $.store.set('rates', { ...(await rates($)), [baseModel(m)]: usd / tokens })
+}
+
+async function onTick($: EngineInterface) {
+  const now = await $.clock.now()
+  await update($, tick, () => now)
+  const last = await read($, lastAt)
+  const s = cacheState(last, now, (await read($, ttlMin)) * 60_000, await read($, warnedFor))
+  if (s?.shouldWarn) {
+    await update($, warnedFor, () => last)
+    $.ui.toast(`Cache goes cold in ${Math.ceil(s.msLeft / 60_000)}m. end / clear / start: the side panel's Cache card, or ctrl+x tab then e / c / s`, { timeoutMs: 15_000 })
+  }
+}
+
+// What the cache view draws, or null while `/cachekeeper off` hides it. Reads the tick, so it redraws every 15s.
+async function cacheData($: EngineInterface, u: SessionUsage): Promise<CacheView | null> {
+  if (await read($, hidden)) return null
+  await read($, tick)
+  const state = cacheState(await read($, lastAt), await $.clock.now(), (await read($, ttlMin)) * 60_000, null)
+  const m = await read($, lastModel)
+  const rate = m ? (await rates($))[baseModel(m)] : undefined
+  return { state, stats: cacheStats(u.context.tokens ?? 0, rate, u.rateLimits, u.cost?.usd), eating: await read($, eating) }
 }
 
 export const register: Register = (on, options) => {
@@ -113,10 +175,16 @@ export const register: Register = (on, options) => {
 
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'sidepanel', description: 'Side panel: open it if closed, close it if open (this session)' })
+    // A cache-keeper still installed may hold the name first; it would stop this whole start (seen live 2026-10-13).
+    await $.command
+      .register({ name: 'cachekeeper', description: 'Side panel cache: hide/show it for this session, or set the cache TTL', argumentHint: 'on | off | ttl <minutes>' })
+      .catch(() => $.ui.toast('cache-keeper is still installed: side-panel 0.4.0 carries the cache now. Run /plugin uninstall cache-keeper@claude-tdd-kit', { timeoutMs: 15_000 }))
     void $.ui.open({ id: PANE, title: 'Dashboard' })
     void refresh($, urls)
     $.clock.every(REFRESH_MS, () => void refresh($, urls))
     $.clock.every(AGENTS_MS, () => void refreshAgents($).catch(() => undefined))
+    $.clock.every(TICK_MS, () => void onTick($))
+    await onTick($)
     return next(e)
   })
 
@@ -127,10 +195,30 @@ export const register: Register = (on, options) => {
     return { text: `Side panel ${isOpen ? 'closed' : 'opened'}` }
   })
 
+  on('command.run', { command: 'cachekeeper' }, async ($, e) => {
+    const [word, value] = e.args.trim().split(/\s+/)
+    if (word === 'on' || word === 'off') {
+      await update($, hidden, () => word === 'off')
+      return { text: `Cache ${word} for this session` }
+    }
+    const minutes = Number(value ?? DEFAULT_TTL_MIN)
+    if (word !== 'ttl' || !(minutes > 0)) return { text: 'Usage: /cachekeeper on | off | ttl <minutes> (no number resets to 60)' }
+    await update($, ttlMin, () => minutes)
+    await onTick($)
+    return { text: `Cache TTL set to ${minutes}m` }
+  })
+
   on('prompt.submit', async ($, e, next) => {
-    const t = topicOf(e.text)
+    // A subagent's hand-back arrives as a `peer` prompt (seen live 2026-10-13); it is not the owner's topic.
+    const t = e.origin.kind === 'peer' ? '' : topicOf(e.text)
     if (t) void update($, topic, () => t).catch(() => undefined)
     return next(e)
+  })
+
+  on('agent.spawn', async ($, e, next) => {
+    const r = await next(e)
+    await noteSpawn($, e, r).catch(() => undefined)
+    return r
   })
 
   on('tool.call', { tool: 'Write' }, async ($, e, next) => {
@@ -147,8 +235,10 @@ export const register: Register = (on, options) => {
   })
 
   on('tool.call', async ($, e, next) => {
+    const id = e.agentId
+    if (id) void update($, doing, d => ({ ...d, [id]: nowText(e.tool, e as unknown as Record<string, unknown>) })).catch(() => undefined)
     const ran = await next(e)
-    if (SHIP_TOOLS.has(e.tool)) void refreshShip($)
+    if (SHIP_TOOLS.has(e.tool)) void refreshRepo($)
     if (!e.tool.endsWith('searchJiraIssuesUsingJql') || 'deny' in ran) return ran
     const key = await projectKey($).catch(() => undefined)
     if (key && isProjectSearch(String((e as { jql?: unknown }).jql ?? ''), key)) {
@@ -168,28 +258,64 @@ export const register: Register = (on, options) => {
   })
 
   on('turn.complete', async ($, e, next) => {
-    if (e.agentId === undefined) {
-      void refresh($, urls)
+    const now = await $.clock.now()
+    const id = e.agentId
+    // A subagent's end stamps its span: a short one can leave list() before the 3s poll sees it.
+    if (id !== undefined) {
+      await update($, spawns, all => (all[id] ? { ...all, [id]: { ...all[id]!, to: now } } : all)).catch(() => undefined)
+      return next(e)
     }
+    void refresh($, urls)
+    if (e.usage) {
+      await update($, lastAt, () => now)
+      await update($, lastModel, () => e.usage!.model)
+      await onTick($)
+    }
+    void measureEating($).catch(() => undefined)
     return next(e)
   })
 
-  // Ship band: one row over whatever the plugins beneath draw (Next Steps, Cache Keeper). Text only on every
-  // surface, so no words ever land inside an Svg.
+  on('session.end', async ($, e, next) => {
+    if (e.reason === 'clear') await update($, lastAt, () => null)
+    return next(e)
+  })
+
+  on('classic.SessionStart', async ($, e, next) => {
+    await learnRate($, e.model, e.estimated_cache_write_usd, e.context_tokens)
+    return next(e)
+  })
+
+  on('classic.PostModelSwitch', async ($, e, next) => {
+    await learnRate($, e.to_model, e.estimated_cache_write_usd, e.context_tokens)
+    return next(e)
+  })
+
+  // Above the prompt: the Ship row, then the cache band while the pane is not docked (docked, the pane's Cache
+  // card carries it), then whatever the plugins beneath draw (Next Steps). Ship is text only on every surface.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const below = await next(e)
+    if (e.props.hasSurvey) return below
     const s = await read($, ship)
-    if (!s || e.props.isWorking || e.props.hasSurvey) return below
-    const { Box, Text } = $.ui.resolve(e)
-    const ready = s.items[0]?.text === READY
+    // A render may not write state (host check, seen 2026-10-13), so the pane cannot hand the band its placement:
+    // the band reads the engine's dock rule off its own viewport instead.
+    // Placed and the shown tab: a pane still waiting for room, or behind another tab, leaves the band up.
+    const isDocked = docksPane(e.viewport) && (await $.ui.panes()).some(p => p.id === PANE && p.isPlaced && p.isShown)
+    const cache = isDocked ? null : await cacheData($, await $.session.usage())
+    const showShip = s && !e.props.isWorking
+    if (!showShip && !cache) return below
+    const ui = $.ui.resolve(e)
+    const { Box, Text } = ui
     return (
       <Box flexDirection="column">
-        <Box key="ship" flexWrap="wrap" columnGap={1}>
-          <Text bold>{ready ? s.key : `${s.key} ship ·`}</Text>
-          {s.items.map(({ level, text }, i) => (
-            <Text key={`ship${i}`} color={SHIP_LOOK[level][1]} dimColor={level === 'muted'}>{`${i ? '· ' : ''}${SHIP_LOOK[level][0]}${text}`}</Text>
-          ))}
-        </Box>
+        {showShip ? (
+          <Box key="ship" flexWrap="wrap" columnGap={1}>
+            <Text bold>{s.items[0]?.text === READY ? s.key : `${s.key} ship ·`}</Text>
+            {s.items.map(({ level, text }, i) => (
+              <Text key={`ship${i}`} color={SHIP_LOOK[level][1]} dimColor={level === 'muted'}>{`${i ? '· ' : ''}${SHIP_LOOK[level][0]}${text}`}</Text>
+            ))}
+          </Box>
+        ) : null}
+        {cache ? cacheView(ui, e.surface, cache, runner($), true) : null}
         {below}
       </Box>
     )
@@ -199,114 +325,49 @@ export const register: Register = (on, options) => {
     const ui = $.ui.resolve(e)
     const { Box, Button, Text } = ui
     const list = await read($, sections)
-    const live = await read($, agents)
-    const opened = await read($, showFinished)
     const open = await read($, undone)
     const now = await read($, topic)
     const name = await read($, project)
+    const at = await read($, head)
+    await read($, tick)
+    const u = await $.session.usage()
+    const cache = e.props.placement === 'dock' ? await cacheData($, u) : null
+    const words = headerText(modelText(await $.session.model()), at.branch, at.worktree, (await $.clock.now()) - u.startedAt, e.surface !== 'terminal')
+    const team = agentsView(ui, e.surface, await read($, agents))
     const tileWidth = Math.max(10, Math.floor((e.props.bodyColumns - 1) / 2))
     const isStale = list.some(s => s.note)
-    const { counts } = live
-    const legend = PARTS.filter(([k]) => counts[k] || k !== 'stuck').map(([k]) => `${counts[k]} ${k}`).join(' · ')
-    const line = (text: string, key: string, dim = false) => (
-      <Text key={key} wrap="truncate-end" dimColor={dim}>
-        {text}
-      </Text>
-    )
     // The terminal draws emoji at a different width than the layout counts, so they overwrite the next letters.
     const icon = (glyph = '') => (e.surface === 'terminal' ? '' : `${glyph} `)
-    const chip = (text: string, color: string) => (
-      <Text backgroundColor={color} color="inverseText">{` ${text} `}</Text>
-    )
-    const card = (title: string, body: RenderChildren, key = title) => (
+    const card = (title: string, body: RenderChildren, key = title, sub = '') => (
       <Box key={key} flexDirection="column" borderStyle="round" borderColor="subtle" paddingX={1}>
-        <Text bold>{title}</Text>
+        <Box columnGap={2}>
+          <Text bold>{title}</Text>
+          {sub ? line(ui, sub, 'sub', true) : null}
+        </Box>
         {body}
       </Box>
     )
-    // Remote surfaces (desktop, editor, phone) draw the count bar and each working agent's pulsing dot as SVG.
-    // The terminal's table is padded with every element name, so `'Svg' in ui` alone is true there too: the
-    // surface decides. Only shapes are SVG: the desktop scales an SVG to its slot, which would blow up text.
-    const Svg = e.surface !== 'terminal' && 'Svg' in ui ? ui.Svg : undefined
-    const barWidth = Math.max(4, e.props.bodyColumns - 4)
-    const barCells = segments(PARTS.map(([k]) => counts[k]), barWidth)
-    const bar = Svg ? (
-      <Svg source={barSvg(counts)} alt={`Agents: ${legend}`} height={8} />
-    ) : (
-      <Text>
-        {PARTS.map(([k, color], i) => (barCells[i] ? <Text key={k} color={color}>{BAR.repeat(barCells[i])}</Text> : null))}
-        {barCells.some(Boolean) ? null : <Text color="subtle">{BAR.repeat(barWidth)}</Text>}
-      </Text>
-    )
-    // Header tiles: Cost (≈ the agents' share of the session $), Tokens, Time since the first agent started.
-    const third = Math.max(8, Math.floor((e.props.bodyColumns - 6) / 3))
-    const { totals } = live
-    const tiles = (
-      <Box key="tiles" columnGap={1}>
-        {([[usdText(totals.usd), 'Cost'], [tokensText(totals.tokens), 'Tokens'], [totals.time, 'Time']] as const).map(([value, title]) => (
-          <Box key={title} width={third} flexDirection="column">
-            <Text bold color="claude">{value}</Text>
-            {line(title, 'label', true)}
-          </Box>
-        ))}
-      </Box>
-    )
-    // One card per live agent: a fixed-size pixel person on remote surfaces (a face emoji in the terminal), and
-    // every word as Text beside it.
-    const agentCard = (a: Agent, i: number) => {
-      const working = WORKING.has(a.status)
-      const meta = metaLine(a)
-      return (
-        <Box key={`agent${i}`} columnGap={1}>
-          {Svg ? <Svg source={avatarSvg(a.label)} alt={`${a.label} avatar`} width={27} height={48} /> : <Text>{avatarEmoji(a.label)}</Text>}
-          <Box flexDirection="column" flexGrow={1}>
-            <Box columnGap={1} alignItems="center">
-              {Svg ? <Svg source={dotSvg(working)} alt={a.status} width={10} height={10} isInteractive={working || undefined} /> : null}
-              <Box flexGrow={1}>{line(a.label, 'label')}</Box>
-              {chip(a.status, working ? 'success' : 'warning')}
-            </Box>
-            {meta ? line(meta, 'meta', true) : null}
-            {line(statsLine(a), 'stats', true)}
-          </Box>
-        </Box>
-      )
-    }
-    // Finished agents fold into one line that opens to a row each.
-    const finished = live.finished.length
-      ? [
-          <Button key="finished" plain dimColor label={`${opened ? '▾' : '▸'} Finished · ${live.finished.length}`} onPress={() => update($, showFinished, v => !v)} />,
-          ...(opened ? live.finished.map((a, i) => line(`${a.label} · ${statsLine(a)}`, `done${i}`, true)) : []),
-        ]
-      : []
-    // Idle (nothing ever ran or is running) is one line, not tiles, an empty bar and a row of zeros.
-    const idle = !live.rows.length && !live.finished.length
-    const more = live.rows.length - CARDS
-    const agentBody = idle ? line('none running', 'none', true) : [
-      tiles,
-      <Box key="bar">{bar}</Box>,
-      line(legend, 'legend', true),
-      ...(live.rows.length ? live.rows.slice(0, CARDS).map(agentCard) : [line('none running', 'none', true)]),
-      ...(more > 0 ? [line(`+${more} more`, 'more', true)] : []),
-      ...finished,
-    ]
     return (
       <Box flexDirection="column">
         <Box columnGap={1}>
           <Text bold>{`${icon('📊')}${name || 'Dashboard'}`}</Text>
-          {chip(isStale ? 'partial' : 'live', isStale ? 'warning' : 'success')}
+          {chip(ui, isStale ? 'partial' : 'live', isStale ? 'warning' : 'success')}
+          {line(ui, words[0] ?? '', 'meta', true)}
         </Box>
+        {words[1] ? line(ui, words[1], 'branch', true) : null}
+        {cache ? card('Cache', cacheView(ui, e.surface, cache, runner($), false)) : null}
         <Box flexWrap="wrap" columnGap={1}>
           {[...list, ...(open.length ? [{ title: 'Left undone', count: open.length, rows: [] }] : [])].map(s => (
             <Box key={`tile-${s.title}`} width={tileWidth} flexDirection="column" borderStyle="round" borderColor={needsAction(s) ? 'error' : 'subtle'} paddingX={1}>
               <Text bold color={tileColor(s)} dimColor={!!s.note}>
                 {`${icon(ICON[s.title])}${s.note ? '–' : s.count}`}
               </Text>
-              {line(s.note ? `${s.title} · ${s.note}` : s.title, 'label', true)}
+              {line(ui, s.note ? `${s.title} · ${s.note}` : s.title, 'label', true)}
             </Box>
           ))}
         </Box>
-        {card(`${icon('🤖')}Agents`, agentBody, 'Agents')}
-        {card(`${icon('💬')}Now`, line(now || 'nothing yet', 'now', !now), 'Now')}
+        {card(`${icon('🤖')}Agents`, team.body, 'Agents', team.title)}
+        {card(`${icon('💬')}Now`, line(ui, now || 'nothing yet', 'now', !now), 'Now')}
         {open.length > 0 && (
           <Box flexDirection="column" borderStyle="round" borderColor="error" paddingX={1}>
             <Box>
@@ -325,7 +386,7 @@ export const register: Register = (on, options) => {
         )}
         {list
           .filter(s => s.rows.length)
-          .map(s => card(`${icon(ICON[s.title])}${s.title}`, s.rows.map((row, i) => line(row, `${s.title}${i}`)), s.title))}
+          .map(s => card(`${icon(ICON[s.title])}${s.title}`, s.rows.map((row, i) => line(ui, row, `${s.title}${i}`)), s.title))}
       </Box>
     )
   })

@@ -1,6 +1,6 @@
 import type { ProcessRunResult } from 'claude-code'
 
-import type { Ship, ShipItem } from '../types'
+import type { Head, Ship, ShipItem } from '../types'
 
 // The pipeline's record of the last verified run (tdd-pipeline build-coordinator writes it; never this mod).
 export type Receipt = {
@@ -66,17 +66,21 @@ const readText = (repo: Repo, path: string) => repo.read(path).then(t => t.trim(
 
 // HEAD and branch from the repo files, no shell: `.git` is a dir, or a file `gitdir: <path>` in a worktree,
 // whose refs live in the `commondir` it names; a ref not loose is in packed-refs.
-export async function readHead(repo: Repo): Promise<{ head?: string; branch?: string }> {
-  const gitdir = (await readText(repo, '.git'))?.match(/^gitdir: (.+)$/m)?.[1] ?? '.git'
+// `worktree`: `.git` is that file (the header's "⑂ wt").
+export type HeadInfo = Head & { head?: string }
+export async function readHead(repo: Repo): Promise<HeadInfo> {
+  const linked = (await readText(repo, '.git'))?.match(/^gitdir: (.+)$/m)?.[1]
+  const gitdir = linked ?? '.git'
+  const worktree = linked !== undefined
   const head = await readText(repo, `${gitdir}/HEAD`)
   const ref = head?.match(/^ref: (\S+)/)?.[1]
-  if (!ref) return { head }
+  if (!ref) return { head, worktree }
   const branch = ref.replace(/^refs\/heads\//, '')
   const commondir = await readText(repo, `${gitdir}/commondir`)
   let common = gitdir
   if (commondir) common = commondir.startsWith('/') ? commondir : `${gitdir}/${commondir}`
   const packed = async () => (await readText(repo, `${common}/packed-refs`))?.split('\n').find(l => l.endsWith(` ${ref}`))?.split(' ')[0]
-  return { head: (await readText(repo, `${gitdir}/${ref}`)) ?? (await readText(repo, `${common}/${ref}`)) ?? (await packed()), branch }
+  return { head: (await readText(repo, `${gitdir}/${ref}`)) ?? (await readText(repo, `${common}/${ref}`)) ?? (await packed()), branch, worktree }
 }
 
 // Only a receipt whose ticket key the branch names: none on main, a detached HEAD or a branch without a key,
@@ -97,8 +101,9 @@ async function commitsSince(repo: Repo, sha: string | undefined): Promise<number
   return Number.isInteger(n) ? n : undefined
 }
 
-export async function shipState(repo: Repo): Promise<Ship | null> {
-  const { head, branch } = await readHead(repo)
+// `at`: the HEAD the caller already read (the pane's header reads it too), else read here.
+export async function shipState(repo: Repo, at?: HeadInfo): Promise<Ship | null> {
+  const { head, branch } = at ?? (await readHead(repo))
   const pick = await pickReceipt(repo, branch)
   if (!pick) return null
   const r = parse(pick.text)

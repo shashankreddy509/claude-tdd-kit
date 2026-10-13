@@ -82,3 +82,18 @@ export function topicOf(prompt: string): string {
   const first = prompt.split('\n').map(l => l.trim()).find(Boolean)?.replace(/\s+/g, ' ') ?? ''
   return ANSWER.test(first) ? '' : first
 }
+
+// The header's words after "<project> [live]": in the terminal "opus-5-5 · 71m" then "⎇ main ⑂ wt" on its own
+// row (it does not fit beside them at ~46 columns); on desktop one row, the branch between model and timer.
+export function headerText(model: string, branch: string | undefined, worktree: boolean, ms: number, oneRow: boolean): string[] {
+  const timer = `${Math.max(0, Math.floor(ms / 60_000))}m`
+  const where = branch ? `${branch}${worktree ? ' ⑂ wt' : ''}` : ''
+  if (oneRow) return [[model, where, timer].filter(Boolean).join(' · ')]
+  return [[model, timer].filter(Boolean).join(' · '), ...(where ? [`⎇ ${where}`] : [])]
+}
+
+// The engine's dock rule (API types, `CommandPresentation`; probed 2026-10-13: 110 columns dock, 109 do not):
+// the fullscreen layout seats a pane beside the transcript from 110 columns, otherwise inline above the prompt.
+// A surface that does not say (desktop) counts as not docked, so its band stays as it was.
+const DOCK_COLUMNS = 110
+export const docksPane = (v: { columns: number; isFullscreen?: boolean } | undefined) => v?.isFullscreen === true && v.columns >= DOCK_COLUMNS
