@@ -335,6 +335,11 @@ for f in tdd-pipeline/agents/code-review-coordinator.md tdd-pipeline/agents/kotl
   has "$f" '`\.kt` / `\.kts` files' "$f starts the Kotlin reviewer on .kts too"
 done
 has tdd-pipeline/agents/code-review-coordinator.md 'desktop / CLI / library' "review platform buckets go past mobile and web"
+for f in build-coordinator code-review-coordinator; do
+  lacks "tdd-pipeline/agents/$f.md" 'TaskOutput' "$f names no TaskOutput (gone from Claude Code)"
+  has "tdd-pipeline/agents/$f.md" 'every spawn passes `run_in_background: false`' "$f spawns in the foreground (claude -p does not wait for background children)"
+done
+has tdd-pipeline/agents/code-review-coordinator.md 'not returned`.{0,120}partial' "review coordinator marks a missing reviewer as a partial report"
 has tdd-pipeline/agents/build-coordinator.md '`-run` for `go test`' "verify-red knows the go test filter"
 has tdd-pipeline/agents/build-coordinator.md '`poetry install`.{0,250}`composer install`' "dependency check covers a Python venv and composer vendor/"
 has tdd-pipeline/agents/changelog.md 'test_orders\.py' "changelog shows a second, non-Kotlin example"

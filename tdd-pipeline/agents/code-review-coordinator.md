@@ -50,9 +50,13 @@ Conditionally (spawn only when relevant — don't waste agents):
   Say so under Passed Checks when the diff is in such a stack, so a clean report is not read as a language review.
 
 Spawn ALL selected specialists in ONE message as parallel blocking Task calls
-and wait for their results directly. NEVER spawn placeholder, "idle wait", or
-polling agents to check whether another agent has finished — waiting is free,
-poller agents are pure waste and noise.
+and wait for their results directly: every spawn passes `run_in_background: false` (reviewers here
+and verifiers in step 4). In `claude -p` a background child is not waited for: you would hand back
+before its findings arrive and the build's receipt stays at `green`, so `/ship` refuses. If a
+reviewer's result is still missing when you compile, write `<reviewer> not returned` under Blocking
+and mark the report partial; never report a clean review without every reviewer's findings.
+NEVER spawn placeholder, "idle wait", or polling agents to check whether another agent has
+finished — waiting is free, poller agents are pure waste and noise.
 
 ### 4. Adversarial verify pass (only on CRITICALs — keeps the gate trustworthy)
 Collect every finding the specialists marked CRITICAL (other scales map to the report buckets: HIGH/MEDIUM/Warning and severity-less quality items → 🟡 Warning; LOW/Suggestion → 🟢 Suggestions; MUST-FIX → 🟠 Must-fix). For EACH critical, spawn 1-2 `general-purpose`
