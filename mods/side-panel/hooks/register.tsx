@@ -1,11 +1,13 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 
-import type { Agent, JiraState, Section, Undone } from '../types'
+import type { Agent, JiraState, Section, ShipItem, Undone } from '../types'
 import type { Span } from './agents'
 import { CARDS, MAIN, WORKING, addStep, agentBoard, metaLine, statsLine, tokensText, track, usdText } from './agents'
 import { avatarEmoji, avatarSvg } from './avatar'
 import { BAR, PARTS, barSvg, dotSvg, segments } from './look'
+import type { Repo } from './receipt'
+import { READY, shipState } from './receipt'
 import { isProjectSearch, issuesOf, jiraKeyOf, jiraSection, needsSection, savedPathOf, todoSection, topicOf } from './panel'
 import { KEYS, addUndone, doItNow, fileTodos } from './undone'
 
@@ -30,6 +32,10 @@ const topic = atom({ plugin: 'side-panel', key: 'topic' } as const, '')
 const project = atom({ plugin: 'side-panel', key: 'project' } as const, '')
 // Caught from start-session's own Jira search (no URL or login of ours); refreshed by any later project-wide search.
 const jira = atom({ plugin: 'side-panel', key: 'jira' } as const, 'waiting' as JiraState)
+// Ship band: what /ship would refuse right now, from the repo's pipeline receipt (null = no receipt).
+const ship = atom({ plugin: 'side-panel', key: 'ship' } as const, null)
+const SHIP_TOOLS = new Set(['Write', 'Edit', 'Bash'])
+const SHIP_LOOK: Record<ShipItem['level'], [string, string]> = { ok: ['✓ ', 'success'], warn: ['⚠ ', 'warning'], stop: ['✗ ', 'error'], muted: ['', 'subtle'] }
 // When this mod first and last saw each agent live (ms); resets on reload, so elapsed restarts then.
 const spans: Record<string, Span> = {}
 // A tile's count is dim when its source is off, error-colored when undone items wait, the accent otherwise.
@@ -76,11 +82,20 @@ async function refresh($: EngineInterface, urls: Urls) {
     read($, jira),
   ])
   await update($, project, () => name)
+  void refreshShip($)
   await update($, sections, () => [
     ...(urls.needs ? [needsSection(cards, key)] : []),
     ...(key ? [jiraSection(tickets, key)] : []),
     ...(urls.todos ? [todoSection(todos, name)] : []),
   ])
+}
+
+const repoOf = ($: EngineInterface): Repo => ({ read: p => $.fs.read(p), run: argv => $.process.run(argv) })
+
+// Never rejects: callers fire and forget.
+async function refreshShip($: EngineInterface) {
+  const next = await shipState(repoOf($)).catch(() => null)
+  if (JSON.stringify(next) !== JSON.stringify(await read($, ship))) await update($, ship, () => next).catch(() => undefined)
 }
 
 async function refreshAgents($: EngineInterface) {
@@ -133,6 +148,7 @@ export const register: Register = (on, options) => {
 
   on('tool.call', async ($, e, next) => {
     const ran = await next(e)
+    if (SHIP_TOOLS.has(e.tool)) void refreshShip($)
     if (!e.tool.endsWith('searchJiraIssuesUsingJql') || 'deny' in ran) return ran
     const key = await projectKey($).catch(() => undefined)
     if (key && isProjectSearch(String((e as { jql?: unknown }).jql ?? ''), key)) {
@@ -156,6 +172,27 @@ export const register: Register = (on, options) => {
       void refresh($, urls)
     }
     return next(e)
+  })
+
+  // Ship band: one row over whatever the plugins beneath draw (Next Steps, Cache Keeper). Text only on every
+  // surface, so no words ever land inside an Svg.
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    const below = await next(e)
+    const s = await read($, ship)
+    if (!s || e.props.isWorking || e.props.hasSurvey) return below
+    const { Box, Text } = $.ui.resolve(e)
+    const ready = s.items[0]?.text === READY
+    return (
+      <Box flexDirection="column">
+        <Box key="ship" flexWrap="wrap" columnGap={1}>
+          <Text bold>{ready ? s.key : `${s.key} ship ·`}</Text>
+          {s.items.map(({ level, text }, i) => (
+            <Text key={`ship${i}`} color={SHIP_LOOK[level][1]} dimColor={level === 'muted'}>{`${i ? '· ' : ''}${SHIP_LOOK[level][0]}${text}`}</Text>
+          ))}
+        </Box>
+        {below}
+      </Box>
+    )
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
