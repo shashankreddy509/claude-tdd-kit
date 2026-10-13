@@ -1,6 +1,0 @@
-{
-  "name": "cache-keeper",
-  "version": "0.2.0",
-  "description": "Prompt-cache countdown, cold-rewrite cost, and end / clear / start buttons",
-  "types": "./types/index.d.ts"
-}

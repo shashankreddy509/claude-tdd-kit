@@ -1,6 +1,7 @@
 import { expect, mock, test } from 'claude-code/testing'
+import type { TestBody } from 'claude-code/testing'
 
-import { cacheState, eatingText, filled, warmthSvg } from './cache'
+import { cacheState, cacheStats, eatingText, filled, leftText, limitsText, warmthSvg } from './cache'
 
 const H = 60 * 60_000
 
@@ -43,17 +44,34 @@ test('warmth: share left, tone by lead, bar cells', () => {
   expect(warmthSvg(0.5, 'warning')).toContain('#d29922')
 })
 
+test('figures: context group then spend group; a group with nothing in it is dropped', () => {
+  const limits = [{ kind: 'five_hour', percentUsed: 4.2 }, { kind: 'seven_day', percentUsed: 0 }, { kind: 'other', percentUsed: 50 }] as never
+  expect(limitsText(limits)).toBe('5h 4% · week 0%')
+  expect(cacheStats(141_000, 0.0000149, limits, 2.95)).toEqual([['ctx 141k', 'rewrite ≈ $2.10'], ['5h 4% · week 0%', 'session $2.95']])
+  expect(cacheStats(141_000, undefined, [], undefined)).toEqual([['ctx 141k', 'rewrite ≈ $?']])
+  expect(cacheStats(0, undefined, [], 0)).toEqual([['session $0.00']])
+  expect([leftText(42 * 60_000 + 5), leftText(119_000), leftText(500)]).toEqual(['42m', '119s', '1s'])
+})
+
 const BAND = { component: 'AbovePrompt', props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} } } as const
 
-test('band: warmth bar is SVG on desktop, cells in the terminal; end, clear, start buttons each run one command', async ($, on) => {
+// The world the side panel's hooks touch on a main turn, answering as nothing special.
+type On = Parameters<TestBody>[1]
+function quietWorld(on: On) {
   mock.clock(on)
   mock.store(on)
+  on('session.usage', () => ({ value: { startedAt: 0, context: { tokens: 0 }, rateLimits: [] } }) as never)
+  on('session.cwd', () => ({ value: '/x/repo' }) as never)
+  on('fs.read', () => ({ deny: 'no file' }) as never)
   on('turn.complete', () => ({ text: '' }))
-  on('session.usage', () => ({ value: { context: { tokens: 0 }, rateLimits: [] } }) as never)
   on('ui.render', ($, e) => h($.ui.resolve(e).Box, {}) as never)
+}
+
+test('band: warmth bar is SVG on desktop, cells in the terminal; end, clear, start buttons each run one command', async ($, on) => {
+  quietWorld(on)
   await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer', usage: { model: 'm' } as never })
   for (const surface of ['terminal', 'desktop'] as const) {
-    const ui = await $.ui.mount({ plugin: 'cache-keeper', surface, ...BAND })
+    const ui = await $.ui.mount({ plugin: 'side-panel', surface, ...BAND })
     expect(await ui.find({ key: 'handoff' })).toBeUndefined()
     const end = await ui.find({ key: 'end' })
     expect([end?.props.variant, end?.props.label, end?.props.hotkey]).toEqual(['primary', 'end', 'e'])
@@ -61,7 +79,7 @@ test('band: warmth bar is SVG on desktop, cells in the terminal; end, clear, sta
     expect((await ui.find({ key: 'start' }))?.props.hotkey).toBe('s')
     const actions = await ui.find({ key: 'actions' })
     expect(actions?.props.columnGap).toBe(1)
-    expect(actions?.children?.map((c: { props?: { key?: string } }) => c.props?.key)).toEqual(['end', 'clear', 'start'])
+    expect(actions?.children?.map(c => (c as { props?: { key?: string } }).props?.key)).toEqual(['end', 'clear', 'start'])
     expect((await ui.find({ key: 'row' }))?.props.flexWrap).toBe('wrap')
     // Leaves (Text, Svg) drop their key, so the SVG is found by type.
     const svg = await ui.find({ type: 'Svg' })
@@ -75,14 +93,10 @@ test('band: warmth bar is SVG on desktop, cells in the terminal; end, clear, sta
 })
 
 test('band: each button runs exactly its one command, end never clears', async ($, on) => {
-  mock.clock(on)
-  mock.store(on)
+  quietWorld(on)
   const ran: string[] = []
   on('command.run', ($, e) => (ran.push(e.command), { text: '' }) as never)
-  on('turn.complete', () => ({ text: '' }))
-  on('session.usage', () => ({ value: { context: { tokens: 0 }, rateLimits: [] } }) as never)
-  on('ui.render', ($, e) => h($.ui.resolve(e).Box, {}) as never)
-  const ui = await $.ui.mount({ plugin: 'cache-keeper', surface: 'terminal', ...BAND })
+  const ui = await $.ui.mount({ plugin: 'side-panel', surface: 'terminal', ...BAND })
   for (const key of ['end', 'clear', 'start']) await ui.press({ key })
   await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' } as never)
   expect(ran).toEqual(['dev-day:end-session', 'clear', 'dev-day:start-session'])

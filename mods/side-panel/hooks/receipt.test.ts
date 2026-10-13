@@ -1,4 +1,4 @@
-import { expect, test } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
 
 import type { Receipt, Repo } from './receipt'
 import { items, parse, pickReceipt, readHead, shipState } from './receipt'
@@ -81,8 +81,11 @@ const fake = (files = FILES): Repo => ({
   run: () => Promise.resolve({ exitCode: 0, stdout: '3\n', stderr: '' } as never),
 })
 
-test('HEAD and branch from a worktree .git file via commondir and packed-refs', async () => {
-  expect(await readHead(fake())).toEqual({ head: SHA, branch: 'feature/ST-248-band' })
+test('HEAD and branch from a worktree .git file via commondir and packed-refs; worktree flag from the .git file', async () => {
+  expect(await readHead(fake())).toEqual({ head: SHA, branch: 'feature/ST-248-band', worktree: true })
+  const plain = fake({ '.git/HEAD': 'ref: refs/heads/main', '.git/refs/heads/main': SHA })
+  expect(await readHead(plain)).toEqual({ head: SHA, branch: 'main', worktree: false })
+  expect(await readHead(fake({ '.git/HEAD': SHA }))).toEqual({ head: SHA, worktree: false }) // detached: no branch
 })
 
 test('pick: only a receipt whose key the branch names, any case', async () => {
@@ -117,8 +120,11 @@ test('band: its row over the plugins beneath, which still draw', async ($, on) =
   on('fs.read', (_$, e) => { const k = file(e.path); return (k ? { value: FILES[k] } : { deny: 'ENOENT' }) as never })
   on('session.cwd', () => ({ value: '/repo' }) as never)
   on('turn.complete', () => ({ text: '' }))
+  mock.clock(on)
+  on('session.usage', () => ({ value: { startedAt: 0, context: { tokens: 0 }, rateLimits: [] } }) as never)
   on('ui.render', ($, e) => h($.ui.resolve(e).Text, { key: 'below' }, 'beneath') as never)
-  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer', usage: { model: 'm' } as never })
+  // No main-turn usage: the cache band under the Ship row stays "no cache yet", with no warmth SVG.
+  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' } as never)
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'side-panel', surface, ...BAND })
     expect(await ui.find({ type: 'Text', text: 'ST-248 ship ·' })).toBeDefined()

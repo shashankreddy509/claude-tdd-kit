@@ -1,3 +1,6 @@
+import type { SessionRateLimit } from 'claude-code'
+
+// Moved in from cache-keeper 0.2.0: the prompt-cache countdown the Cache card and the band draw.
 export type Tone = 'success' | 'warning' | 'error'
 export type CacheState = { warm: boolean; msLeft: number; shouldWarn: boolean; left: number; tone: Tone }
 
@@ -27,7 +30,25 @@ export function warmthSvg(left: number, tone: Tone): string {
     `<rect class="k" width="120" height="8" rx="4"/><rect class="f" width="${w}" height="8" clip-path="url(#c)"/></svg>`
 }
 
-export const kTokens = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`)
+const kTokens = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`)
+export const leftText = (ms: number) => (ms >= 120_000 ? `${Math.floor(ms / 60_000)}m` : `${Math.ceil(ms / 1000)}s`)
+
+const LIMIT_NAMES: Record<string, string> = { five_hour: '5h', seven_day: 'week' }
+export function limitsText(limits: readonly SessionRateLimit[]) {
+  return limits
+    .filter(l => LIMIT_NAMES[l.kind])
+    .map(l => `${LIMIT_NAMES[l.kind]} ${Math.round(l.percentUsed)}%`)
+    .join(' · ')
+}
+
+// The figures in two groups, context then spend: the card draws a line per group, the band one row of all.
+export function cacheStats(tokens: number, rate: number | undefined, limits: readonly SessionRateLimit[], usd: number | undefined): string[][] {
+  const groups = [
+    tokens ? [`ctx ${kTokens(tokens)}`, `rewrite ≈ ${rate ? `$${(tokens * rate).toFixed(2)}` : '$?'}`] : [],
+    [limitsText(limits), usd === undefined ? '' : `session $${usd.toFixed(2)}`].filter(Boolean),
+  ]
+  return groups.filter(g => g.length)
+}
 
 // What fills the context, biggest first (the /context breakdown's used rows); the biggest row the owner
 // can actually cut (skills, MCP tools, memory files, custom agents) at 10k+ gets a "← trim" hint.

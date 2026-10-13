@@ -1,62 +1,58 @@
 import { expect, test } from 'claude-code/testing'
 
-import type { Span } from './agents'
-import { MAIN, addStep, agentBoard, clock, metaLine, statsLine, tokensText, track } from './agents'
+import { MAIN, addStep, agentBoard, clock, metaLine, modelText, nowText, seen } from './agents'
 
 // Step usage as turn.step reported it live on 2026-10-09 (an Explore subagent's first step).
 const STEP = { input_tokens: 2, output_tokens: 283, cache_read_input_tokens: 100, cache_creation_input_tokens: 21_997 }
 const OPUS = 'claude-opus-5-5[1m]'
 
-test('a step adds input, cache read, cache write and output to its loop; ctx base is the input side', () => {
+test('a step adds input, cache read, cache write and output to its loop', () => {
   const one = addStep({}, 'a1', OPUS, 'high', STEP)
-  expect(one).toEqual({ a1: { model: OPUS, effort: 'high', tokens: 22_382, lastInput: 22_099 } })
-  const two = addStep(one, 'a1', OPUS, 'high', { input_tokens: 1, output_tokens: 9 })
-  expect(two.a1).toEqual({ model: OPUS, effort: 'high', tokens: 22_392, lastInput: 1 })
+  expect(one).toEqual({ a1: { model: OPUS, effort: 'high', tokens: 22_382 } })
+  expect(addStep(one, 'a1', OPUS, 'high', { input_tokens: 1, output_tokens: 9 }).a1?.tokens).toBe(22_392)
   expect(addStep(one, 'a1', OPUS, 'high', null)).toBe(one) // no response: nothing counted
 })
 
-test('spans open on first sight and stop growing once the agent finishes', () => {
-  const spans: Record<string, Span> = {}
-  track(spans, [{ id: 'a', description: '', type: 'Explore', status: 'running' }], 1_000)
-  track(spans, [{ id: 'a', description: '', type: 'Explore', status: 'running' }], 5_000)
-  track(spans, [{ id: 'a', description: '', type: 'Explore', status: 'completed' }], 9_000)
-  expect(spans.a).toEqual({ from: 1_000, to: 5_000 })
+test('seen: an agent the spawn hook missed joins with its parent; live ones are stamped, finished ones keep their stamp', () => {
+  const spawned = { a: { id: 'a', type: 'Explore', description: '', model: OPUS, from: 0, to: 500 } }
+  const out = seen(spawned, [
+    { id: 'a', description: '', type: 'Explore', status: 'completed' },
+    { id: 'b', description: 'late', type: 'general-purpose', status: 'running', parentId: 'a' },
+  ], 9_000)
+  expect(out.a).toEqual(spawned.a)
+  expect(out.b).toEqual({ id: 'b', type: 'general-purpose', description: 'late', model: '', from: 9_000, to: 9_000, parent: 'a' })
+  expect(seen({}, [{ id: 'c', description: '', type: 'Explore', status: 'running' }], 1).c?.parent).toBeUndefined()
 })
 
-const LIST = [
-  { id: 'a', description: 'Summarise video', type: 'general-purpose', status: 'running' },
-  { id: 'b', description: '', type: 'Explore', status: 'waiting' },
-  { id: 'c', description: 'old', type: 'Explore', status: 'completed' },
-  { id: 'd', description: 'bad', type: 'Explore', status: 'failed' },
-]
-const SPANS = { a: { from: 1_000, to: 62_000 }, b: { from: 60_000, to: 62_000 }, c: { from: 0, to: 30_000 } }
+const SPAWNS = {
+  bc: { id: 'bc', type: 'tdd-pipeline:build-coordinator', description: 'Run TDD pipeline PRB-1', model: 'claude-sonnet-5-5', from: 1_000 },
+  tw: { id: 'tw', type: 'tdd-pipeline:test-writer', parent: 'bc', description: 'Write tests', model: 'claude-sonnet-5-5', from: 2_000, to: 30_000 },
+}
 const USAGE = {
-  [MAIN]: { model: OPUS, effort: 'high', tokens: 600, lastInput: 500 },
-  a: { model: OPUS, effort: 'high', tokens: 300, lastInput: 250_000 },
-  c: { model: 'claude-haiku-5-5', effort: 'medium', tokens: 100, lastInput: 90 },
+  [MAIN]: { model: OPUS, effort: 'high', tokens: 600 },
+  bc: { model: 'claude-sonnet-5-5', effort: 'medium', tokens: 300 },
+  tw: { model: 'claude-sonnet-5-5', effort: '', tokens: 100 },
 }
 
-test('board: live cards, finished group, cost shared over every loop with main counted, ctx only on the session model', () => {
-  const board = agentBoard(LIST, SPANS, USAGE, { usd: 2, window: 1_000_000 })
-  expect(board.counts).toEqual({ working: 1, waiting: 1, done: 1, stuck: 1 })
-  expect(board.rows.map(a => a.label)).toEqual(['Summarise video', 'Explore'])
-  expect(board.finished.map(a => a.label)).toEqual(['old', 'bad'])
-  const [a, b] = board.rows
-  expect(a).toEqual({ label: 'Summarise video', status: 'running', elapsed: '1:01', model: OPUS, effort: 'high', tokens: 300, usd: 0.6, ctx: 25 })
-  expect(b?.usd).toBe(0) // no steps seen yet: no tokens, no share
-  expect(b?.ctx).toBeUndefined()
-  expect(board.finished[0]?.ctx).toBeUndefined() // haiku: window unknown, no ctx %
-  expect(board.finished[0]?.usd).toBe(0.2)
-  expect(board.totals).toEqual({ usd: 0.8, tokens: 400, time: '1:02' })
-  expect(agentBoard([], {}, {}, { usd: 1, window: 0 }).totals).toEqual({ usd: 0, tokens: 0, time: '0:00' })
+test('board: oldest first; gone from the poll means completed; elapsed stops at the last stamp; cost shared over every loop', () => {
+  const board = agentBoard(SPAWNS, [{ id: 'bc', description: '', type: 'x', status: 'waiting' }], USAGE, { bc: 'Task', tw: 'Edit a.kt' }, 2, 62_000)
+  expect(board.map(a => [a.id, a.status, a.elapsed])).toEqual([['bc', 'waiting', '1:01'], ['tw', 'completed', '0:28']])
+  expect(board[0]).toMatchObject({ effort: 'medium', tokens: 300, usd: 0.6, now: 'Task' })
+  expect(board[1]?.now).toBeUndefined() // finished: no "now"
+  expect(board[1]?.usd).toBe(0.2)
+  expect(agentBoard({ x: { id: 'x', type: 'Explore', description: '', model: OPUS, from: 0 } }, [], {}, {}, 1, 5_000)[0]).toMatchObject({ model: OPUS, usd: 0, elapsed: '0:00' })
 })
 
-test('card lines: short model name with effort, ctx only when known', () => {
-  const a = { label: 'x', status: 'running', elapsed: '0:52', model: OPUS, effort: 'high', tokens: 23_600, usd: 0.144, ctx: 12 }
-  expect(metaLine(a)).toBe('opus-5-5 · high')
-  expect(statsLine(a)).toBe('ctx 12% · 23.6k ≈$0.14 · 0:52')
-  expect(statsLine({ ...a, ctx: undefined })).toBe('23.6k ≈$0.14 · 0:52')
-  expect(metaLine({ ...a, model: '', effort: '' })).toBe('')
-  expect([tokensText(999), tokensText(1_500_000)]).toEqual(['999', '1.5M'])
+test('model text: one strip for the header and every row', () => {
+  expect(modelText(OPUS)).toBe('opus-5-5')
+  expect(metaLine({ model: OPUS, effort: 'high' })).toBe('opus-5-5 · high')
+  expect(metaLine({ model: '', effort: '' })).toBe('')
   expect(clock(-5)).toBe('0:00')
+})
+
+test('now: the tool and the file name, the command word, or the pattern', () => {
+  expect(nowText('Edit', { file_path: '/repo/tests/WordCounterTest.kt' })).toBe('Edit WordCounterTest.kt')
+  expect(nowText('Bash', { command: 'python3 -m unittest' })).toBe('Bash python3')
+  expect(nowText('Grep', { pattern: 'slugify' })).toBe('Grep slugify')
+  expect(nowText('Agent', { prompt: 'x' })).toBe('Agent')
 })

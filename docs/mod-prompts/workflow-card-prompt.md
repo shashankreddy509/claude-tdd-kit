@@ -2,7 +2,9 @@ Build the Workflow card: a live side-panel card that follows one `/build` run of
 
 Origin: a public reel ("Dashboard mod"), built on our own pipeline. Build AFTER the Ship band (docs/mod-prompts/ship-band-prompt.md): this card imports its `receipt.ts`. It replaces the "Pipeline stage grid" idea that was briefly in agents-tracker-prompt.md.
 
-Read first: tdd-pipeline/commands/{build,implement,ship}.md, tdd-pipeline/agents/build-coordinator.md (stages ~130-293, receipt ~72-101), tdd-pipeline/agents/code-review-coordinator.md, mods/side-panel/hooks/{register.tsx,panel.ts,look.ts} + tests, mods/side-panel/types/index.d.ts, and the API types (grep). Load the `plugin-authoring` skill before writing hooks.
+One stage view (owner ruled 2026-10-12): side-panel 0.4.0 already draws the build's stages as a rail inside the Agents card, guessed from agent types (`mods/side-panel/hooks/rail.ts`: fixed stage map, "run r2" from test-runner spawns). This card draws no stage row of its own: Part A's progress log becomes the rail's source (stages and rounds from the log, the type map only as the fallback), and Part B keeps the NOW, approval, readiness and PR rows.
+
+Read first: tdd-pipeline/commands/{build,implement,ship}.md, tdd-pipeline/agents/build-coordinator.md (stages ~130-293, receipt ~72-101), tdd-pipeline/agents/code-review-coordinator.md, mods/side-panel/hooks/{register.tsx,panel.ts,rail.ts,agents-view.tsx} + tests, mods/side-panel/types/index.d.ts, and the API types (grep). Load the `plugin-authoring` skill before writing hooks.
 
 ## Reference look (from the reel)
 Header "WORKFLOW <KEY>" + title + live dot · "11 of 13 steps done · 85%" segmented bar (green done, orange running, grey waiting) · "Iteration 2 · 24 stage runs" · readiness rows ("Ready for a pull request: no/yes") · NOW card (spinner + stage name + one-line description) · an approval card when it needs a yes ("Extra round approved · Resuming correction stage") · stage cells with round badges ("r2") · PR row "waiting for reviews" → "PR ready" + a manual checklist.
@@ -10,7 +12,7 @@ Header "WORKFLOW <KEY>" + title + live dot · "11 of 13 steps done · 85%" segme
 ## What exists today (measured 2026-10-09, kit HEAD 93eee48)
 - The pipeline writes only `tasks/plans/<KEY>_plan.md` (after approval) and `tasks/receipts/<KEY>.json` (at stage boundaries: red, green, reviewed, complete). `tasks/` is gitignored.
 - Key = plan filename; title = the plan's `# Feature: <name>` heading. No Jira fetch.
-- Live stage: `$.agent.list()` gives `id`, `description`, `type` per agent (type value not yet seen live).
+- Live stage: `$.agent.list()` gives `id`, `description`, `type`, `parentId` per agent; `type` is the spawn name, `tdd-pipeline:<agent>` for kit agents (seen live 2026-10-13, Claude Code 2.1.296).
 - Not recorded anywhere: per-stage history, fix-round history, human stops (they are chat or AskUserQuestion only), a PR checklist.
 
 ## Part A: pipeline writes a progress log (kit change, decided)
@@ -21,7 +23,7 @@ Header "WORKFLOW <KEY>" + title + live dot · "11 of 13 steps done · 85%" segme
 
 ## Part B: the card (side-panel mod)
 - Source order: progress log if present, else receipt + `$.agent.list()` types (so a run from an older pipeline still shows something).
-- Stages: one row, Plan · Tests · Code · Check · Review · Ship, each done / running / waiting / failed, with "r2", "r3" badges from the log's round. "N of 6 stages · %", "Iteration k · S stage runs" (S = start events).
+- Stages: drawn by the Agents card's rail (see the top), fed from the log: each stage done / running / waiting / failed, "r2", "r3" badges from the log's round. This card adds "N of 6 stages · %" and "Iteration k · S stage runs" (S = start events).
 - NOW: running stage + a fixed one-line description per stage (e.g. Check = "Runs the test command"). A `wait` event turns it into an approval card showing the reason, then "Resumed" on the next `resume`/`start`. Display only: the answer still happens in chat.
 - Readiness rows: "Ready for a pull request" = Ship band's `receipt.ts` all clear (import it, do not re-implement).
 - PR row: waiting → "PR ready" + link from the ship `done` note, then a checklist built from the plan's Success Criteria lines (each with its Prover), shown unchecked for manual review.
