@@ -93,10 +93,12 @@ test('a pane opened unasked that still waits for room leaves the band up, howeve
   await band.unmount()
 })
 
-test('not docked: the pane draws no Cache card and the band carries it', async ($, on) => {
+test('not docked: the inline pane keeps a compact cache row (it hides the band), the band carries it when closed', async ($, on) => {
   await world($, on, [])
   const pane = await $.ui.mount({ plugin: 'side-panel', surface: 'terminal', ...PANE('inline') })
   expect(await pane.find({ type: 'Text', text: /^Cache$/ })).toBeUndefined()
+  expect(await pane.find({ type: 'Text', text: /^○ no cache yet$/ })).toBeDefined()
+  expect((await pane.find({ key: 'end' }))?.props.hotkey).toBeUndefined() // the pane's a-i keys own c and e
   await pane.unmount()
   const band = await $.ui.mount({ plugin: 'side-panel', surface: 'terminal', ...BAND, viewport: { ...WIDE, isFullscreen: false } })
   expect((await band.find({ key: 'end' }))?.props.hotkey).toBe('e')

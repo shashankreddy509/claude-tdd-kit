@@ -331,7 +331,7 @@ export const register: Register = (on, options) => {
     const at = await read($, head)
     await read($, tick)
     const u = await $.session.usage()
-    const cache = e.props.placement === 'dock' ? await cacheData($, u) : null
+    const cache = await cacheData($, u)
     const words = headerText(modelText(await $.session.model()), at.branch, at.worktree, (await $.clock.now()) - u.startedAt, e.surface !== 'terminal')
     const team = agentsView(ui, e.surface, await read($, agents))
     const tileWidth = Math.max(10, Math.floor((e.props.bodyColumns - 1) / 2))
@@ -355,7 +355,8 @@ export const register: Register = (on, options) => {
           {line(ui, words[0] ?? '', 'meta', true)}
         </Box>
         {words[1] ? line(ui, words[1], 'branch', true) : null}
-        {cache ? card('Cache', cacheView(ui, e.surface, cache, runner($), false)) : null}
+        {/* Inline, the pane takes the slot above the prompt and the band goes with it: keep the band's compact row. */}
+        {cache ? (e.props.placement === 'dock' ? card('Cache', cacheView(ui, e.surface, cache, runner($), false)) : cacheView(ui, e.surface, cache, runner($), true, false)) : null}
         <Box flexWrap="wrap" columnGap={1}>
           {[...list, ...(open.length ? [{ title: 'Left undone', count: open.length, rows: [] }] : [])].map(s => (
             <Box key={`tile-${s.title}`} width={tileWidth} flexDirection="column" borderStyle="round" borderColor={needsAction(s) ? 'error' : 'subtle'} paddingX={1}>

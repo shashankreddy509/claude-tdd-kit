@@ -10,7 +10,7 @@ import { svgOf } from './look'
 const WARMTH_CELLS = 10
 export type CacheView = { state: CacheState | null; stats: string[][]; eating: string }
 
-export function cacheView(ui: Ui, surface: RenderSurface, v: CacheView, run: (command: string) => void, band: boolean) {
+export function cacheView(ui: Ui, surface: RenderSurface, v: CacheView, run: (command: string) => void, band: boolean, keys = band) {
   const { Box, Button, Text } = ui
   const s = v.state
   const head = s === null ? <Text dimColor>○ no cache yet</Text> : <Text bold color={s.tone}>{`● cache ${s.warm ? `warm ${leftText(s.msLeft)}` : 'cold'}`}</Text>
@@ -26,9 +26,9 @@ export function cacheView(ui: Ui, surface: RenderSurface, v: CacheView, run: (co
     )
   // The band runs every figure into one row; the card gives each group its own line.
   const stats = band ? [<Text dimColor>{v.stats.flat().map(p => `| ${p}`).join(' ')}</Text>] : v.stats.map(g => <Text dimColor wrap="truncate-end">{g.join(' · ')}</Text>)
-  // One command per button: end-session leaves room to check todos before clear. Hotkeys only on the band: in the
-  // pane, Left undone's a-i keys hold c and e.
-  const hotkey = (k: string) => (band ? k : undefined)
+  // One command per button: end-session leaves room to check todos before clear. Hotkeys only above the prompt: in
+  // the pane (card or compact row), Left undone's a-i keys hold c and e.
+  const hotkey = (k: string) => (keys ? k : undefined)
   const actions = (
     <Box key="actions" columnGap={1}>
       <Button key="end" variant="primary" label="end" hotkey={hotkey('e')} onPress={() => run('dev-day:end-session')} />
