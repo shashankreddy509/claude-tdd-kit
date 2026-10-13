@@ -86,5 +86,5 @@ conventions — never introduce a new test framework into a project.
   the language's dominant standard tool (cargo test, JUnit5, PHPUnit, RSpec, etc.)
 
 ## Rules
-- Write tests only — no implementation code
+- Write tests only — no implementation code (the signature-only stubs above are not implementation)
 - All tests must fail when run (no implementation exists yet)

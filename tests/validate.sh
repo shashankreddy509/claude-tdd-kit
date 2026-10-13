@@ -288,6 +288,8 @@ has tdd-pipeline/agents/memory-analyzer.md 'AnyCancellable' "memory-analyzer cov
 # ---------------------------------------------------------------------------
 head_ "11. stack-generic pipeline"
 lacks tdd-pipeline/agents/test-writer.md 'On compiled stacks' "test-writer stubs on every stack"
+has tdd-pipeline/agents/test-writer.md 'stubs above are not implementation' "test-writer: a stub is not implementation"
+has tdd-pipeline/agents/build-coordinator.md 'never tell it to skip a source file or a stub' "coordinator never bans test-writer's stubs"
 has tdd-pipeline/agents/build-coordinator.md 'Compile or import error naming ONLY' "verify-red takes a missing-module import error as red"
 has tdd-pipeline/agents/build-coordinator.md '\*\*STOP\*\* \(except a run that +stopped on the compile or import error' "the zero-tests STOP yields to a missing-module red"
 has tdd-pipeline/agents/build-coordinator.md 'closest parent' "test command comes from the project owning the plan's files"

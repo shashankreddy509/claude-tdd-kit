@@ -141,7 +141,9 @@ Rules for writing it:
 
 ### Stage 1: Write Tests
 Spawn agent: `test-writer`
-Pass: full contents of the plan file + `TEST_CMD`
+Pass: full contents of the plan file, unchanged, + `TEST_CMD`. Add no instructions of your own,
+and never tell it to skip a source file or a stub: it stubs the plan's new types and modules so the
+tests load and fail on assertions.
 Wait for completion.
 Output: "📝 Tests written. Verifying red state..."
 
