@@ -66,7 +66,9 @@ writes free.
   - **Bug:** the analysis — root cause, the files that need to change, how the fix affects the flow.
     (If a `tasks/<KEY>-triage.md` exists, its verdict + root cause already supply this — reuse it.)
   - **New implementation:** the analysis — what's needed to finish, ALL files to be changed, and how
-    it affects the flow.
+    it affects the flow. Grep for code that already does the job and name it in the plan; when it
+    lacks something, add a parameter to the shared piece rather than forking a copy. This covers
+    work done outside `/build`, where the implementer's reuse rule never runs.
   - Then a concrete plan, and STOP for explicit approval. Write no code until the user agrees.
 - The plan must be thorough up front — enumerate all affected files and use-cases — so that once
   approved, in-flight edits consistent with the plan proceed WITHOUT re-asking.

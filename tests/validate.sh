@@ -249,6 +249,7 @@ lacks() {  # file, regex, label
 }
 has dev-day/skills/start-session/SKILL.md '\*\*Open points:\*\*' "start-session template shows Open points"
 has dev-day/skills/start-session/SKILL.md '`## Left off` block.{0,80}newest first' "start-session shows every session's Left off block"
+has dev-day/skills/start-session/SKILL.md 'New implementation:.{0,200}Grep for code that already does the job.{0,160}add a parameter to the shared piece' "start-session plan-gate makes inline work reuse before writing new"
 has dev-day/skills/end-session/SKILL.md 'Re-read the file right before writing' "end-session re-reads session-notes before writing"
 has dev-day/skills/end-session/SKILL.md 'No substantive work[^.]*Open points' "end-session no-work session keeps Open points"
 lacks dev-day/skills/end-session/SKILL.md 'OVERWRITE it' "end-session never overwrites session-notes"
