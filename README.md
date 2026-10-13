@@ -234,27 +234,34 @@ Each plugin's own README has the full command list and the stage-by-stage flow.
 
 ## Mods
 
-Four optional Claude Code mods (hook plugins that draw inside the terminal or the desktop Code
+Three optional Claude Code mods (hook plugins that draw inside the terminal or the desktop Code
 tab) live under `mods/`. Each installs on its own and needs neither plugin above, except where noted.
 
-- **side-panel**: a right-side dashboard pane for the project the session is open in. Count
-  tiles, the session's agents, the current topic, and a
+- **side-panel**: a right-side dashboard pane for the project the session is open in. The header
+  shows the folder, the session's model, how long the session has run (it restarts on `/clear`),
+  and the branch, marked `⑂ wt` in a git worktree. Under it, the Cache card: the prompt-cache
+  countdown, the cost of a cold rewrite, 5h / weekly usage, what is eating the context (with a trim
+  hint), and three buttons, each running one command: end (`dev-day:end-session`), clear, and start
+  (`dev-day:start-session`), so you can check the session's todos before clearing. It assumes a
+  60-minute cache TTL; set yours with `/cachekeeper ttl <minutes>`. end and start need dev-day
+  installed. While the pane is not docked (a narrow window, or the main-screen layout) the same
+  cache view sits as a band above the prompt instead, with `e` / `c` / `s` hotkeys.
+  Then count tiles, the Agents card, the current topic, and a
   "Left undone" card that collects TODOs and skipped tests Claude writes into files; click an entry to put "You left this undone: ... Do it now." in the
   prompt box. The Jira card lists the project's open tickets by status, caught from the search
   `/start-session` already runs for the repo's `Jira: cloudId=... key=KEY` line (no setup).
   Needs-you and todos cards appear only after you set their URLs in `/config` (`needs_url`,
-  `todos_url`). The Agents card shows Cost / Tokens / Time tiles and a card per running agent:
-  a pixel avatar (a face emoji in the terminal), model · effort, context %, tokens, its share of
-  the session cost and elapsed time; finished agents fold into one "Finished" line. Cost is an
-  estimate (the session's $ split by tokens), and context % shows only when the agent runs the
-  session's model. The pane docks in the fullscreen layout from 144 columns.
+  `todos_url`). While a tdd-pipeline build runs, the Agents card draws it as stages (explore,
+  tests, code, run, review; "run r2" on a second test round) over a tree of who spawned whom; any
+  other agents are a plain tree. Each row shows the model (and effort when known), what a helper
+  is doing now, and elapsed time; the title carries the build's ticket key and its share of the
+  session cost (an estimate: the session's $ split by tokens). The pane docks in the fullscreen
+  layout from 144 columns.
   A Ship band above the prompt shows what `/ship` would refuse right now, read from the pipeline
   receipt whose ticket key the branch names; any other branch shows nothing.
-- **cache-keeper**: a band above the prompt with the prompt-cache countdown, the cost of a cold
-  rewrite, 5h / weekly usage, what is eating the context (with a trim hint), and three buttons, each
-  running one command: end (`dev-day:end-session`), clear, and start (`dev-day:start-session`), so
-  you can check the session's todos before clearing. It assumes a 60-minute cache TTL; set yours
-  with `/cachekeeper ttl <minutes>`. end and start need dev-day installed.
+  Coming from cache-keeper: side-panel 0.4.0 carries everything it did, so run
+  `/plugin uninstall cache-keeper@claude-tdd-kit`. Until you do, its old band still shows and the
+  two share `/cachekeeper` (side-panel says so in a toast when cache-keeper took the name first).
 - **next-steps**: turns the numbered list under a bold **Questions** heading at the end of a
   reply into answer buttons (1-9 answer, 0 sends the picks as one reply). It does nothing for
   replies without that block, so it pairs with a reply format that ends in one.
@@ -267,13 +274,12 @@ tab) live under `mods/`. Each installs on its own and needs neither plugin above
 
 ```
 /plugin install side-panel@claude-tdd-kit
-/plugin install cache-keeper@claude-tdd-kit
 /plugin install next-steps@claude-tdd-kit
 /plugin install secret-guard@claude-tdd-kit
 ```
 
 Hide or show a mod for the current session with `/sidepanel` (opens or closes the pane),
-`/cachekeeper on|off`, `/nextsteps on|off` or `/secretguard on|off`. To turn one off for good, use
+`/cachekeeper on|off` (the side panel's cache), `/nextsteps on|off` or `/secretguard on|off`. To turn one off for good, use
 `claude plugin disable <mod>@claude-tdd-kit` (and `enable` to bring it back).
 
 Each mod's logic has `*.test.ts` files; run them with `claude plugin test mods/<name>`. CI does
@@ -325,7 +331,7 @@ the kit, with no SSH key and no second clone:
 
 - `dev-day/`: the session-loop plugin
 - `tdd-pipeline/`: the build pipeline plugin
-- `mods/`: the four optional mods (side-panel, cache-keeper, next-steps, secret-guard)
+- `mods/`: the three optional mods (side-panel, next-steps, secret-guard)
 
 This kit is the canonical install source.
 
