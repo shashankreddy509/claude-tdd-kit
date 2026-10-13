@@ -45,7 +45,7 @@ test('warmth: share left, tone by lead, bar cells', () => {
 
 const BAND = { component: 'AbovePrompt', props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} } } as const
 
-test('band: warmth bar is SVG on desktop, cells in the terminal; handoff is the primary button, clear sits beside it with a gap', async ($, on) => {
+test('band: warmth bar is SVG on desktop, cells in the terminal; end, clear, start buttons each run one command', async ($, on) => {
   mock.clock(on)
   mock.store(on)
   on('turn.complete', () => ({ text: '' }))
@@ -54,9 +54,14 @@ test('band: warmth bar is SVG on desktop, cells in the terminal; handoff is the 
   await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer', usage: { model: 'm' } as never })
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'cache-keeper', surface, ...BAND })
-    expect((await ui.find({ key: 'handoff' }))?.props.variant).toBe('primary')
+    expect(await ui.find({ key: 'handoff' })).toBeUndefined()
+    const end = await ui.find({ key: 'end' })
+    expect([end?.props.variant, end?.props.label, end?.props.hotkey]).toEqual(['primary', 'end', 'e'])
     expect((await ui.find({ key: 'clear' }))?.props.hotkey).toBe('c')
-    expect((await ui.find({ key: 'actions' }))?.props.columnGap).toBe(1)
+    expect((await ui.find({ key: 'start' }))?.props.hotkey).toBe('s')
+    const actions = await ui.find({ key: 'actions' })
+    expect(actions?.props.columnGap).toBe(1)
+    expect(actions?.children?.map((c: { props?: { key?: string } }) => c.props?.key)).toEqual(['end', 'clear', 'start'])
     expect((await ui.find({ key: 'row' }))?.props.flexWrap).toBe('wrap')
     // Leaves (Text, Svg) drop their key, so the SVG is found by type.
     const svg = await ui.find({ type: 'Svg' })
@@ -67,4 +72,19 @@ test('band: warmth bar is SVG on desktop, cells in the terminal; handoff is the 
     }
     await ui.unmount()
   }
+})
+
+test('band: each button runs exactly its one command, end never clears', async ($, on) => {
+  mock.clock(on)
+  mock.store(on)
+  const ran: string[] = []
+  on('command.run', ($, e) => (ran.push(e.command), { text: '' }) as never)
+  on('turn.complete', () => ({ text: '' }))
+  on('session.usage', () => ({ value: { context: { tokens: 0 }, rateLimits: [] } }) as never)
+  on('ui.render', ($, e) => h($.ui.resolve(e).Box, {}) as never)
+  const ui = await $.ui.mount({ plugin: 'cache-keeper', surface: 'terminal', ...BAND })
+  for (const key of ['end', 'clear', 'start']) await ui.press({ key })
+  await $.turn.complete({ answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' } as never)
+  expect(ran).toEqual(['dev-day:end-session', 'clear', 'dev-day:start-session'])
+  await ui.unmount()
 })

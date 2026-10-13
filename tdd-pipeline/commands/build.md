@@ -43,7 +43,7 @@ Feature request: $ARGUMENTS
   If a live call isn't possible, list the dependency as UNPROVEN under Risks / Assumptions.
 
 ### 1.5 Gating check (optional)
-Only if the project CLAUDE.md has a `Gating:` line (not `off`): follow `references/gating.md`
+Only if the project CLAUDE.md has a `Gating:` line (not `off`): follow `${CLAUDE_PLUGIN_ROOT}/references/gating.md`
 to decide the sides and fill the plan's `## Gating` section. Otherwise skip this step.
 
 ### 2. Present the plan INLINE
@@ -77,7 +77,7 @@ Resolve it from the ticket's mock reference or the project's design directory. N
 - `path/to/existing` — [what changes and why]
 ## Test Cases to Write
 - [Test]: [scenarios]
-## Gating  (only when the project has a `Gating:` line — format in `references/gating.md`)
+## Gating  (only when the project has a `Gating:` line — format in `${CLAUDE_PLUGIN_ROOT}/references/gating.md`)
 ## Risks / Assumptions
 - [anything that could go wrong or needs confirmation]
 

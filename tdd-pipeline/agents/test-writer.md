@@ -28,7 +28,7 @@ types/functions/modules in the plan's planned source files, so tests load and fa
    under test), never a new file, and name that file in your final message.
 4. Tests must assert real behavior — no empty tests, no `assertTrue(true)`
 5. If the plan has a **Gating** section, write its gate-off and absent-key tests as REQUIRED, per
-   `references/gating.md` § Tests.
+   `${CLAUDE_PLUGIN_ROOT}/references/gating.md` § Tests.
 6. If the plan has a **Reuse** section, write one test per row proving the new code goes
    THROUGH that shared piece with this ticket's data — e.g. the settings screen renders the
    shared profile card with the settings user's name. Reach it via the real screen or entry
@@ -86,5 +86,5 @@ conventions — never introduce a new test framework into a project.
   the language's dominant standard tool (cargo test, JUnit5, PHPUnit, RSpec, etc.)
 
 ## Rules
-- Write tests only — no implementation code
+- Write tests only — no implementation code (the signature-only stubs above are not implementation)
 - All tests must fail when run (no implementation exists yet)

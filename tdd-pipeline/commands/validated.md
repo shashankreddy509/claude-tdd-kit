@@ -17,7 +17,7 @@ Done should mean *validated*, not merely *merged*. `merged` deliberately stops s
 
 - `<KEY>` from the argument, else the newest `tasks/plans/*_plan.md`, else the branch name.
   With no key, stop and ask — this command is entirely about the ticket.
-- Resolve the Jira MCP dialect ONCE — see `references/jira-mcp.md`. It returns the tool names
+- Resolve the Jira MCP dialect ONCE — see `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md`. It returns the tool names
   for this machine and whether `cloudId` is a parameter (and if so, where to read it from).
   No Atlassian MCP resolved → STOP and say so: this command is entirely about the ticket, so
   there is nothing it can do without Jira.

@@ -1,5 +1,3 @@
-export type Pending = 'handoff' | 'start' | null
-
 declare module 'claude-code' {
   interface PluginState {
     'cache-keeper': {
@@ -8,7 +6,6 @@ declare module 'claude-code' {
       ttlMin: number
       tick: number
       warnedFor: number | null
-      pending: Pending
       eating: string
       hidden: boolean
     }

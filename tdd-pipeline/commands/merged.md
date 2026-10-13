@@ -19,11 +19,11 @@ modified `tasks/plans/*_plan.md`, or from the current branch (`feat/PROJ-12-slug
 
 - Determine `<KEY>` from the argument, the newest plan file, or the branch name. With no key,
   the git cleanup still runs and every Jira step is skipped.
-- Resolve the Jira MCP dialect ONCE — see `references/jira-mcp.md`. It returns the tool names
+- Resolve the Jira MCP dialect ONCE — see `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md`. It returns the tool names
   for this machine and whether `cloudId` is a parameter (and if so, where to read it from).
   No Atlassian MCP resolved → log the skip line from that file, run the git cleanup, and skip
   every Jira step below.
-- Determine `<default>` per `references/git-host.md` — do NOT assume `main`.
+- Determine `<default>` per `${CLAUDE_PLUGIN_ROOT}/references/git-host.md` — do NOT assume `main`.
 
 ### Step 1 — Verify the merge actually happened
 
@@ -40,7 +40,7 @@ Falling back to a search when only a key is known:
 gh pr list --search "<KEY>" --state merged --json number,url,mergedAt,mergeCommit,headRefName --limit 5
 ```
 
-Manual path → `references/git-host.md` merge confirmation; "Not yet" = `OPEN` → stop;
+Manual path → `${CLAUDE_PLUGIN_ROOT}/references/git-host.md` merge confirmation; "Not yet" = `OPEN` → stop;
 `headRefName` = the branch you pushed.
 
 - `MERGED` → continue; capture PR URL, merge commit, merged-at, and `headRefName` (the branch

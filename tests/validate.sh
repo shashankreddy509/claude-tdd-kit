@@ -288,6 +288,8 @@ has tdd-pipeline/agents/memory-analyzer.md 'AnyCancellable' "memory-analyzer cov
 # ---------------------------------------------------------------------------
 head_ "11. stack-generic pipeline"
 lacks tdd-pipeline/agents/test-writer.md 'On compiled stacks' "test-writer stubs on every stack"
+has tdd-pipeline/agents/test-writer.md 'stubs above are not implementation' "test-writer: a stub is not implementation"
+has tdd-pipeline/agents/build-coordinator.md 'never tell it to skip a source file or a stub' "coordinator never bans test-writer's stubs"
 has tdd-pipeline/agents/build-coordinator.md 'Compile or import error naming ONLY' "verify-red takes a missing-module import error as red"
 has tdd-pipeline/agents/build-coordinator.md '\*\*STOP\*\* \(except a run that +stopped on the compile or import error' "the zero-tests STOP yields to a missing-module red"
 has tdd-pipeline/agents/build-coordinator.md 'closest parent' "test command comes from the project owning the plan's files"
@@ -341,6 +343,21 @@ has dev-day/skills/groom/SKILL.md '\*\*Other:\*\*' "groom maps stacks beyond web
 lacks dev-day/skills/groom/SKILL.md 'screen → ViewModel/presenter → repository chain' "groom names no single client architecture"
 has dev-day/skills/groom-panel/SKILL.md 'any other toolkit' "groom-panel renders the toolkit the user named"
 has dev-day/skills/prove-pre-existing/SKILL.md '`--- FAIL:`' "prove-pre-existing reads Go traces"
+
+# ---------------------------------------------------------------------------
+# 13. References resolve from the user's repo.
+#     Agents and commands run with cwd = the user's repo, so a bare
+#     `references/x.md` sent live runs into `find /` (120s timeout) or a stale
+#     cached plugin copy. ${CLAUDE_PLUGIN_ROOT} is swapped for the real path.
+# ---------------------------------------------------------------------------
+head_ "13. plugin-rooted references"
+bare="$(grep -rnE 'references/[a-z-]+\.md' tdd-pipeline/agents tdd-pipeline/commands | sed 's|\${CLAUDE_PLUGIN_ROOT}/references/||g' | grep -E 'references/[a-z-]+\.md' || true)"
+if [ -z "$bare" ]; then ok "no bare references/ path in tdd-pipeline"; else bad "bare references/ path: $(printf '%s' "$bare" | head -1)"; fi
+miss=""
+for f in $(grep -rhoE '\$\{CLAUDE_PLUGIN_ROOT\}/references/[a-z-]+\.md' tdd-pipeline | sort -u | sed 's|.*/references/||'); do
+  [ -f "tdd-pipeline/references/$f" ] || miss="$miss $f"
+done
+if [ -z "$miss" ]; then ok "every plugin-rooted reference exists"; else bad "missing references:$miss"; fi
 
 # ---------------------------------------------------------------------------
 head_ "result"

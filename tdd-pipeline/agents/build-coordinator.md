@@ -106,7 +106,7 @@ that file and refuses to open a PR when it is missing, stale, or red.
 - `sha` — staleness detection: HEAD moving after the receipt means code changed after the
   last verified run.
 - `tree` — the uncommitted edits the run verified, from the command in
-  `references/tree-fingerprint.md`. HEAD does not move on an edit made after review; this does.
+  `${CLAUDE_PLUGIN_ROOT}/references/tree-fingerprint.md`. HEAD does not move on an edit made after review; this does.
 - `exit` — the real process exit code. `red.exit` must be non-zero, or null with a required `note` saying why no genuine red run was possible; `green.exit` must be 0.
 - `review.unverified` — Criticals the verify pass reached no verdict on. Still hard-stop:
   "nobody checked" is not evidence of safety. Only an ACTIVELY REFUTED critical becomes a warning.
@@ -114,7 +114,7 @@ that file and refuses to open a PR when it is missing, stale, or red.
   verify pass. A receipt without the key (older pipeline) reads as 0.
 - `review.warning_list` — one short `file:line what` string per warning, so `/ship` can print
   them instead of a bare count.
-- `gating` — optional; see `references/gating.md`. Omit when the project has no `Gating:` line
+- `gating` — optional; see `${CLAUDE_PLUGIN_ROOT}/references/gating.md`. Omit when the project has no `Gating:` line
   or the ticket needs no gate.
 - `stage` — `red` | `green` | `reviewed` | `complete`. Anything short of `complete` means the
   pipeline stopped early.
@@ -141,7 +141,9 @@ Rules for writing it:
 
 ### Stage 1: Write Tests
 Spawn agent: `test-writer`
-Pass: full contents of the plan file + `TEST_CMD`
+Pass: full contents of the plan file, unchanged, + `TEST_CMD`. Add no instructions of your own,
+and never tell it to skip a source file or a stub: it stubs the plan's new types and modules so the
+tests load and fail on assertions.
 Wait for completion.
 Output: "📝 Tests written. Verifying red state..."
 
@@ -154,7 +156,7 @@ implementation exists. Target just the new tests where the runner supports it: t
 - New tests FAIL → correct red state. Write the receipt with `red` filled in and
   `"stage": "red"`. Output: "🔴 Red state confirmed. Starting implementation..." and
   proceed to Stage 2.
-- The run ran ZERO tests (a zero or missing count per `references/test-counts.md`, or none
+- The run ran ZERO tests (a zero or missing count per `${CLAUDE_PLUGIN_ROOT}/references/test-counts.md`, or none
   of the new test names in the output), whatever the exit code → **STOP** (except a run that
   stopped on the compile or import error below: a missing new module loads no tests): "❌ Pipeline
   stopped at Stage 1.5: the new tests never ran — they are not in any test target the
@@ -172,13 +174,13 @@ implementation exists. Target just the new tests where the runner supports it: t
 
 ### Stage 1.6: Seed The Gate Keys (skip unless the plan has a Gating section)
 Tests are red and no implementation exists. Do this YOURSELF via Bash (not delegated), per
-`references/gating.md` § Seeding: write each key at `false`, read it back, record keys +
+`${CLAUDE_PLUGIN_ROOT}/references/gating.md` § Seeding: write each key at `false`, read it back, record keys +
 readback in the receipt's `gating` block, STOP if a configured store cannot be reached.
 
 ### Stage 2: Write Implementation
 Spawn agent: `implementer`
 Pass: full contents of the plan file + list of test files written in Stage 1 + (if the
-plan has a Gating section) the seeded keys and the implementation rule in `references/gating.md`
+plan has a Gating section) the seeded keys and the implementation rule in `${CLAUDE_PLUGIN_ROOT}/references/gating.md`
 + (if the plan has a `## Design Reference` naming a mock) the mock path(s) and this rule:
 READ that image with the Read tool before writing any UI code and build to it — the mock is
 the visual contract and wins over prose on layout; never substitute generic sample UI when a

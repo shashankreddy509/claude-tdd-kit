@@ -12,7 +12,7 @@ Jira: cloudId=<uuid> key=<KEY>
 
 That line is the ONLY source for the project key. No line → the repo has no Jira wiring: skip every Jira step (steps 2 and 8's transition), ship the PR anyway, and say so in the report.
 
-Resolve the Jira MCP dialect and `cloudId` before any Jira call, exactly as `references/jira-mcp.md` says (§ Calling convention). No Atlassian MCP resolved → log the skip line from that file, ship the PR anyway, and report which transition was skipped.
+Resolve the Jira MCP dialect and `cloudId` before any Jira call, exactly as `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md` says (§ Calling convention). No Atlassian MCP resolved → log the skip line from that file, ship the PR anyway, and report which transition was skipped.
 
 No `Jira:` line but the user names a key, and the cloudId is still ambiguous → ask; do not pick one.
 
@@ -29,11 +29,11 @@ Derive the browse URL from the resolved site, not a literal host.
    | `red.exit == 0`, or `red.exit` null with no `note` | **STOP** — tests never failed (or no reason recorded) |
    | `green.exit != 0` | **STOP** — tests are red |
    | `review.critical > 0` · `review.must_fix > 0` (missing = 0) · `review.unverified > 0` | **STOP** — list them |
-   | `gating` present, `readback != "ok"` or `seeded` misses a `required` key | **STOP** — kill-switch missing (see `references/gating.md`) |
+   | `gating` present, `readback != "ok"` or `seeded` misses a `required` key | **STOP** — kill-switch missing (see `${CLAUDE_PLUGIN_ROOT}/references/gating.md`) |
    | `review.warnings > 0` | Print each warning (file:line + what it is) from `review.warning_list`, THEN **AskUserQuestion**: ship anyway / fix first. Never summarise as a bare count — an unread warning is the same as no warning. |
    | clean | proceed |
 
-   **Staleness.** Compare `receipt.sha` to `git rev-parse HEAD`, and recompute the working-tree fingerprint with the command in `references/tree-fingerprint.md`. The receipt describes the tree the pipeline verified; if code moved since, it describes nothing. The cases:
+   **Staleness.** Compare `receipt.sha` to `git rev-parse HEAD`, and recompute the working-tree fingerprint with the command in `${CLAUDE_PLUGIN_ROOT}/references/tree-fingerprint.md`. The receipt describes the tree the pipeline verified; if code moved since, it describes nothing. The cases:
    - HEAD == `receipt.sha`, fingerprint == `receipt.tree` → the normal case (the pipeline runs before the commit; step 5 commits exactly those edits). Proceed.
    - HEAD == `receipt.sha`, fingerprint differs from `receipt.tree` → source was edited after the last verified run, often a fix made after review that nobody reviewed. **STOP** and re-run the pipeline on the current tree.
    - No `tree` key (receipt from an older pipeline) → say so, apply the HEAD check alone, and note in the report that post-run edits were not checked.
@@ -43,7 +43,7 @@ Derive the browse URL from the resolved site, not a literal host.
 
    No ticket key at all (a genuine chore/docs ship with no Jira issue) → skip this step; the receipt gate covers ticketed feature work.
 
-1. **Inspect the tree.** Resolve `<default>` per `references/git-host.md`, then:
+1. **Inspect the tree.** Resolve `<default>` per `${CLAUDE_PLUGIN_ROOT}/references/git-host.md`, then:
    ```bash
    git status --short && git branch --show-current && git fetch origin <default> -q && git rev-parse origin/<default> HEAD
    ```
@@ -87,7 +87,7 @@ Derive the browse URL from the resolved site, not a literal host.
    git push -u origin <branch>
    gh pr create --base <default> --title "<conventional title>" --body "<what / why / safety>"
    ```
-   - Not GitHub, or `gh` unusable (`references/git-host.md` probe) → push, then that file's manual path; the report gives the compare/MR URL plus the title/body to paste.
+   - Not GitHub, or `gh` unusable (`${CLAUDE_PLUGIN_ROOT}/references/git-host.md` probe) → push, then that file's manual path; the report gives the compare/MR URL plus the title/body to paste.
    - **Jira:** include the `<KEY>-NN` key in the PR title (e.g. `<KEY>-12 feat(auth): add password reset`) when the work maps to an issue, so the GitHub-for-Jira app links the PR to the issue.
    **PR body = what / why / safety + the Jira link. Nothing else.**
    - **what** — the change, from the staged diff (same content as the commit subject/body, step 5).
