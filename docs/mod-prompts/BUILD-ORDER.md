@@ -8,10 +8,10 @@ Source map: an overview of the reels, kept outside the repo.
 ## Build these, in order
 
 1. **Ship band**, PDF #07 + reel #10 end card. docs/mod-prompts/ship-band-prompt.md. Depends on: nothing. Size M. Not started (no `receipt.ts` in the kit yet).
-2. **Workflow card** (incl. approval card, PR-ready checklist, stage row/grid), reel #10. docs/mod-prompts/workflow-card-prompt.md. Depends on: Ship band (imports `receipt.ts`). Size L.
+2. **Workflow card** (incl. approval card, PR-ready checklist), reel #10. docs/mod-prompts/workflow-card-prompt.md. Depends on: Ship band (imports `receipt.ts`). Size L. One stage view (owner ruled 2026-10-12): side-panel 0.4.0 draws the stage rail inside the Agents card from agent types; this card's progress log, once it exists, becomes that rail's source. It draws no second stage row.
 3. **Agents tracker**, reel #8 + PDF #01. docs/mod-prompts/agents-tracker-prompt.md. DONE: kit PR #34 merged (side-panel 0.2.0).
 4. **Blast Radius** (`rm -r` preview + block outside the repo), reel #5. docs/mod-prompts/blast-radius-prompt.md. Built INSIDE the git-guards work, as a settings.json PreToolUse hook, after the shared command parser exists (git-guards ticket 2); not a kit mod. Size M.
-5. **Token weather** (forecast in the cache-keeper band), reel #5. docs/mod-prompts/token-weather-prompt.md. Depends on: nothing (extends cache-keeper). Size M.
+5. **Token weather** (forecast in the side panel's cache view: its Cache card and band), reel #5. docs/mod-prompts/token-weather-prompt.md. Depends on: nothing (extends side-panel 0.4.0, which took cache-keeper in). Size M.
 6. **Project notes card**, PDF #08. docs/mod-prompts/project-notes-card-prompt.md. Storage: a `NOTES.md` file in each repo. Size S.
 7. **Tool-call counter** on the spinner, reel #5. docs/mod-prompts/tool-call-counter-prompt.md. Depends on: nothing; cosmetic, build only if you want it. Size S.
 
