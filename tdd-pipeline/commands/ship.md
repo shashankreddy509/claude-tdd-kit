@@ -25,6 +25,7 @@ Derive the browse URL from the resolved site, not a literal host.
    | Receipt state | Do |
    |---|---|
    | file missing | **STOP** — no verified run. Offer `/implement` first. |
+   | `receipt.ticket` differs from the key being shipped | **STOP** — the receipt is another ticket's run |
    | `stage != "complete"` | **STOP** — name the stage it died at |
    | `red.exit == 0`, or `red.exit` null with no `note` | **STOP** — tests never failed (or no reason recorded) |
    | `green.exit != 0` | **STOP** — tests are red |
@@ -41,7 +42,7 @@ Derive the browse URL from the resolved site, not a literal host.
 
    A STOP here is a real stop: report why and what to re-run, do not push. **Never write or edit a receipt to get past this gate** — if the gate is wrong, fix the gate. The user may override explicitly ("ship without the receipt"); record that they did in the report.
 
-   No ticket key at all (a genuine chore/docs ship with no Jira issue) → skip this step; the receipt gate covers ticketed feature work.
+   No ticket key at all → look for a receipt in `tasks/receipts/` whose `sha` equals HEAD. One exists → this is pipeline work on a branch with no key (an agent worktree comes up on `worktree-agent-<id>`): ask the user for the key, never skip the gate. None → a genuine chore/docs ship with no Jira issue: skip this step; the receipt gate covers ticketed feature work.
 
 1. **Inspect the tree.** Resolve `<default>` per `${CLAUDE_PLUGIN_ROOT}/references/git-host.md`, then:
    ```bash
@@ -57,7 +58,8 @@ Derive the browse URL from the resolved site, not a literal host.
 
 4. **Pick the branch.**
    - If on `<default>`: branch first (PR-only; never push it).
-   - If the work is a chore UNRELATED to the active feature branch, or HEAD is behind `origin/<default>`: base off `origin/<default>` for a clean PR — `git checkout -b <type>/<slug> origin/<default>` (working changes carry over).
+   - Step 0 read a receipt → branch from HEAD (`git checkout -b <type>/<slug>`), never rebranch onto a newer `origin/<default>`: the suite ran on this base, not that one. HEAD behind `origin/<default>` → say how far in the report; the PR shows any conflict. Already on a branch whose name holds the key (a ticket worktree's `feat/<KEY>-slug`) → keep it. On a branch with no key (`worktree-agent-<id>`) → rename it: `git branch -m <type>/<KEY>-<slug>`.
+   - No receipt, and the work is a chore UNRELATED to the active feature branch or HEAD is behind `origin/<default>`: base off `origin/<default>` for a clean PR — `git checkout -b <type>/<slug> origin/<default>` (working changes carry over).
    - Branch name: `feat/`, `fix/`, `chore/`, `docs/` + kebab slug.
    - **Jira link:** if the work maps to an issue, put the key in the branch slug: `feat/<KEY>-12-password-reset`. Use the key the user gave, or one obvious from the work via the Atlassian MCP; if there's no issue, skip the key — don't invent one.
 
