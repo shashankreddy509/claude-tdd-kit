@@ -49,6 +49,10 @@ stages in sequence, reading the plan file at that path:
 If tests still fail after 5 fix rounds, or the failure is environmental, the pipeline stops
 and reports what went wrong.
 
+To fix review findings on a ticket that already ran, add a numbered `## Review fixes` section
+to its plan and run this command again: stages 1-1.6 are skipped, the implementer fixes each
+item, then stages 3-5 run in full. Never resume a finished coordinator for this.
+
 ### Auto-ship
 When the coordinator returns, read `tasks/receipts/<TICKET>.json` from disk (see Gotchas).
 - `stage == "complete"` → run this plugin's `ship` command now (Skill tool,

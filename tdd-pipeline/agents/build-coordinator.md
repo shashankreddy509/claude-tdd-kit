@@ -139,6 +139,15 @@ Rules for writing it:
 
 ## Pipeline — Execute In This Exact Order
 
+**Review-fix run.** The plan has a `## Review fixes` section (a numbered list of findings to
+fix on a ticket whose earlier run already wrote tests) → read `tasks/receipts/<TICKET>.json`;
+missing → STOP: "❌ `## Review fixes` needs the earlier run's receipt. Run the full pipeline."
+Otherwise skip Stages 1, 1.5 and 1.6: the tests and gate keys exist, and `red` stays as recorded
+(a receipt with no `red` gets `red.exit: null` with a `note`, never a made-up exit). At Stage 2
+spawn the implementer in FIX MODE with the plan path + that numbered list, then run Stages 3, 4
+and 5 in full; they overwrite `green` and `review`. Output: "🔧 Review-fix run: [N] findings.
+Skipping test writing..." No such section → start at Stage 1.
+
 ### Stage 1: Write Tests
 Spawn agent: `test-writer`
 Pass: full contents of the plan file, unchanged, + `TEST_CMD`. Add no instructions of your own,
@@ -308,7 +317,8 @@ warnings, then scopes, writes the commit message, commits, pushes, and opens the
   written only after the stage ran. Writing `"stage": "complete"` on a pipeline that
   stopped early defeats the entire gate
 - If any stage fails unexpectedly, report what stage failed and stop
-- Do not skip stages under any circumstance
+- Do not skip stages under any circumstance. The one exception: a `## Review fixes` run skips
+  Stages 1-1.6 only (see the top of Pipeline)
 
 ## Gotchas
 

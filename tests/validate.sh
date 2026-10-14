@@ -376,6 +376,11 @@ has tdd-pipeline/commands/ship.md '`receipt\.ticket` differs.{0,80}\*\*STOP\*\*'
 has tdd-pipeline/commands/ship.md 'worktree-agent-<id>.{0,200}ask the user for the key, never skip' "ship asks for the key instead of skipping the gate"
 has tdd-pipeline/commands/ship.md 'never rebranch onto a newer' "ship keeps receipt work on the base the suite ran on"
 lacks tdd-pipeline/commands/ship.md '^   - If the work is a chore UNRELATED' "ship no longer rebases verified work after the gate"
+has tdd-pipeline/agents/build-coordinator.md '`## Review fixes` needs the earlier run.{0,120}skip Stages 1, 1\.5 and 1\.6' "coordinator review-fix run skips only the test-writing stages"
+has tdd-pipeline/agents/build-coordinator.md 'skip Stages 1, 1\.5 and 1\.6.{0,120}`red` stays as recorded' "review-fix run never re-stamps red"
+has tdd-pipeline/agents/build-coordinator.md 'Do not skip stages.{0,80}`## Review fixes`' "no-skip rule names its one exception"
+has tdd-pipeline/agents/implementer.md '`## Review fixes`.{0,200}names that test' "implementer edits a test only when a finding names it"
+has tdd-pipeline/commands/implement.md '`## Review fixes`' "implement documents review-fix runs"
 
 # ---------------------------------------------------------------------------
 head_ "result"
