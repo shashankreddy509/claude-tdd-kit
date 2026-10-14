@@ -112,8 +112,10 @@ git checkout <default> && git fetch origin <default> -q && git pull --ff-only or
 Use `headRefName` from Step 1, never the branch you happen to be on.
 
 When `git worktree list --porcelain` shows `branch refs/heads/<headRefName>` under a
-`worktree <path>` line, remove that worktree first. Without `--force` it refuses on uncommitted
-or untracked files: stop and show them, never force.
+`worktree <path>` line, remove that worktree first. The pipeline leaves its untracked
+`tasks/plans/<KEY>_plan.md` and `tasks/receipts/<KEY>.json` there: copy each into the main
+checkout's same path, `cmp` the copy, then delete it from the worktree. Without `--force` the remove
+refuses on any other uncommitted or untracked file: stop and show them, never force.
 
 ```bash
 git worktree remove <path>              # only when the branch is checked out in a worktree
