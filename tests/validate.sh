@@ -395,6 +395,27 @@ for f in tdd-pipeline/references/jira-mcp.md dev-day/references/jira-mcp.md; do
 done
 
 # ---------------------------------------------------------------------------
+# 16. Epic intake + worktree cleanup (PA-105, PA-108 slice).
+#     The kit had no dependency logic: nothing read Jira issue links, and a blocker
+#     "Done" in Jira is not the same as its code on the default branch. /merged
+#     ran `git branch -d` on a branch still checked out in a worktree, which fails.
+# ---------------------------------------------------------------------------
+head_ "16. epic intake + worktree cleanup"
+E=tdd-pipeline/commands/build-epic.md
+has $E 'issuelinks' "build-epic reads blockers from Jira issue links"
+has $E 'git log origin/<default>.{0,60}--grep' "build-epic counts a blocker merged only from origin"
+has $E 'never from Jira status' "build-epic never trusts Jira status for a blocker"
+has $E '`\.worktreeinclude`.{0,120}STOP' "build-epic STOPs a JS/iOS repo with no .worktreeinclude"
+has $E 'Dry run only.{0,80}no build' "build-epic is a dry run"
+has tdd-pipeline/commands/merged.md 'git worktree remove <path>.{0,200}git branch -d' "merged removes the worktree before deleting the branch"
+has tdd-pipeline/commands/merged.md 'from the main checkout' "merged stops when run inside the branch's worktree"
+for f in tdd-pipeline/references/jira-mcp.md dev-day/references/jira-mcp.md; do
+  has $f 'is blocked by.{0,80}inwardIssue' "jira-mcp says where blockers live"
+done
+has README.md 'build-epic' "README lists build-epic"
+has tdd-pipeline/README.md '`build-epic`' "tdd-pipeline README lists build-epic"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

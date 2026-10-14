@@ -24,6 +24,9 @@ modified `tasks/plans/*_plan.md`, or from the current branch (`feat/PROJ-12-slug
   No Atlassian MCP resolved → log the skip line from that file, run the git cleanup, and skip
   every Jira step below.
 - Determine `<default>` per `${CLAUDE_PLUGIN_ROOT}/references/git-host.md` — do NOT assume `main`.
+- Inside a linked worktree (`git rev-parse --path-format=absolute --git-dir --git-common-dir` prints two different
+  paths; without `--path-format=absolute` a subfolder of the main checkout looks like a worktree) → STOP:
+  "Run /merged from the main checkout: this worktree cannot check out `<default>` or remove itself."
 
 ### Step 1 — Verify the merge actually happened
 
@@ -108,7 +111,12 @@ git checkout <default> && git fetch origin <default> -q && git pull --ff-only or
 
 Use `headRefName` from Step 1, never the branch you happen to be on.
 
+When `git worktree list --porcelain` shows `branch refs/heads/<headRefName>` under a
+`worktree <path>` line, remove that worktree first. Without `--force` it refuses on uncommitted
+or untracked files: stop and show them, never force.
+
 ```bash
+git worktree remove <path>              # only when the branch is checked out in a worktree
 git branch -d <headRefName>             # -d, never -D: refuses if not merged
 git push origin --delete <headRefName>  # only if it still exists remotely
 ```
@@ -122,7 +130,7 @@ trigger this; confirm the squash commit contains the work before forcing anythin
 ```
 ✅ <KEY> merged via <PR url>
 ✅ Moved to "<status>"
-✅ <default> synced · <branch> deleted
+✅ <default> synced · <branch> deleted (and its worktree, if it had one)
 ```
 
 When the ticket parked in a verification column, close with what still has to happen:
