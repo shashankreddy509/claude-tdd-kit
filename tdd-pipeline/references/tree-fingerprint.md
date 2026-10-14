@@ -4,10 +4,16 @@ The pipeline runs before the commit, so at `/ship` time HEAD still equals `recei
 source is dirty. An edit made AFTER the last verified run looks exactly the same. The fingerprint
 tells them apart: build-coordinator stamps it into the receipt, `/ship` recomputes it and compares.
 
+Run these as plain commands, one call each, pasting the literal path from the first into the
+rest. Chained with `&&` and command substitution, a session isolated in a worktree refuses it as too complex
+to verify.
+
 ```bash
-idx=$(mktemp -u) && cp "$(git rev-parse --git-path index)" "$idx" \
-  && GIT_INDEX_FILE=$idx git add -A -- ':/' ':(top,exclude)tasks' \
-  && GIT_INDEX_FILE=$idx git write-tree; rm -f "$idx"
+git rev-parse --git-path index                  # the real index, e.g. .git/worktrees/X/index
+cp <that index> <scratch>/fp-index              # any temp dir; never the real index
+GIT_INDEX_FILE=<scratch>/fp-index git add -A -- ':/' ':(top,exclude)tasks'
+GIT_INDEX_FILE=<scratch>/fp-index git write-tree
+rm <scratch>/fp-index
 ```
 
 It prints one tree id covering every tracked and untracked, non-ignored file, from any directory

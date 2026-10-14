@@ -60,6 +60,10 @@ Read blockers as `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md` describes (`issu
    never built in a parallel worktree.
 5. **buildable** — everything else.
 
+**Range note.** When no subject carries the child's key but one holds a range that covers it
+(`PROJ-120..123` covers 121 to 123; find it with `grep -E '(^|[^A-Za-z0-9-])PROJ-[0-9]+\.\.[0-9]+'`
+on the same log), keep the tag and add to its reason: "key only in range subject <sha>, owner may close".
+
 ### Step 3 — Show the intake list and stop
 
 ```
@@ -68,6 +72,7 @@ Read blockers as `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md` describes (`issu
   2. PROJ-72  BLOCKED     by PROJ-71 (not on origin/main)
   3. PROJ-73  owner-step  needs a hook install
   4. PROJ-74  in flight   Build Testing
+  5. PROJ-75  in flight   In Progress (key only in range subject a1b2c3d, owner may close)
 ```
 
 Board order, one line per child, the reason after the tag. Zero buildable →
@@ -82,6 +87,6 @@ run `/tdd-pipeline:build <KEY>` there, then `/tdd-pipeline:ship`. Add `.claude/w
 - Jira "Done" is not merged code. A blocker whose PR is still open, or that was built in another
   repo, has no commit here: it stays BLOCKED until its key shows up on origin/<default>.
 - A merge counts only when the commit subject carries the key (a PR title, or a merge subject naming
-  `feat/<KEY>-...`). A range like "PROJ-120..123" names PROJ-120 only. When a ticket merged without
-  its key in the subject, it stays unmerged here; say so in the reason so the user can override.
+  `feat/<KEY>-...`). A range like "PROJ-120..123" names PROJ-120 only; Step 2's range note flags
+  the rest for the user.
 - Never widen the JQL past the epic's children, and never build from this command.

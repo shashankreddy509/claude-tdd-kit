@@ -264,6 +264,8 @@ has tdd-pipeline/references/tree-fingerprint.md 'git write-tree' "tree-fingerpri
 has tdd-pipeline/agents/build-coordinator.md '"tree":' "build-coordinator receipt stamps tree"
 has tdd-pipeline/agents/build-coordinator.md 'references/tree-fingerprint\.md' "build-coordinator points at the fingerprint reference"
 has tdd-pipeline/commands/ship.md 'references/tree-fingerprint\.md' "ship points at the fingerprint reference"
+lacks tdd-pipeline/references/tree-fingerprint.md '\$\(' "tree-fingerprint has no command substitution (a worktree session refuses chained git)"
+has tdd-pipeline/references/tree-fingerprint.md 'one call each' "tree-fingerprint runs its steps as separate calls"
 has tdd-pipeline/commands/ship.md 'differs from `receipt\.tree`.{0,160}\*\*STOP\*\*' "ship STOPs on a tree mismatch"
 
 # ---------------------------------------------------------------------------
@@ -413,7 +415,9 @@ has $E '`\.worktreeinclude`.{0,120}STOP' "build-epic STOPs a JS/iOS repo with no
 has $E 'Dry run only.{0,80}no build' "build-epic is a dry run"
 has $E '\*\*merged, awaiting Done\*\*.{0,120}own key' "build-epic tags a child already on the default branch"
 has $E '\*\*in flight\*\*.{0,120}In Progress' "build-epic never offers a child already in progress"
+has $E 'range subject.{0,40}owner may close' "build-epic flags a key that only sits in a range subject"
 has tdd-pipeline/commands/merged.md 'git worktree remove <path>.{0,200}git branch -d' "merged removes the worktree before deleting the branch"
+has tdd-pipeline/commands/merged.md 'tasks/receipts/<KEY>\.json.{0,200}cmp' "merged saves the worktree plan + receipt before removing it"
 has tdd-pipeline/commands/merged.md 'from the main checkout' "merged stops when run inside the branch's worktree"
 for f in tdd-pipeline/references/jira-mcp.md dev-day/references/jira-mcp.md; do
   has $f 'is blocked by.{0,80}inwardIssue' "jira-mcp says where blockers live"
