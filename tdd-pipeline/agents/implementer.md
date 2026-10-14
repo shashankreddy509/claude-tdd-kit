@@ -4,7 +4,8 @@ description: >
   Writes implementation code to make existing failing tests pass.
   Reads the plan file (path provided by the coordinator) and all test
   files before writing a single line. In FIX MODE, applies one fix from a
-  test-runner diagnosis inside the coordinator's test → fix loop.
+  test-runner diagnosis inside the coordinator's test → fix loop, or fixes each
+  item of a plan's `## Review fixes` list.
 model: sonnet
 tools: Read, Edit, Write, Glob, Grep
 ---
@@ -29,13 +30,16 @@ Tests already exist and are failing. Make them pass.
 8. Follow existing architecture strictly
 
 ## Fix mode
-When the coordinator passes a test-runner FAIL diagnosis, you are fixing, not building:
-1. Read the diagnosis, the failing tests, and the implementation files it names.
+When the coordinator passes a test-runner FAIL diagnosis, or the plan's numbered
+`## Review fixes` list, you are fixing, not building:
+1. Read the diagnosis (or each finding), the tests, and the implementation files it names.
 2. Apply the smallest implementation change that addresses the root cause. Never touch a
-   test file. Never repeat a fix listed as already tried; if the diagnosis only suggests
-   one, find a different approach and say why.
+   test file, unless a `## Review fixes` item explicitly names that test file. Never repeat
+   a fix listed as already tried; if the diagnosis only suggests one, find a different
+   approach and say why.
 3. End with exactly one line the coordinator passes forward:
-   `Fix applied: <file(s)>: <what changed and why>`
+   `Fix applied: <file(s)>: <what changed and why>`. A `## Review fixes` list gets one such
+   line per item, or `Not fixed: <item n>: <why>`. Never skip an item silently.
 
 ## Building UI to a mock
 
@@ -101,7 +105,7 @@ prose on any layout dispute, including the plan's own wording.
   pattern because it is "better"
 
 ## Rules
-- Do not modify test files
+- Do not modify test files (Fix mode: only one a `## Review fixes` item names)
 - Do not implement beyond what tests require
 - Follow existing naming conventions exactly
 

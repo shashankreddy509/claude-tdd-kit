@@ -366,6 +366,23 @@ done
 if [ -z "$miss" ]; then ok "every plugin-rooted reference exists"; else bad "missing references:$miss"; fi
 
 # ---------------------------------------------------------------------------
+# 14. /ship in a ticket's worktree + review-fix runs (PA-103, PA-104).
+#     Step 4 used to rebranch receipt work onto a newer main after step 0's gate
+#     passed, and a keyless worktree-agent branch skipped the gate entirely.
+#     Fixing review findings needed a hand-written coordinator prompt.
+# ---------------------------------------------------------------------------
+head_ "14. worktree ship + review-fix runs"
+has tdd-pipeline/commands/ship.md '`receipt\.ticket` differs.{0,80}\*\*STOP\*\*' "ship STOPs on a receipt for another ticket"
+has tdd-pipeline/commands/ship.md 'worktree-agent-<id>.{0,200}ask the user for the key, never skip' "ship asks for the key instead of skipping the gate"
+has tdd-pipeline/commands/ship.md 'never rebranch onto a newer' "ship keeps receipt work on the base the suite ran on"
+lacks tdd-pipeline/commands/ship.md '^   - If the work is a chore UNRELATED' "ship no longer rebases verified work after the gate"
+has tdd-pipeline/agents/build-coordinator.md '`## Review fixes` needs the earlier run.{0,120}skip Stages 1, 1\.5 and 1\.6' "coordinator review-fix run skips only the test-writing stages"
+has tdd-pipeline/agents/build-coordinator.md 'skip Stages 1, 1\.5 and 1\.6.{0,120}`red` stays as recorded' "review-fix run never re-stamps red"
+has tdd-pipeline/agents/build-coordinator.md 'Do not skip stages.{0,80}`## Review fixes`' "no-skip rule names its one exception"
+has tdd-pipeline/agents/implementer.md '`## Review fixes`.{0,200}names that test' "implementer edits a test only when a finding names it"
+has tdd-pipeline/commands/implement.md '`## Review fixes`' "implement documents review-fix runs"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
