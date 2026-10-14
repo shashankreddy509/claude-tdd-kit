@@ -82,6 +82,9 @@ Derive parameters from the RESOLVED schema, not from a fixed rule.
 - **`cloudId` not in the schema** → omit it. The `Jira:` line in CLAUDE.md is then unused
   and harmless; leave it alone, other tooling reads it.
 - Issue key parameter is whatever the schema calls it (`issueIdOrKey` / `issue_key`).
+- **Blockers** come from the issue's `issuelinks` field (ask the search or read verb for it). On
+  the blocked ticket, a link whose type reads "is blocked by" holds the blocker as `inwardIssue`;
+  a link holding `outwardIssue` under the same type is a ticket this one blocks.
 
 **Transition ids are per-project and change.** Always list transitions first and match on
 the target status NAME, never a hardcoded id. Two projects with identically-named statuses
