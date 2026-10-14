@@ -21,6 +21,16 @@ A plugin written against one dialect does nothing useful on the other. Detect, t
 write against an unknown server risks double-firing or landing a ticket in the wrong state.
 Detection below is read-only and runs once.
 
+## Wiring check (before detection)
+
+Read the project's CLAUDE.md for a `Jira: cloudId=<uuid> key=<KEY>` line. No line → skip every Jira step and log once:
+`ℹ️ No Jira: line in CLAUDE.md — skipping Jira for <KEY>.` A command that is entirely about
+the ticket STOPs and says so instead. The one exception is a key the user named in this
+request: then resolve the site as in Calling convention and ask when it is ambiguous.
+A key taken from a plan filename or branch name never reaches Jira on its own: in an unwired
+repo it is just a name, and a match with a real project would move someone else's ticket.
+The same holds when the key's project prefix differs from the line's `key=`.
+
 ## Detection (once per command invocation — reuse the result for every later Jira call)
 
 **Step 1 — probe dialect A by exact name.**
@@ -65,8 +75,9 @@ Then proceed. The TDD stages never depend on Jira.
 Derive parameters from the RESOLVED schema, not from a fixed rule.
 
 - **`cloudId` required by the schema** → resolve it: prefer a `Jira: cloudId=<uuid> key=<KEY>`
-  line in the project's CLAUDE.md; else `mcp__atlassian__getAccessibleAtlassianResources`
-  (dialect A only) and use the returned site id. Never hardcode one — a wrong `cloudId`
+  line in the project's CLAUDE.md; else, only for a key the user named (Wiring check),
+  `mcp__atlassian__getAccessibleAtlassianResources` (dialect A only) and use the returned
+  site id; more than one site → ask. Never hardcode one — a wrong `cloudId`
   transitions some other project's ticket.
 - **`cloudId` not in the schema** → omit it. The `Jira:` line in CLAUDE.md is then unused
   and harmless; leave it alone, other tooling reads it.
