@@ -84,7 +84,9 @@ Derive parameters from the RESOLVED schema, not from a fixed rule.
 - Issue key parameter is whatever the schema calls it (`issueIdOrKey` / `issue_key`).
 - **Blockers** come from the issue's `issuelinks` field (ask the search or read verb for it). On
   the blocked ticket, a link whose type reads "is blocked by" holds the blocker as `inwardIssue`;
-  a link holding `outwardIssue` under the same type is a ticket this one blocks.
+  a link holding `outwardIssue` under the same type is a ticket this one blocks. Some servers
+  drop `issuelinks` in their default compact view even when it is requested: pass the fuller view
+  (e.g. `view: "evidence"`) when the schema has one, and treat a missing field as unknown, never as none.
 
 **Transition ids are per-project and change.** Always list transitions first and match on
 the target status NAME, never a hardcoded id. Two projects with identically-named statuses

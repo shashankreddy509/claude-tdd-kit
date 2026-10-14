@@ -403,7 +403,10 @@ done
 head_ "16. epic intake + worktree cleanup"
 E=tdd-pipeline/commands/build-epic.md
 has $E 'issuelinks' "build-epic reads blockers from Jira issue links"
-has $E 'git log origin/<default>.{0,60}--grep' "build-epic counts a blocker merged only from origin"
+has $E "git log origin/<default> --format='%h %s'.{0,20}grep -E" "build-epic counts a key merged only from an origin subject line"
+lacks $E 'git log[^`]*--grep' "build-epic never greps whole commit messages (a body mention is not a merge)"
+has $E 'issuelinks.{0,200}missing from every row.{0,120}titles only' "build-epic warns when Jira drops issuelinks"
+has $E '\[ -e package\.json \]' "build-epic tests each worktree marker on its own (zsh aborts on an unmatched glob)"
 lacks $E "grep '\\\\b" "build-epic grep avoids \\b (macOS git -E matches nothing with it)"
 has $E 'never from Jira status' "build-epic never trusts Jira status for a blocker"
 has $E '`\.worktreeinclude`.{0,120}STOP' "build-epic STOPs a JS/iOS repo with no .worktreeinclude"
@@ -414,6 +417,7 @@ has tdd-pipeline/commands/merged.md 'git worktree remove <path>.{0,200}git branc
 has tdd-pipeline/commands/merged.md 'from the main checkout' "merged stops when run inside the branch's worktree"
 for f in tdd-pipeline/references/jira-mcp.md dev-day/references/jira-mcp.md; do
   has $f 'is blocked by.{0,80}inwardIssue' "jira-mcp says where blockers live"
+  has $f 'drop `issuelinks`.{0,120}view' "jira-mcp warns some servers drop issuelinks in the default view"
 done
 has README.md 'build-epic' "README lists build-epic"
 has tdd-pipeline/README.md '`build-epic`' "tdd-pipeline README lists build-epic"
