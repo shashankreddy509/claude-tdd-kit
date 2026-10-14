@@ -141,3 +141,5 @@ merging".
   default to "open a fresh session".
 - When the idea is a big build (new apps, new platforms), give a worth-building verdict with the
   cheaper path BEFORE detail questions.
+- When every answer from an `AskUserQuestion` dialog comes back "[No preference]", treat it as skipped,
+  not as a ruling: re-ask in plain text and never write those answers under Decided.
