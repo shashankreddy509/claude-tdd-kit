@@ -39,14 +39,19 @@ Ask for fields `summary`, `status`, `issuetype`, `issuelinks` (50 results). One 
 Read blockers as `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md` describes (`issuelinks`, the
 "is blocked by" side). For each child, first match wins:
 
-1. **BLOCKED by X** — X is a blocker not yet on the default branch. X counts as merged only when
-   `git log origin/<default> --oneline -E --grep '\b<X>\b'` prints a commit, never from Jira status:
+1. **merged, awaiting Done** — the child's own key is on the default branch (the same `git log`
+   grep as below). Its code shipped; it needs a Jira close, not a build.
+2. **in flight** — its status category is In Progress (e.g. In Progress, In Review, Build Testing).
+   Someone is building or verifying it; never offer it for a second build.
+3. **BLOCKED by X** — X is a blocker not yet on the default branch. X counts as merged only when
+   `git log origin/<default> --oneline -E --grep '(^|[^A-Za-z0-9-])<X>([^0-9]|$)'` prints a commit
+   (spelled out, not `\b`: macOS git matches nothing with `\b` and reports no error), never from Jira status:
    a ticket can be Done in Jira while its PR is still open. A title like "BLOCKED (X)" is an extra
    signal, never the rule; when it names a key the links do not, check that key the same way.
-2. **owner-step** — the ticket needs something only a person can do: install a hook or edit
+4. **owner-step** — the ticket needs something only a person can do: install a hook or edit
    `settings.json`, prove it on a phone or in an app, or wait for a scheduled run. These are
    never built in a parallel worktree.
-3. **buildable** — everything else.
+5. **buildable** — everything else.
 
 ### Step 3 — Show the intake list and stop
 
@@ -55,6 +60,7 @@ Read blockers as `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md` describes (`issu
   1. PROJ-71  buildable   Run log hook
   2. PROJ-72  BLOCKED     by PROJ-71 (not on origin/main)
   3. PROJ-73  owner-step  needs a hook install
+  4. PROJ-74  in flight   Build Testing
 ```
 
 Board order, one line per child, the reason after the tag. Zero buildable →

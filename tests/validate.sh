@@ -404,9 +404,12 @@ head_ "16. epic intake + worktree cleanup"
 E=tdd-pipeline/commands/build-epic.md
 has $E 'issuelinks' "build-epic reads blockers from Jira issue links"
 has $E 'git log origin/<default>.{0,60}--grep' "build-epic counts a blocker merged only from origin"
+lacks $E "grep '\\\\b" "build-epic grep avoids \\b (macOS git -E matches nothing with it)"
 has $E 'never from Jira status' "build-epic never trusts Jira status for a blocker"
 has $E '`\.worktreeinclude`.{0,120}STOP' "build-epic STOPs a JS/iOS repo with no .worktreeinclude"
 has $E 'Dry run only.{0,80}no build' "build-epic is a dry run"
+has $E '\*\*merged, awaiting Done\*\*.{0,120}own key' "build-epic tags a child already on the default branch"
+has $E '\*\*in flight\*\*.{0,120}In Progress' "build-epic never offers a child already in progress"
 has tdd-pipeline/commands/merged.md 'git worktree remove <path>.{0,200}git branch -d' "merged removes the worktree before deleting the branch"
 has tdd-pipeline/commands/merged.md 'from the main checkout' "merged stops when run inside the branch's worktree"
 for f in tdd-pipeline/references/jira-mcp.md dev-day/references/jira-mcp.md; do
