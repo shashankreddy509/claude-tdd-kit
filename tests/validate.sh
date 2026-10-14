@@ -383,6 +383,18 @@ has tdd-pipeline/agents/implementer.md '`## Review fixes`.{0,200}names that test
 has tdd-pipeline/commands/implement.md '`## Review fixes`' "implement documents review-fix runs"
 
 # ---------------------------------------------------------------------------
+# 15. Jira only in a repo wired to it.
+#     /implement moved a ticket for a key taken from a plan filename in a repo
+#     with no Jira: line; the reference's site fallback would pick any project.
+# ---------------------------------------------------------------------------
+head_ "15. Jira only when wired"
+for f in tdd-pipeline/references/jira-mcp.md dev-day/references/jira-mcp.md; do
+  has $f 'No line.{0,40}skip every Jira step' "jira-mcp skips Jira when CLAUDE.md has no Jira line"
+  has $f 'plan filename or branch name never reaches Jira' "a filename key alone never reaches Jira"
+  has $f 'else, only for a key the user named' "site fallback only for a user-named key"
+done
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
