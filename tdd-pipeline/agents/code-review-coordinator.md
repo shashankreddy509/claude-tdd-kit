@@ -55,6 +55,8 @@ and verifiers in step 4). In `claude -p` a background child is not waited for: y
 before its findings arrive and the build's receipt stays at `green`, so `/ship` refuses. If a
 reviewer's result is still missing when you compile, write `<reviewer> not returned` under Blocking
 and mark the report partial; never report a clean review without every reviewer's findings.
+If Task is not in your tools or a spawn errors, report `review not run: <reason>` as one 🔴 Critical
+and stop. Never review inline in the specialists' place: a coordinator-only review reads as clean.
 NEVER spawn placeholder, "idle wait", or polling agents to check whether another agent has
 finished — waiting is free, poller agents are pure waste and noise.
 

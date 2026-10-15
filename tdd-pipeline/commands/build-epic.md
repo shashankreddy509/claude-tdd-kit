@@ -31,7 +31,7 @@ One call to the resolved *search issues by JQL* tool:
 parent = <EPIC> AND statusCategory != Done ORDER BY rank ASC
 ```
 
-Ask for fields `summary`, `status`, `issuetype`, `issuelinks` (50 results), in the tool's fuller view
+Ask for fields `summary`, `status`, `issuetype`, `issuelinks`, `description` (50 results; `description` feeds rule 4), in the tool's fuller view
 when its schema has one (see `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md`). If `issuelinks` is still
 missing from every row, print once: "⚠️ Jira returned no `issuelinks`: blockers come from titles only."
 Never read a missing field as "no blockers". One plain line each, then STOP:
@@ -55,9 +55,13 @@ Read blockers as `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md` describes (`issu
    matches nothing with it and reports no error. Status is no proof either:
    a ticket can be Done in Jira while its PR is still open. A title like "BLOCKED (X)" is an extra
    signal, never the rule; when it names a key the links do not, check that key the same way.
+   A merged X still blocks while its own status category is In Progress (e.g. Build Testing): its
+   proof is owed. Tag it "BLOCKED by X (merged, still <status>)"; read X's status from the rows,
+   or with one issue read when X is outside the epic.
 4. **owner-step** — the ticket needs something only a person can do: install a hook or edit
-   `settings.json`, prove it on a phone or in an app, or wait for a scheduled run. These are
-   never built in a parallel worktree.
+   `settings.json`, run `sudo`, investigate with no code change, prove it on a phone or in an app,
+   or wait for a scheduled run. Judge it from each row's `description`, never the title alone; a row
+   without one gets one issue read. These are never built in a parallel worktree.
 5. **buildable** — everything else.
 
 **Range note.** When no subject carries the child's key but one holds a range that covers it
@@ -79,7 +83,7 @@ Board order, one line per child, the reason after the tag. Zero buildable →
 "Nothing to build in <EPIC>" plus each child's line.
 
 Then close with: "Dry run only, no build started. Build each buildable ticket in its own
-worktree (`git worktree add -b feat/<KEY>-<slug> .claude/worktrees/<KEY> origin/<default>`),
+worktree (`git worktree add --no-track -b feat/<KEY>-<slug> .claude/worktrees/<KEY> origin/<default>`),
 run `/tdd-pipeline:build <KEY>` there, then `/tdd-pipeline:ship`. Add `.claude/worktrees/` to `.gitignore`."
 
 ## Gotchas
