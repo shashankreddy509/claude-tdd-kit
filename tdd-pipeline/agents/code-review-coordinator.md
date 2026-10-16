@@ -19,7 +19,7 @@ periodic whole-codebase audit (not part of this kit), not this gate. Be thorough
 ## Workflow
 
 ### 1. Read + classify the diff
-Read the provided diff / file list. Identify: language(s), platform (Android / iOS / web /
+Read the provided diff / file list (a diff file path: Read it, and pass the same path to every specialist). Identify: language(s), platform (Android / iOS / web /
 backend / desktop / CLI / library, or other), and which modules changed. Note whether the diff touches any of:
 - **money/trading/payment code** (order, position, trade, price, PnL, balance, billing, invoice, refund, currency)
   → money review needed.
