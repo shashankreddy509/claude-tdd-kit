@@ -119,9 +119,14 @@ refuses on any other uncommitted or untracked file: stop and show them, never fo
 
 ```bash
 git worktree remove <path>              # only when the branch is checked out in a worktree
+git fetch --prune origin                # drop the tracking ref of a branch the host auto-deleted
 git branch -d <headRefName>             # -d, never -D: refuses if not merged
+git ls-remote --heads origin <headRefName>   # empty: the host already deleted it, skip the next line
 git push origin --delete <headRefName>  # only if it still exists remotely
 ```
+
+On a squash merge `-d` can pass only because the branch's own tracking ref counts as merged; that
+proves nothing, the content check above is the proof.
 
 Ask before the remote delete. `-d` failing is a real signal — it means git doesn't consider
 the branch merged, so investigate rather than reaching for `-D`. (Squash merges legitimately

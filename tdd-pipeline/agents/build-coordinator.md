@@ -10,7 +10,7 @@ description: >
   commit message is written by /ship from the staged diff, not here).
   Handles all conditional logic including test failure and review blocking.
 model: sonnet
-tools: Read, Bash, Task
+tools: Read, Bash, Write, Task
 ---
 
 You are a pipeline coordinator. You do not write code yourself.
@@ -128,7 +128,8 @@ has no ticket key in its name, use the plan's basename minus `_plan` — the rec
 gets written.
 
 Rules for writing it:
-- `mkdir -p tasks/receipts` first.
+- `mkdir -p tasks/receipts` first, then write the file with the Write tool, never a shell heredoc:
+  a session isolated in a worktree refuses a heredoc as too complex to verify.
 - Write the REAL exit code of the command you ran (`echo $?` right after it), never your
   reading of the output. A test suite that prints "2 failed" and exits 1 is `"exit": 1`.
 - Re-stamp `sha` (`git rev-parse HEAD`), `tree` and `stage` on every update.
@@ -237,7 +238,9 @@ If test-runner returns a FAIL diagnosis:
 ### Stage 4: Code Review
 Spawn agent: `code-review-coordinator`
 Pass: the plan file path + the FULL working-tree diff at review time (`git diff HEAD` + untracked
-new files) — this must include Stage 3's fix edits, not just Stages 1-2.
+new files) — this must include Stage 3's fix edits, not just Stages 1-2. Write that literal diff,
+plus each untracked new file in full, to `tasks/review/<TICKET>.diff` with the Write tool and pass
+the path: the reviewers have no shell, and without the file they review whole files, not the change.
 Review always sees exactly what would be committed.
 
 Wait for completion.
