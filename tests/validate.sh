@@ -440,6 +440,25 @@ has README.md 'build-epic' "README lists build-epic"
 has tdd-pipeline/README.md '`build-epic`' "tdd-pipeline README lists build-epic"
 
 # ---------------------------------------------------------------------------
+# 17. Epic run loop, sequential (PA-106). By-hand runs 2 + 3: the test command
+#     came from session memory, `git -C <main> worktree add` was refused inside a
+#     worktree, and switching worktrees mid-build lost a coordinator's receipt.
+# ---------------------------------------------------------------------------
+head_ "17. epic run loop (sequential)"
+has $E 'Build the <B> buildable tickets one at a time\?' "build-epic asks before running the loop"
+has $E '`Test:` line.{0,120}ask the user once.{0,200}never from (session )?memory' "build-epic loop takes the test command from Test: or the user, never memory"
+has $E 'worktree add --no-track -b feat/<KEY>-<slug> <repo>/\.claude/worktrees/<KEY>' "build-epic loop adds each worktree by absolute path"
+has $E 'first 4 words of the summary.{0,40}max 30' "build-epic loop names the slug"
+has $E 'ToolSearch.{0,40}EnterWorktree|EnterWorktree.{0,80}ToolSearch' "build-epic loop loads the deferred EnterWorktree tool"
+has $E 'Never call EnterWorktree while a build' "build-epic loop never switches worktree mid-build"
+has $E 'Skip ticket.{0,40}Stop loop' "build-epic loop offers skip and stop"
+has $E '`/tdd-pipeline:merged <KEY>` from the main checkout' "build-epic loop runs merged from the main checkout"
+has $E 're-run Steps 1-3' "build-epic loop re-reads the epic after the last ticket"
+has $E 'never moves a ticket to Done' "build-epic loop never closes a ticket"
+has $E 'add `Test: <command>` as its own line to each plan' "build-epic loop hands the user's test command over in the plan"
+has tdd-pipeline/agents/build-coordinator.md 'else a `Test: <command>` line in the plan file' "coordinator reads a plan Test: line when CLAUDE.md has none"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

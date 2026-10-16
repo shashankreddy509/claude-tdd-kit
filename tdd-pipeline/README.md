@@ -65,8 +65,9 @@ between projects even on the same site.
 - `merged` — after you merge: verify it, park the ticket for validation, sync the
   default branch, delete the merged branch (asks before each destructive step)
 - `validated` — after you verify on a real build: record the note, move to Done
-- `build-epic` — dry run over an epic: list its open tickets in board order, tagged
-  buildable / blocked / owner-step (a blocker counts only once its code is on the default branch)
+- `build-epic` — list an epic's open tickets in board order, tagged
+  buildable / blocked / owner-step (a blocker counts only once its code is on the default branch),
+  then on your yes build the buildable ones one at a time, each in its own worktree
 
 ## Agents
 build-coordinator, test-writer, implementer, test-runner,

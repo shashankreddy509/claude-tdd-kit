@@ -25,7 +25,8 @@ Before doing anything:
    every stage runs whatever command this step resolves, and nothing downstream
    re-detects. First hit wins:
    a. A project CLAUDE.md line `Test: <command>` (optionally `Test-filter: <how to run
-      only some tests>`).
+      only some tests>`), else a `Test: <command>` line in the plan file (the epic loop
+      writes one when the user gave the command for that run).
    b. The test step of the repo's CI config: `.github/workflows/*.yml`,
       `azure-pipelines.yml`, `.gitlab-ci.yml`, `bitrise.yml`, `fastlane/Fastfile`,
       `Jenkinsfile`. Keep the test command, drop CI-only wrappers (caching, uploads).
