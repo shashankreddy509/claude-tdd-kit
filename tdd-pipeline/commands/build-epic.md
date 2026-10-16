@@ -1,6 +1,6 @@
 List an epic's open tickets in board order and tag each one buildable, blocked or owner-step,
-so you know which tickets can be built now and in what order. Dry run only: it reads Jira and
-git, prints the list and stops. No branch, no worktree, no plan, no build.
+so you know which tickets can be built now and in what order. Steps 1-3 only read Jira and git
+and print the list. Step 4 builds the buildable tickets one at a time, only when the user says yes.
 
 Triggers: `/tdd-pipeline:build-epic <EPIC-KEY>`, e.g. `/tdd-pipeline:build-epic PROJ-70`.
 
@@ -82,9 +82,45 @@ on the same log), keep the tag and add to its reason: "key only in range subject
 Board order, one line per child, the reason after the tag. Zero buildable →
 "Nothing to build in <EPIC>" plus each child's line.
 
-Then close with: "Dry run only, no build started. Build each buildable ticket in its own
+Any "merged, awaiting Done" or range-note rows → one more line: "Close in Jira, or run
+`/tdd-pipeline:validated <KEY>` after you verify: <KEYS>." Print it only; no Jira write.
+
+Zero buildable → stop here. Otherwise one `AskUserQuestion`: "Build the <B> buildable tickets one
+at a time?" Yes / No. Yes → Step 4. No → close with: "Dry run only, no build started. Build each buildable ticket in its own
 worktree (`git worktree add --no-track -b feat/<KEY>-<slug> .claude/worktrees/<KEY> origin/<default>`),
 run `/tdd-pipeline:build <KEY>` there, then `/tdd-pipeline:ship`. Add `.claude/worktrees/` to `.gitignore`."
+
+### Step 4 — Run loop (sequential, main thread)
+
+Preflight once, before the first ticket:
+- Test command from the repo CLAUDE.md `Test:` line. No such line → ask the user once for the
+  command and add `Test: <command>` as its own line to each plan `/build` writes in this run (the
+  coordinator reads it there); never from session memory (run 2: a remembered `python3` was the
+  wrong interpreter). Do not write it into CLAUDE.md.
+- `.claude/worktrees/` not in `.gitignore` → say so once; keep going.
+
+Then for each buildable ticket, in board order (i of B):
+1. `git worktree add --no-track -b feat/<KEY>-<slug> <repo>/.claude/worktrees/<KEY> origin/<default>`,
+   where `<repo>` is the absolute path of the main checkout (`git -C <main> worktree add` is refused
+   inside a worktree session). Slug = first 4 words of the summary, kebab case, max 30 chars.
+2. Load EnterWorktree with ToolSearch (it is deferred), then EnterWorktree on that path.
+3. Print "Ticket i of B · <KEY> <summary>", then run `/tdd-pipeline:build <KEY>`. When it asks
+   for approval, add **Skip ticket** and **Stop loop** to that same question. `/build` hands off to
+   `/implement` with the explicit plan path, and `/implement` runs `/ship` on a complete receipt.
+4. ExitWorktree. Print the PR link and one line: "<KEY> shipped, i of B."
+   - Skip ticket → ExitWorktree, `git worktree remove` the untouched worktree, `git branch -D` its
+     branch, go to the next ticket.
+   - Stop loop → ExitWorktree, list the tickets not built, stop.
+   - A build that STOPs (red, review Critical, no receipt) → ExitWorktree, keep the worktree, ask:
+     next ticket / stop loop.
+5. Never call EnterWorktree while a build is running: it moves every running agent's shell and
+   git isolation (run 3 lost a coordinator's receipt this way). Next ticket starts only after
+   ExitWorktree.
+6. User says "merged <KEY>" → run `/tdd-pipeline:merged <KEY>` from the main checkout, between
+   tickets, never during a build. It saves the plan + receipt, removes the worktree and parks the ticket.
+
+After the last ticket, re-run Steps 1-3 (expect zero buildable) and stop. The loop never moves a
+ticket to Done: `/merged` parks it, `/tdd-pipeline:validated` closes it.
 
 ## Gotchas
 
@@ -93,4 +129,5 @@ run `/tdd-pipeline:build <KEY>` there, then `/tdd-pipeline:ship`. Add `.claude/w
 - A merge counts only when the commit subject carries the key (a PR title, or a merge subject naming
   `feat/<KEY>-...`). A range like "PROJ-120..123" names PROJ-120 only; Step 2's range note flags
   the rest for the user.
-- Never widen the JQL past the epic's children, and never build from this command.
+- Never widen the JQL past the epic's children, and never build without the Step 3 yes.
+- One writable worktree per session. The loop is sequential; parallel builds need one session per ticket.
