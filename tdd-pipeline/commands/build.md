@@ -104,7 +104,7 @@ session, not a typing exchange.
 - Ensure `tasks/plans/` exists (create it if missing).
 - Write the full approved plan to `tasks/plans/<TICKET>_plan.md`. This file is the
   permanent per-feature record.
-- Optional hook: if `$PLAN_GATE_CMD` is set, run `eval "$PLAN_GATE_CMD" record tasks/plans/<TICKET>_plan.md approve`
+- Optional hook: if `$PLAN_GATE_CMD` is set, run `<gate> record tasks/plans/<TICKET>_plan.md approve`, with `<gate>` expanded as the `implement` command's Approval gate says (no `eval`)
   (lets `/implement` tell 'approved' from 'a plan file exists'); unset → skip silently.
 
 ### 5. Auto-hand off to implementation (only if "Approve — run pipeline" was chosen)

@@ -459,6 +459,17 @@ has $E 'add `Test: <command>` as its own line to each plan' "build-epic loop han
 has tdd-pipeline/agents/build-coordinator.md 'else a `Test: <command>` line in the plan file' "coordinator reads a plan Test: line when CLAUDE.md has none"
 
 # ---------------------------------------------------------------------------
+# 18. Plan gate under worktree isolation (run 4). `eval "$PLAN_GATE_CMD"` was
+#     refused inside a worktree session; the expanded literal line ran fine.
+# ---------------------------------------------------------------------------
+head_ "18. plan gate without eval"
+for f in tdd-pipeline/commands/implement.md tdd-pipeline/commands/build.md; do
+  lacks $f 'eval "\$PLAN_GATE_CMD"' "plan gate never runs through eval (worktree isolation refuses it)"
+done
+has tdd-pipeline/commands/implement.md 'printenv PLAN_GATE_CMD.{0,200}literal' "implement expands the gate command once and runs it as a literal line"
+has tdd-pipeline/commands/build.md '<gate> record.{0,120}implement' "build reuses implement's gate expansion"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
