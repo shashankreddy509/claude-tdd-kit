@@ -9,11 +9,13 @@ Precondition: an approved plan file must exist at `tasks/plans/<TICKET>_plan.md`
 - State which plan file you resolved; if the user named a ticket and the resolved file doesn't match it, STOP and ask.
 
 ### Approval gate (optional hook — only if `$PLAN_GATE_CMD` is set; otherwise skip silently)
-A plan FILE is not an approval. Run `eval "$PLAN_GATE_CMD" check <resolved-plan-path>` (prints
+A plan FILE is not an approval. Read the command once with `printenv PLAN_GATE_CMD`; call its output
+`<gate>` and type it out as a literal line, never through `eval` (worktree isolation refuses an
+`eval`ed command). Run `<gate> check <resolved-plan-path>` (prints
 approve/revise/discard/unanswered for this exact file version): `approve` → proceed; `discard`
 → STOP, never build a discarded plan; `revise` → STOP until the plan is rewritten; `unanswered`
 → ask via `AskUserQuestion` ("Build this plan?" — Approve / Cancel) and run
-`eval "$PLAN_GATE_CMD" record <resolved-plan-path> approve|discard` (Cancel → `discard` and STOP).
+`<gate> record <resolved-plan-path> approve|discard` (Cancel → `discard` and STOP).
 
 ### Step 0 — Move Jira ticket to "In Progress" (if a ticket is in scope)
 Before spawning the build-coordinator, derive the Jira ticket key from the resolved
