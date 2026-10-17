@@ -112,6 +112,11 @@ duplication), the evidence (caller grep, named copies, untouched plan file), and
 [style, readability, architecture — include any language-specific reviewer's findings here
 mapped by severity.]
 
+### Reviewers run
+[One line per specialist whose result came back, by agent name (e.g. `security-reviewer`). A spawned
+reviewer that never returned is not listed. None returned → this section says `none` and the report
+is `review not run` (🔴 Critical).]
+
 ### ✅ Passed Checks
 [what each specialist looked at and found clean — name the specialist and the category.]
 

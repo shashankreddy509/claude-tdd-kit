@@ -104,8 +104,10 @@ Then for each buildable ticket, in board order (i of B):
    where `<repo>` is the absolute path of the main checkout (`git -C <main> worktree add` is refused
    inside a worktree session). Slug = first 4 words of the summary, kebab case, max 30 chars.
 2. Load EnterWorktree with ToolSearch (it is deferred), then EnterWorktree on that path.
-3. Print "Ticket i of B · <KEY> <summary>", then run `/tdd-pipeline:build <KEY>`. When it asks
-   for approval, add **Skip ticket** and **Stop loop** to that same question. `/build` hands off to
+3. Print "Ticket i of B · <KEY> <summary>", then run `/tdd-pipeline:build <KEY>`. In the loop, skip
+   `/build`'s "Enter plan mode" (its approval question is the gate), and ask that question with
+   exactly these four options: **Approve — run pipeline**, **Revise**, **Skip ticket**, **Stop loop**
+   (the question holds at most four; Stop loop stands in for Cancel). `/build` hands off to
    `/implement` with the explicit plan path, and `/implement` runs `/ship` on a complete receipt.
 4. ExitWorktree. Print the PR link and one line: "<KEY> shipped, i of B."
    - Skip ticket → ExitWorktree, `git worktree remove` the untouched worktree, `git branch -D` its
