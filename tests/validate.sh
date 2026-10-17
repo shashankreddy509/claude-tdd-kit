@@ -470,6 +470,24 @@ has tdd-pipeline/commands/implement.md 'printenv PLAN_GATE_CMD.{0,200}literal' "
 has tdd-pipeline/commands/build.md '<gate> record.{0,120}implement' "build reuses implement's gate expansion"
 
 # ---------------------------------------------------------------------------
+# 19. Epic run 5 (PA-127). A review that spawned no reviewers still wrote a
+#     clean receipt and /ship passed it; the loop's approval question needed
+#     6 options (max 4); /merged left tasks/review/<KEY>.diff in the worktree.
+# ---------------------------------------------------------------------------
+head_ "19. review proves it ran + loop fixes"
+R=tdd-pipeline/agents/code-review-coordinator.md
+C=tdd-pipeline/agents/build-coordinator.md
+S=tdd-pipeline/commands/ship.md
+has $R '### Reviewers run' "review report lists the reviewers that returned"
+has $C '"reviewers": \[' "receipt schema carries review.reviewers"
+has $C 'review.reviewers.{0,200}Reviewers run' "coordinator copies reviewers from the report, never from itself"
+has $C 'code-review-coordinator.{0,20}Never review inline or skip this spawn' "coordinator never replaces Stage 4 with its own review"
+has $S 'review.reviewers. missing or empty.{0,80}STOP' "ship stops when no reviewer returned"
+has $E 'exactly these four options: .{0,40}Approve' "loop names the four approval options"
+has $E 'skip .{0,40}plan mode' "loop skips /build's plan mode"
+has tdd-pipeline/commands/merged.md 'tasks/review/<KEY>\.diff' "merged saves the review diff before removing the worktree"
+
+# ---------------------------------------------------------------------------
 head_ "result"
 printf '  %d passed, %d failed\n\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

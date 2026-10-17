@@ -98,7 +98,8 @@ that file and refuses to open a PR when it is missing, stale, or red.
   "red":    { "cmd": "pytest tests/test_proj12.py -q", "exit": 1, "note": "<required only when exit is null>", "at": "<UTC ISO-8601>" },
   "green":  { "cmd": "pytest -q", "exit": 0, "attempts": 2, "at": "<UTC ISO-8601>" },
   "review": { "critical": 0, "must_fix": 0, "warnings": 2, "unverified": 0, "at": "<UTC ISO-8601>",
-              "warning_list": ["scanner.py:412 unbounded retry loop"] },
+              "warning_list": ["scanner.py:412 unbounded retry loop"],
+              "reviewers": ["security-reviewer", "code-quality-reviewer"] },
   "gating": { "required": [...], "seeded": [...], "readback": "ok", "at": "<UTC ISO-8601>" },
   "stage":  "complete"
 }
@@ -115,6 +116,9 @@ that file and refuses to open a PR when it is missing, stale, or red.
   verify pass. A receipt without the key (older pipeline) reads as 0.
 - `review.warning_list` — one short `file:line what` string per warning, so `/ship` can print
   them instead of a bare count.
+- `review.reviewers` — the agent names under the report's `### Reviewers run`, copied exactly; `[]`
+  when it says `none` or there is no report. Never fill it from what you expected to run: `/ship`
+  stops on an empty list, and that stop is the only check that a review really happened.
 - `gating` — optional; see `${CLAUDE_PLUGIN_ROOT}/references/gating.md`. Omit when the project has no `Gating:` line
   or the ticket needs no gate.
 - `stage` — `red` | `green` | `reviewed` | `complete`. Anything short of `complete` means the
@@ -237,7 +241,8 @@ If test-runner returns a FAIL diagnosis:
     STOP. Do not proceed to Stage 4.
 
 ### Stage 4: Code Review
-Spawn agent: `code-review-coordinator`
+Spawn agent: `code-review-coordinator`. Never review inline or skip this spawn, even for a tiny
+diff: your own read of the diff is not a review (run 5 shipped one as 0/0/0 with no reviewer).
 Pass: the plan file path + the FULL working-tree diff at review time (`git diff HEAD` + untracked
 new files) — this must include Stage 3's fix edits, not just Stages 1-2. Write that literal diff,
 plus each untracked new file in full, to `tasks/review/<TICKET>.diff` with the Write tool and pass
@@ -250,7 +255,7 @@ Read the review report output.
 
 Whatever the verdict, update the receipt with `review`: `critical` = count of 🔴,
 `must_fix` = count of 🟠, `warnings` = count of 🟡, `unverified` = how many of those Criticals are marked
-`⚠️ unverified`, and `warning_list` = one short `file:line what` string per warning (this
+`⚠️ unverified`, `reviewers` = the names under its `### Reviewers run`, and `warning_list` = one short `file:line what` string per warning (this
 is what `/ship` prints before asking whether to ship anyway). Set `"stage": "reviewed"`.
 Count what the report says — a Critical you disagree with is still a Critical in the
 count. `unverified` is a SUBSET of `critical`, not a separate downgraded bucket.

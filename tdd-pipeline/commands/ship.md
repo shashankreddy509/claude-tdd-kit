@@ -20,7 +20,7 @@ Derive the browse URL from the resolved site, not a literal host.
 
 ## Steps
 
-0. **Read the pipeline receipt — gate the ship on it.** Find the ticket key (branch slug, the user's argument, or the Jira issue for this work) and read `tasks/receipts/<TICKET>.json`. The pipeline writes it; keys are `ticket`, `plan`, `sha` (HEAD at the last stage written — staleness detection), `tree` (working-tree fingerprint at that stage), `red`/`green` (`cmd` + the REAL process `exit` + `at`), `review` (`critical`, `must_fix`, `warnings`, `unverified`, `warning_list` of `file:line what` strings), an optional `gating` block (`required`, `seeded`, `readback`), and `stage` (`red` | `green` | `reviewed` | `complete`). A receipt is a record, not a permission slip — never hand-write or edit one to get past this gate.
+0. **Read the pipeline receipt — gate the ship on it.** Find the ticket key (branch slug, the user's argument, or the Jira issue for this work) and read `tasks/receipts/<TICKET>.json`. The pipeline writes it; keys are `ticket`, `plan`, `sha` (HEAD at the last stage written — staleness detection), `tree` (working-tree fingerprint at that stage), `red`/`green` (`cmd` + the REAL process `exit` + `at`), `review` (`critical`, `must_fix`, `warnings`, `unverified`, `warning_list` of `file:line what` strings, `reviewers` the agents that returned), an optional `gating` block (`required`, `seeded`, `readback`), and `stage` (`red` | `green` | `reviewed` | `complete`). A receipt is a record, not a permission slip — never hand-write or edit one to get past this gate.
 
    | Receipt state | Do |
    |---|---|
@@ -30,6 +30,7 @@ Derive the browse URL from the resolved site, not a literal host.
    | `red.exit == 0`, or `red.exit` null with no `note` | **STOP** — tests never failed (or no reason recorded) |
    | `green.exit != 0` | **STOP** — tests are red |
    | `review.critical > 0` · `review.must_fix > 0` (missing = 0) · `review.unverified > 0` | **STOP** — list them |
+   | `review.reviewers` missing or empty | **STOP** — review not run: no reviewer returned, so 0 findings proves nothing. Re-run `/review` or the pipeline's Stage 4 |
    | `gating` present, `readback != "ok"` or `seeded` misses a `required` key | **STOP** — kill-switch missing (see `${CLAUDE_PLUGIN_ROOT}/references/gating.md`) |
    | `review.warnings > 0` | Print each warning (file:line + what it is) from `review.warning_list`, THEN **AskUserQuestion**: ship anyway / fix first. Never summarise as a bare count — an unread warning is the same as no warning. |
    | clean | proceed |
