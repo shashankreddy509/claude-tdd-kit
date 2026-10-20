@@ -450,6 +450,8 @@ has $E 'Build the <B> buildable tickets one at a time\?' "build-epic asks before
 has $E '`Test:` line.{0,120}ask the user once.{0,200}never from (session )?memory' "build-epic loop takes the test command from Test: or the user, never memory"
 has $E 'worktree add --no-track -b feat/<KEY>-<slug> <repo>/\.claude/worktrees/<KEY>' "build-epic loop adds each worktree by absolute path"
 has $E 'first 4 words of the summary.{0,40}max 30' "build-epic loop names the slug"
+has $E 'split on any non-alphanumeric' "build-epic slug splits words on punctuation"
+has $E 'during a build.{0,80}held.{0,120}after ExitWorktree' "build-epic holds a mid-build merged and runs it after hand-back"
 has $E 'ToolSearch.{0,40}EnterWorktree|EnterWorktree.{0,80}ToolSearch' "build-epic loop loads the deferred EnterWorktree tool"
 has $E 'Never call EnterWorktree while a build' "build-epic loop never switches worktree mid-build"
 has $E 'Skip ticket.{0,40}Stop loop' "build-epic loop offers skip and stop"

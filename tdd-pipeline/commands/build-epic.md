@@ -102,7 +102,8 @@ Preflight once, before the first ticket:
 Then for each buildable ticket, in board order (i of B):
 1. `git worktree add --no-track -b feat/<KEY>-<slug> <repo>/.claude/worktrees/<KEY> origin/<default>`,
    where `<repo>` is the absolute path of the main checkout (`git -C <main> worktree add` is refused
-   inside a worktree session). Slug = first 4 words of the summary, kebab case, max 30 chars.
+   inside a worktree session). Slug = first 4 words of the summary, kebab case, max 30 chars;
+   words split on any non-alphanumeric, lowercase (`store.connect() leaks` → `store-connect-leaks`).
 2. Load EnterWorktree with ToolSearch (it is deferred), then EnterWorktree on that path.
 3. Print "Ticket i of B · <KEY> <summary>", then run `/tdd-pipeline:build <KEY>`. In the loop, skip
    `/build`'s "Enter plan mode" (its approval question is the gate), and ask that question with
@@ -120,6 +121,8 @@ Then for each buildable ticket, in board order (i of B):
    ExitWorktree.
 6. User says "merged <KEY>" → run `/tdd-pipeline:merged <KEY>` from the main checkout, between
    tickets, never during a build. It saves the plan + receipt, removes the worktree and parks the ticket.
+   Said during a build → reply "held: merged <KEY> runs after this build hands back", then run it
+   right after ExitWorktree, before the next ticket.
 
 After the last ticket, re-run Steps 1-3 (expect zero buildable) and stop. The loop never moves a
 ticket to Done: `/merged` parks it, `/tdd-pipeline:validated` closes it.
