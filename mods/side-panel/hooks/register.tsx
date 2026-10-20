@@ -117,10 +117,11 @@ async function refreshRepo($: EngineInterface) {
 async function refreshAgents($: EngineInterface) {
   const list = await $.agent.list()
   const now = await $.clock.now()
-  const all = seen(await read($, spawns), list, now)
+  const last = await read($, doing)
+  const all = seen(await read($, spawns), list, now, last)
   await update($, spawns, () => all)
   const session = await $.session.usage()
-  const next = agentBoard(all, list, await read($, usage), await read($, doing), session.cost?.usd ?? 0, now)
+  const next = agentBoard(all, list, await read($, usage), last, session.cost?.usd ?? 0, now)
   if (JSON.stringify(next) !== JSON.stringify(await read($, agents))) await update($, agents, () => next)
 }
 
