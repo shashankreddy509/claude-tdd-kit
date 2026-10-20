@@ -424,6 +424,7 @@ has $E 'never from Jira status' "build-epic never trusts Jira status for a block
 has $E '`\.worktreeinclude`.{0,120}STOP' "build-epic STOPs a JS/iOS repo with no .worktreeinclude"
 has $E 'Dry run only.{0,80}no build' "build-epic is a dry run"
 has $E '\*\*merged, awaiting Done\*\*.{0,120}own key' "build-epic tags a child already on the default branch"
+has $E 'awaiting Done.{0,240}Reason after the tag: its status' "build-epic shows a merged child's status so Build Testing does not read as forgot-to-close"
 has $E '\*\*in flight\*\*.{0,120}In Progress' "build-epic never offers a child already in progress"
 has $E 'range subject.{0,40}owner may close' "build-epic flags a key that only sits in a range subject"
 has $E 'worktree add --no-track -b' "build-epic worktree command does not track origin (a bare push would hit the default branch)"

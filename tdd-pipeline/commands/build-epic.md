@@ -46,6 +46,8 @@ Read blockers as `${CLAUDE_PLUGIN_ROOT}/references/jira-mcp.md` describes (`issu
 
 1. **merged, awaiting Done** — the child's own key is in a commit subject on the default branch
    (the same check as below). Its code shipped; it needs a Jira close, not a build.
+   Reason after the tag: its status and that commit, e.g. `Build Testing (3d4c48d)`, so a ticket
+   held for proof does not read as one nobody closed.
 2. **in flight** — its status category is In Progress (e.g. In Progress, In Review, Build Testing).
    Someone is building or verifying it; never offer it for a second build.
 3. **BLOCKED by X** — X is a blocker not yet on the default branch. X counts as merged only when
@@ -77,6 +79,7 @@ on the same log), keep the tag and add to its reason: "key only in range subject
   3. PROJ-73  owner-step  needs a hook install
   4. PROJ-74  in flight   Build Testing
   5. PROJ-75  in flight   In Progress (key only in range subject a1b2c3d, owner may close)
+  6. PROJ-76  merged, awaiting Done   Build Testing (3d4c48d)
 ```
 
 Board order, one line per child, the reason after the tag. Zero buildable →
