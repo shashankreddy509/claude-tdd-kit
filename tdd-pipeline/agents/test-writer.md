@@ -26,7 +26,9 @@ types/functions/modules in the plan's planned source files, so tests load and fa
    generating it): a new `.swift` file joins no target on its own, so add the new test
    cases to an existing test file the target already lists (the one closest to the code
    under test), never a new file, and name that file in your final message.
-4. Tests must assert real behavior — no empty tests, no `assertTrue(true)`
+4. Tests must assert real behavior — no empty tests, no `assertTrue(true)`. For a test-only or
+   cleanup ticket, the red is a behavioural assertion on the object (e.g. a closed handle
+   raises on use), not a warnings flag; a `-W error` run is only an extra check.
 5. If the plan has a **Gating** section, write its gate-off and absent-key tests as REQUIRED, per
    `${CLAUDE_PLUGIN_ROOT}/references/gating.md` § Tests.
 6. If the plan has a **Reuse** section, write one test per row proving the new code goes
