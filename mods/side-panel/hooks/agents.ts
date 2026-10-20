@@ -9,6 +9,9 @@ export const MAIN = ''
 export const WORKING = new Set(['running', 'pending'])
 const LIVE = new Set([...WORKING, 'waiting', 'idle'])
 export const isLive = (status: string) => LIVE.has(status)
+// A background agent that handed back stays 'waiting' in list() (resumable) though its work is done; a later
+// tool call overwrites `doing` and makes it live again.
+const handedBack = (doing: Record<string, string>, id: string) => doing[id] === 'SubagentHandback'
 
 // One step folded into its loop's total.
 export function addStep(all: Record<string, LoopUsage>, loop: string, model: string, effort: string, u: StepUsage | null | undefined): Record<string, LoopUsage> {
@@ -18,12 +21,12 @@ export function addStep(all: Record<string, LoopUsage>, loop: string, model: str
 }
 
 // The poll's view folded into the spawn records: an agent the spawn hook never saw (spawned before a reload) is
-// added at first sight, and every live one is stamped seen now.
-export function seen(spawns: Record<string, Spawn>, list: readonly Listed[], now: number): Record<string, Spawn> {
+// added at first sight, and every live one that has not handed back is stamped seen now.
+export function seen(spawns: Record<string, Spawn>, list: readonly Listed[], now: number, doing: Record<string, string> = {}): Record<string, Spawn> {
   const out = { ...spawns }
   for (const a of list) {
     const s = out[a.id] ?? { id: a.id, type: a.type, description: a.description, model: '', from: now, ...(a.parentId ? { parent: a.parentId } : {}) }
-    out[a.id] = isLive(a.status) ? { ...s, to: now } : s
+    out[a.id] = isLive(a.status) && !handedBack(doing, a.id) ? { ...s, to: now } : s
   }
   return out
 }
@@ -37,7 +40,7 @@ export function agentBoard(spawns: Record<string, Spawn>, list: readonly Listed[
   return Object.values(spawns)
     .sort((a, b) => a.from - b.from)
     .map(s => {
-      const st = status.get(s.id) ?? 'completed'
+      const st = handedBack(doing, s.id) ? 'completed' : (status.get(s.id) ?? 'completed')
       const live = isLive(st)
       const u = usage[s.id]
       const tokens = u?.tokens ?? 0

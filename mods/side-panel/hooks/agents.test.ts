@@ -1,6 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import { MAIN, addStep, agentBoard, clock, metaLine, modelText, nowText, seen } from './agents'
+import { agentsLook } from './rail'
 
 // Step usage as turn.step reported it live on 2026-10-09 (an Explore subagent's first step).
 const STEP = { input_tokens: 2, output_tokens: 283, cache_read_input_tokens: 100, cache_creation_input_tokens: 21_997 }
@@ -55,4 +56,18 @@ test('now: the tool and the file name, the command word, or the pattern', () => 
   expect(nowText('Bash', { command: 'python3 -m unittest' })).toBe('Bash python3')
   expect(nowText('Grep', { pattern: 'slugify' })).toBe('Grep slugify')
   expect(nowText('Agent', { prompt: 'x' })).toBe('Agent')
+})
+
+// Seen live 2026-10-20: a background build-coordinator that handed back stayed 'waiting' in list() for days.
+test('handed back: done whatever list() says, time frozen, gone from the card; a later tool makes it live again', () => {
+  const list = [{ id: 'bc', description: '', type: 'tdd-pipeline:build-coordinator', status: 'waiting' }]
+  const back = { bc: nowText('SubagentHandback', { message: 'report' }) }
+  const stamped = seen({ bc: { ...SPAWNS.bc, to: 40_000 } }, list, 900_000, back)
+  expect(stamped.bc?.to).toBe(40_000)
+  const board = agentBoard({ ...SPAWNS, bc: stamped.bc! }, list, USAGE, back, 2, 900_000)
+  expect(board.map(a => [a.id, a.status, a.elapsed])).toEqual([['bc', 'completed', '0:39'], ['tw', 'completed', '0:28']])
+  expect(agentsLook(board).rows).toEqual([])
+  const again = agentBoard(SPAWNS, list, USAGE, { bc: 'Agent' }, 2, 62_000)
+  expect(again[0]?.status).toBe('waiting')
+  expect(seen(SPAWNS, list, 62_000, { bc: 'Agent' }).bc?.to).toBe(62_000)
 })
